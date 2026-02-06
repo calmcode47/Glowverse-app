@@ -1,0 +1,215 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  password      String
+  name          String?
+  avatar        String?
+  role          UserRole  @default(USER)
+  isVerified    Boolean   @default(false)
+  isActive      Boolean   @default(true)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  lastLoginAt   DateTime?
+  profile       UserProfile?
+  analyses      Analysis[]
+  favorites     Favorite[]
+  tryOns        VirtualTryOn[]
+  refreshTokens RefreshToken[]
+
+  @@map("users")
+}
+
+enum UserRole {
+  USER
+  PREMIUM
+  ADMIN
+}
+
+model UserProfile {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phoneNumber String?
+  dateOfBirth DateTime?
+  gender      Gender?
+  skinType    String?
+  skinTone    String?
+  preferences Json?
+  totalAnalyses    Int @default(0)
+  totalTryOns      Int @default(0)
+  favoriteProducts Int @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("user_profiles")
+}
+
+enum Gender {
+  MALE
+  FEMALE
+  OTHER
+  PREFER_NOT_TO_SAY
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@map("refresh_tokens")
+  @@index([userId])
+}
+
+model Analysis {
+  id          String        @id @default(uuid())
+  userId      String
+  user        User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        AnalysisType
+  status      AnalysisStatus @default(PENDING)
+  originalImageUrl          String
+  originalImagePublicId     String
+  processedImageUrl         String?
+  processedImagePublicId    String?
+  results     Json?
+  metadata    Json?
+  errorMessage String?
+  processingTime Int?
+  perfectCorpAnalysisId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("analyses")
+  @@index([userId, type])
+  @@index([createdAt])
+}
+
+enum AnalysisType {
+  SKIN_ANALYSIS
+  FACE_SHAPE
+  SKIN_TONE
+  HAIR_ANALYSIS
+}
+
+enum AnalysisStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model VirtualTryOn {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type        TryOnType
+  status      TryOnStatus @default(PENDING)
+  originalImageUrl          String
+  originalImagePublicId     String
+  resultImageUrl            String?
+  resultImagePublicId       String?
+  productId   String?
+  productName String?
+  productBrand String?
+  productCategory String?
+  intensity   Float    @default(1.0)
+  results     Json?
+  metadata    Json?
+  errorMessage String?
+  processingTime Int?
+  perfectCorpTryOnId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("virtual_try_ons")
+  @@index([userId, type])
+  @@index([createdAt])
+}
+
+enum TryOnType {
+  LIPSTICK
+  EYESHADOW
+  BLUSH
+  FOUNDATION
+  HAIR_COLOR
+  FULL_MAKEUP
+}
+
+enum TryOnStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
+
+model Favorite {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  productName String
+  productBrand String?
+  productCategory String?
+  productImageUrl String?
+  price       Float?
+  notes       String?
+  tags        String[]
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, productId])
+  @@map("favorites")
+  @@index([userId])
+}
+
+model ProductRecommendation {
+  id          String   @id @default(uuid())
+  productId   String   @unique
+  name        String
+  brand       String
+  category    String
+  description String?
+  price       Float?
+  imageUrl    String?
+  rating      Float?
+  suitableForSkinTypes String[]
+  suitableForSkinTones String[]
+  concerns    String[]
+  perfectCorpProductId String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@map("product_recommendations")
+  @@index([category])
+}
+
+model ApiUsage {
+  id          String   @id @default(uuid())
+  endpoint    String
+  method      String
+  statusCode  Int
+  responseTime Int
+  userId      String?
+  requestBody Json?
+  responseBody Json?
+  errorMessage String?
+  perfectCorpApiCalled Boolean @default(false)
+  perfectCorpEndpoint  String?
+  perfectCorpCost      Float?
+  createdAt   DateTime @default(now())
+
+  @@map("api_usage")
+  @@index([endpoint])
+  @@index([createdAt])
+  @@index([userId])
+}
