@@ -1,0 +1,56 @@
+{
+  "expo": {
+    "name": "PerfectCorpAI",
+    "slug": "perfectcorpai",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "androidStatusBar": {
+      "backgroundColor": "#000000",
+      "translucent": false,
+      "barStyle": "light-content"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.perfectcorp.perfectcorpai",
+      "infoPlist": {
+        "NSCameraUsageDescription": "This app uses the camera for AR try-on and skin analysis.",
+        "NSPhotoLibraryUsageDescription": "This app needs access to your photos to save and share analysis results.",
+        "NSPhotoLibraryAddUsageDescription": "This app saves captured photos and try-on previews to your photo library."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "com.perfectcorp.perfectcorpai",
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-camera",
+      "expo-media-library"
+    ],
+    "extra": {
+      "apiBaseUrl": "${API_BASE_URL}",
+      "perfectCorpApiKey": "${PERFECT_CORP_API_KEY}",
+      "analyticsId": "${ANALYTICS_ID}",
+      "sentryDsn": "${SENTRY_DSN}"
+    }
+  }
+}
