@@ -1,4 +1,4 @@
-# PerfectCorpAI — Frontend
+# Glowverse — Frontend
 
 ## Repository Structure
 - frontend/ — Expo React Native application (this project)
