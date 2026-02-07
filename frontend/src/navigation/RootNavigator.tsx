@@ -7,15 +7,16 @@ import OnboardingScreen from "@screens/onboarding/OnboardingScreen";
 import AnalysisResultsScreen from "@screens/results/AnalysisResultsScreen";
 import SettingsScreen from "@screens/profile/SettingsScreen";
 import TutorialScreen from "@screens/onboarding/TutorialScreen";
-import { ActivityIndicator, useTheme } from "react-native-paper";
+import ProductDetailScreen from "@screens/shop/ProductDetailScreen";
+import { ActivityIndicator } from "react-native-paper";
 import HeaderRight from "@components/navigation/HeaderRight";
 import BackButton from "@components/navigation/BackButton";
 import type { RootStackParamList } from "./types";
+import { theme as appTheme } from "@constants/theme";
 
 const Stack = createStackNavigator<RootStackParamList>();
 
 export default function RootNavigator() {
-  const theme = useTheme();
   const [loading, setLoading] = React.useState(true);
   const [hasOnboarded, setHasOnboarded] = React.useState<boolean>(false);
 
@@ -32,8 +33,8 @@ export default function RootNavigator() {
 
   if (loading) {
     return (
-      <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-        <ActivityIndicator />
+      <View style={{ flex: 1, alignItems: "center", justifyContent: "center", backgroundColor: appTheme.colors.backgroundDark }}>
+        <ActivityIndicator size="large" color={appTheme.colors.orange} />
       </View>
     );
   }
@@ -43,8 +44,10 @@ export default function RootNavigator() {
       initialRouteName={hasOnboarded ? "MainTabs" : "Onboarding"}
       screenOptions={{
         headerTitleAlign: "center",
+        headerStyle: { backgroundColor: appTheme.colors.surfaceDark },
+        headerTintColor: appTheme.colors.text.inverse,
         headerRight: () => <HeaderRight />,
-        headerLeft: () => <BackButton />
+        headerLeft: () => <BackButton />,
       }}
     >
       <Stack.Screen
@@ -52,15 +55,24 @@ export default function RootNavigator() {
         component={OnboardingScreen}
         options={{
           title: "Welcome",
-          headerLeft: () => null
+          headerLeft: () => null,
         }}
       />
       <Stack.Screen
         name="MainTabs"
         component={MainTabNavigator}
         options={{
-          title: "PerfectCorpAI",
-          headerShown: false
+          title: "Your Brand",
+          headerShown: false,
+        }}
+      />
+      <Stack.Screen
+        name="ProductDetail"
+        component={ProductDetailScreen}
+        options={{
+          headerShown: false,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen
@@ -69,7 +81,7 @@ export default function RootNavigator() {
         options={{
           title: "Results",
           cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-          gestureEnabled: true
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen
@@ -78,7 +90,7 @@ export default function RootNavigator() {
         options={{
           title: "Settings",
           cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-          gestureEnabled: true
+          gestureEnabled: true,
         }}
       />
       <Stack.Screen
@@ -87,7 +99,7 @@ export default function RootNavigator() {
         options={{
           title: "Tutorial",
           cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
-          gestureEnabled: true
+          gestureEnabled: true,
         }}
       />
     </Stack.Navigator>

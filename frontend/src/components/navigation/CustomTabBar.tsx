@@ -1,29 +1,18 @@
 import React from "react";
 import { View, TouchableOpacity, StyleSheet } from "react-native";
 import { BottomTabBarProps } from "@react-navigation/bottom-tabs";
-import { useTheme, Text } from "react-native-paper";
+import { Text } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, { useSharedValue, useAnimatedStyle, withTiming } from "react-native-reanimated";
 import { SafeAreaView, useSafeAreaInsets } from "react-native-safe-area-context";
+import { theme as appTheme } from "@constants/theme";
 
 export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
-  const theme = useTheme();
   const insets = useSafeAreaInsets();
-  const indicatorX = useSharedValue(0);
-
-  React.useEffect(() => {
-    indicatorX.value = withTiming(state.index, { duration: 250 });
-  }, [state.index]);
-
-  const indicatorStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateX: indicatorX.value * 100 }]
-    };
-  });
 
   return (
     <SafeAreaView style={[styles.container, { paddingBottom: insets.bottom }]}>
-      <View style={[styles.bar, { backgroundColor: theme.colors.surface }]}>
+      <View style={styles.bar}>
         {state.routes.map((route, index) => {
           const { options } = descriptors[route.key];
           const isFocused = state.index === index;
@@ -32,7 +21,7 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
             const event = navigation.emit({
               type: "tabPress",
               target: route.key,
-              canPreventDefault: true
+              canPreventDefault: true,
             });
             if (!isFocused && !event.defaultPrevented) {
               navigation.navigate(route.name);
@@ -42,62 +31,47 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
           const onLongPress = () => {
             navigation.emit({
               type: "tabLongPress",
-              target: route.key
+              target: route.key,
             });
           };
 
           const icon = options.tabBarIcon
             ? options.tabBarIcon({
-                color: isFocused ? theme.colors.primary : theme.colors.outline,
+                color: isFocused ? appTheme.colors.orange : appTheme.colors.text.muted,
                 size: 24,
-                focused: isFocused
+                focused: isFocused,
               })
             : null;
 
-          const isCamera = route.name === "CameraTab";
-
           return (
-            <View key={route.key} style={styles.itemWrapper}>
-              {isCamera ? (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel="Camera"
-                  accessibilityState={isFocused ? { selected: true } : {}}
-                  onPress={onPress}
-                  onLongPress={onLongPress}
-                  style={[
-                    styles.cameraButton,
-                    {
-                      backgroundColor: theme.colors.primary
-                    }
-                  ]}
-                >
-                  <MaterialCommunityIcons name="camera" color={theme.colors.onPrimary} size={28} />
-                </TouchableOpacity>
-              ) : (
-                <TouchableOpacity
-                  accessibilityRole="button"
-                  accessibilityLabel={options.title || route.name}
-                  accessibilityState={isFocused ? { selected: true } : {}}
-                  onPress={onPress}
-                  onLongPress={onLongPress}
-                  style={styles.item}
-                >
-                  {icon}
-                  <Text
-                    style={{
-                      marginTop: 4,
-                      color: isFocused ? theme.colors.primary : theme.colors.outline
-                    }}
-                  >
-                    {options.title || route.name}
-                  </Text>
-                </TouchableOpacity>
-              )}
-            </View>
+            <TouchableOpacity
+              key={route.key}
+              accessibilityRole="button"
+              accessibilityLabel={options.title || route.name}
+              accessibilityState={isFocused ? { selected: true } : {}}
+              onPress={onPress}
+              onLongPress={onLongPress}
+              style={styles.item}
+            >
+              <View
+                style={[
+                  styles.iconCircle,
+                  isFocused && styles.iconCircleActive,
+                ]}
+              >
+                {icon}
+              </View>
+              <Text
+                style={[
+                  styles.label,
+                  { color: isFocused ? appTheme.colors.orange : appTheme.colors.text.muted },
+                ]}
+              >
+                {options.title || route.name}
+              </Text>
+            </TouchableOpacity>
           );
         })}
-        <Animated.View style={[styles.indicator, indicatorStyle]} />
       </View>
     </SafeAreaView>
   );
@@ -108,7 +82,7 @@ const styles = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    bottom: 0
+    bottom: 0,
   },
   bar: {
     flexDirection: "row",
@@ -117,36 +91,36 @@ const styles = StyleSheet.create({
     marginHorizontal: 16,
     marginBottom: 8,
     borderRadius: 24,
-    paddingVertical: 8,
+    paddingVertical: 10,
+    backgroundColor: appTheme.colors.surfaceDark,
+    borderWidth: 1,
+    borderColor: appTheme.colors.borderOrange,
     shadowColor: "#000",
-    shadowOpacity: 0.08,
+    shadowOpacity: 0.15,
     shadowRadius: 12,
-    shadowOffset: { width: 0, height: 6 },
-    elevation: 6
-  },
-  itemWrapper: {
-    flex: 1,
-    alignItems: "center"
+    shadowOffset: { width: 0, height: 4 },
+    elevation: 8,
   },
   item: {
-    alignItems: "center",
-    justifyContent: "center"
-  },
-  cameraButton: {
-    width: 64,
-    height: 64,
-    borderRadius: 32,
+    flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    marginTop: -32
   },
-  indicator: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    width: 80,
-    height: 2,
-    borderRadius: 1,
-    backgroundColor: "transparent"
-  }
+  iconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: appTheme.colors.primary,
+  },
+  iconCircleActive: {
+    borderWidth: 2,
+    borderColor: appTheme.colors.borderOrange,
+  },
+  label: {
+    marginTop: 4,
+    fontSize: 11,
+    fontWeight: "600",
+  },
 });

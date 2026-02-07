@@ -1,34 +1,25 @@
 import React from "react";
-import { View, StyleSheet, ScrollView, Alert } from "react-native";
-import { Text, Button, useTheme, List, Dialog, Portal, TextInput, Divider } from "react-native-paper";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  Alert,
+  TouchableOpacity,
+  Platform,
+} from "react-native";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { theme } from "@constants/theme";
 import type { RootStackParamList } from "@navigation/types";
 import { useApp } from "@context/AppContext";
-import { useCameraContext } from "@context/CameraContext";
-import AvatarPicker from "@components/profile/AvatarPicker";
-import StatsCard from "@components/profile/StatsCard";
-import HistoryGrid from "@components/profile/HistoryGrid";
-import SettingItem from "@components/profile/SettingItem";
+import { StatCircle } from "@components/ui";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ProfileScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const theme = useTheme();
-  const { user, setUser, updatePreferences } = useApp();
-  const { capturedImages, removeImage } = useCameraContext();
-  const [editOpen, setEditOpen] = React.useState(false);
-  const [name, setName] = React.useState(user.name || "");
-  const [bio, setBio] = React.useState(user.bio || "");
-
-  const analysesCount = capturedImages.length;
-  const productsTried = 0;
-  const favoritesSaved = 0;
-
-  const saveProfile = () => {
-    setUser({ name, bio });
-    setEditOpen(false);
-  };
+  const { user, setUser } = useApp();
 
   const logout = async () => {
     Alert.alert("Logout", "Are you sure you want to logout?", [
@@ -39,74 +30,171 @@ export default function ProfileScreen() {
         onPress: async () => {
           await AsyncStorage.removeItem("pcAuthToken");
           navigation.navigate("Onboarding");
-        }
-      }
+        },
+      },
     ]);
   };
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      showsVerticalScrollIndicator={false}
+    >
       <View style={styles.header}>
-        <AvatarPicker />
-        <Text variant="titleLarge" style={{ marginTop: 8 }}>{user.name || "Guest"}</Text>
-        {user.bio ? <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>{user.bio}</Text> : null}
-        <Button style={{ marginTop: 8 }} mode="outlined" onPress={() => setEditOpen(true)}>Edit Profile</Button>
-      </View>
-
-      <View style={styles.section}>
-        <Text variant="titleMedium">Stats</Text>
-        <View style={styles.statsRow}>
-          <StatsCard icon="chart-box" label="Analyses" value={analysesCount} />
-          <StatsCard icon="lipstick" label="Products Tried" value={productsTried} />
-          <StatsCard icon="heart" label="Favorites" value={favoritesSaved} />
+        <View style={styles.avatarWrap}>
+          <Text style={styles.avatarText}>
+            {(user.name || "G")[0].toUpperCase()}
+          </Text>
         </View>
+        <Text style={styles.name}>{user.name || "Guest"}</Text>
+        {user.bio ? (
+          <Text style={styles.bio}>{user.bio}</Text>
+        ) : null}
+        <TouchableOpacity
+          style={styles.editBtn}
+          onPress={() => navigation.navigate("Settings")}
+        >
+          <Text style={styles.editBtnText}>Edit Profile</Text>
+        </TouchableOpacity>
       </View>
 
-      <View style={styles.section}>
-        <Text variant="titleMedium">History</Text>
-        <HistoryGrid
-          items={capturedImages.map((i) => ({ uri: i.uri, timestamp: i.timestamp, type: "analysis" }))}
-          onPress={(uri) => navigation.navigate("Results", { imageUri: uri })}
-          onDelete={(uri) => removeImage(uri)}
-        />
+      <View style={styles.statsRow}>
+        <StatCircle value={12} size={56} />
+        <StatCircle value={28} size={56} />
+        <StatCircle value={7} size={56} />
+      </View>
+      <View style={styles.statsLabels}>
+        <Text style={styles.statsLabel}>Orders</Text>
+        <Text style={styles.statsLabel}>Favorites</Text>
+        <Text style={styles.statsLabel}>Reviews</Text>
       </View>
 
-      <View style={styles.section}>
-        <Text variant="titleMedium">Settings</Text>
-        <List.Section>
-          <SettingItem icon="account" label="Account settings" type="navigation" onPress={() => navigation.navigate("Settings")} />
-          <SettingItem icon="bell-outline" label="Notifications" type="toggle" value={user.preferences.notifications} onPress={() => updatePreferences({ notifications: !user.preferences.notifications })} />
-          <SettingItem icon="shield-lock-outline" label="Privacy" type="navigation" onPress={() => navigation.navigate("Settings")} />
-          <SettingItem icon="camera-outline" label="Camera settings" type="navigation" onPress={() => navigation.navigate("Settings")} />
-          <SettingItem icon="theme-light-dark" label="App theme" type="select" value={user.preferences.theme} onPress={() => updatePreferences({ theme: user.preferences.theme === "light" ? "dark" : "light" })} />
-          <SettingItem icon="translate" label="Language" type="select" value={user.preferences.language} onPress={() => updatePreferences({ language: user.preferences.language === "en" ? "es" : "en" })} />
-          <SettingItem icon="lifebuoy" label="Help & Support" type="navigation" onPress={() => navigation.navigate("Tutorial")} />
-          <SettingItem icon="information-outline" label="About app" type="navigation" onPress={() => navigation.navigate("Settings")} />
-          <Divider />
-          <SettingItem icon="logout" label="Logout" type="navigation" onPress={logout} />
-        </List.Section>
+      <View style={styles.menu}>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate("Settings")}
+        >
+          <MaterialCommunityIcons name="cog-outline" size={22} color={theme.colors.text.primary} />
+          <Text style={styles.menuText}>Settings</Text>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={theme.colors.text.muted} />
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.menuItem}
+          onPress={() => navigation.navigate("Tutorial")}
+        >
+          <MaterialCommunityIcons name="help-circle-outline" size={22} color={theme.colors.text.primary} />
+          <Text style={styles.menuText}>Help & Support</Text>
+          <MaterialCommunityIcons name="chevron-right" size={22} color={theme.colors.text.muted} />
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.menuItem, styles.menuItemLast]} onPress={logout}>
+          <MaterialCommunityIcons name="logout" size={22} color={theme.colors.error} />
+          <Text style={[styles.menuText, { color: theme.colors.error }]}>Logout</Text>
+        </TouchableOpacity>
       </View>
 
-      <Portal>
-        <Dialog visible={editOpen} onDismiss={() => setEditOpen(false)}>
-          <Dialog.Title>Edit Profile</Dialog.Title>
-          <Dialog.Content>
-            <TextInput label="Name" value={name} onChangeText={setName} />
-            <TextInput label="Bio" value={bio} onChangeText={setBio} />
-          </Dialog.Content>
-          <Dialog.Actions>
-            <Button onPress={() => setEditOpen(false)}>Cancel</Button>
-            <Button onPress={saveProfile}>Save</Button>
-          </Dialog.Actions>
-        </Dialog>
-      </Portal>
+      <View style={styles.bottomPad} />
     </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: { alignItems: "center", padding: 16 },
-  section: { padding: 16 },
-  statsRow: { flexDirection: "row", justifyContent: "space-between", marginTop: 8 }
+  container: {
+    flex: 1,
+    backgroundColor: theme.colors.background,
+  },
+  content: {
+    paddingTop: Platform.OS === "ios" ? 56 : 48,
+    paddingBottom: 100,
+  },
+  header: {
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 24,
+  },
+  avatarWrap: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    backgroundColor: theme.colors.orange,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  avatarText: {
+    fontSize: 32,
+    fontWeight: "700",
+    color: theme.colors.text.inverse,
+  },
+  name: {
+    fontSize: theme.typography.fontSizes.xl,
+    fontWeight: "700",
+    color: theme.colors.text.primary,
+    marginTop: 12,
+  },
+  bio: {
+    fontSize: theme.typography.fontSizes.sm,
+    color: theme.colors.text.secondary,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  editBtn: {
+    marginTop: 12,
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderWidth: 1,
+    borderColor: theme.colors.borderOrange,
+    borderRadius: theme.radius.round,
+  },
+  editBtnText: {
+    fontSize: theme.typography.fontSizes.sm,
+    fontWeight: "600",
+    color: theme.colors.orange,
+  },
+  statsRow: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 24,
+    paddingVertical: 16,
+  },
+  statsLabels: {
+    flexDirection: "row",
+    justifyContent: "center",
+    gap: 24,
+    paddingHorizontal: 40,
+  },
+  statsLabel: {
+    flex: 1,
+    fontSize: 12,
+    color: theme.colors.text.secondary,
+    textAlign: "center",
+  },
+  menu: {
+    marginHorizontal: 16,
+    marginTop: 24,
+    backgroundColor: theme.colors.surface,
+    borderRadius: theme.radius.lg,
+    overflow: "hidden",
+    borderWidth: 1,
+    borderColor: theme.colors.border,
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: theme.colors.border,
+  },
+  menuItemLast: {
+    borderBottomWidth: 0,
+  },
+  menuText: {
+    flex: 1,
+    fontSize: theme.typography.fontSizes.md,
+    fontWeight: "500",
+    color: theme.colors.text.primary,
+    marginLeft: 12,
+  },
+  bottomPad: {
+    height: 24,
+  },
 });

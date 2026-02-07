@@ -110,7 +110,7 @@ export default function AnalysisResultsScreen() {
                   brand={p.brand}
                   price={p.price}
                   rating={p.rating}
-                  onTryOn={() => navigation.navigate("MainTabs", { screen: "CameraTab" } as any)}
+                  onTryOn={() => navigation.navigate("MainTabs", { screen: "HomeTab" } as any)}
                   onDetails={() => {}}
                   onFavorite={() => {}}
                 />
@@ -121,7 +121,7 @@ export default function AnalysisResultsScreen() {
           <View style={styles.footer}>
             <Button mode="contained">Save</Button>
             <Button mode="outlined" onPress={() => setShareOpen(true)}>Share</Button>
-            <Button mode="text" onPress={() => navigation.navigate("MainTabs", { screen: "CameraTab" } as any)}>New Analysis</Button>
+            <Button mode="text" onPress={() => navigation.navigate("MainTabs", { screen: "HomeTab" } as any)}>New Analysis</Button>
             <Button mode="text">View Recommendations</Button>
           </View>
         </ScrollView>

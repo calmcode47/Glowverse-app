@@ -10,6 +10,7 @@ import { RootStackParamList } from "@navigation/types";
 import { AppProvider, useApp } from "@context/AppContext";
 import { CameraProvider } from "@context/CameraContext";
 import { AIProvider } from "@context/AIContext";
+import ErrorBoundary from "@components/common/ErrorBoundary";
 
 const linking: LinkingOptions<RootStackParamList> = {
   prefixes: ["perfectcorpai://", "https://perfectcorpai"],
@@ -19,10 +20,11 @@ const linking: LinkingOptions<RootStackParamList> = {
       MainTabs: {
         screens: {
           HomeTab: "home",
-          CameraTab: "camera",
+          ShopTab: "shop",
           ProfileTab: "profile"
         }
       },
+      ProductDetail: "product/:productId",
       Results: "results",
       Settings: "settings",
       Tutorial: "tutorial"
@@ -38,10 +40,12 @@ function ThemeBridge({ children }: { children: React.ReactNode }) {
     colors: {
       ...base.colors,
       primary: appTheme.colors.primary,
-      secondary: appTheme.colors.secondary,
+      secondary: appTheme.colors.orange,
       surface: appTheme.colors.surface,
       background: appTheme.colors.background,
-      error: appTheme.colors.error
+      error: appTheme.colors.error,
+      outline: appTheme.colors.text.muted,
+      onPrimary: appTheme.colors.text.inverse,
     }
   };
   return <PaperProvider theme={paperTheme}>{children}</PaperProvider>;
@@ -49,20 +53,22 @@ function ThemeBridge({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <AppProvider>
-        <ThemeBridge>
-          <CameraProvider>
-            <AIProvider>
-              <NavigationContainer linking={linking}>
-                <RootNavigator />
-                <StatusBar style="auto" />
-              </NavigationContainer>
-            </AIProvider>
-          </CameraProvider>
-        </ThemeBridge>
-      </AppProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <AppProvider>
+          <ThemeBridge>
+            <CameraProvider>
+              <AIProvider>
+                <NavigationContainer linking={linking}>
+                  <RootNavigator />
+                  <StatusBar style="auto" />
+                </NavigationContainer>
+              </AIProvider>
+            </CameraProvider>
+          </ThemeBridge>
+        </AppProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }
 
