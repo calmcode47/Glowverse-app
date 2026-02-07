@@ -5,11 +5,12 @@ import { HeroSection } from '@/components/home/HeroSection';
 import { FeatureCards } from '@/components/home/FeatureCards';
 import { TrendingSection } from '@/components/home/TrendingSection';
 import { PersonalizedFeed } from '@/components/home/PersonalizedFeed';
-import { MorphingBlob } from '@/components/advanced/animations/MorphingBlob';
+import { OptimizedView } from '@/components/optimized/OptimizedView';
 import { useAuthStore } from '@/stores/auth.store';
 import { useAnalysisStore } from '@/stores/analysis.store';
 import { theme } from '@/design-system/theme';
 import { useNavigation } from '@react-navigation/native';
+import { useBackendHealth } from '@/hooks/useBackendHealth';
 
 const { width } = Dimensions.get('window');
 
@@ -18,9 +19,11 @@ export const HomeScreen: React.FC = () => {
   const { user } = useAuthStore();
   const { fetchAnalyses, analyses, isLoading } = useAnalysisStore();
   const [refreshing, setRefreshing] = React.useState(false);
+  const { check } = useBackendHealth();
 
   useEffect(() => {
     loadData();
+    check();
   }, []);
 
   const loadData = async () => {
@@ -55,13 +58,27 @@ export const HomeScreen: React.FC = () => {
         // @ts-expect-error route type handled by app navigator
         navigation.navigate('SavedLooks');
         break;
+      case 'shop':
+        // @ts-expect-error route type handled by app navigator
+        navigation.navigate('MensShopHome');
+        break;
+      case 'performance':
+        // @ts-expect-error route type handled by app navigator
+        navigation.navigate('PerformanceDashboard');
+        break;
+      case 'brand':
+        // @ts-expect-error route type handled by app navigator
+        navigation.navigate('BrandDashboard');
+        break;
     }
   };
 
   return (
     <View style={styles.container}>
-      <LinearGradient colors={[theme.colors.primary[50], theme.colors.neutral[0]] as any} style={styles.background} />
-      <MorphingBlob colors={theme.gradients.primary.soft} duration={5000} />
+      <LinearGradient colors={theme.gradients.darkBlue as any} style={styles.background} />
+      <OptimizedView withBlur style={styles.overlay}>
+        <View />
+      </OptimizedView>
       <ScrollView
         style={styles.scrollView}
         contentContainerStyle={styles.content}
@@ -92,6 +109,9 @@ const styles = StyleSheet.create({
   },
   content: {
     paddingTop: 60
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject
   },
   section: {
     marginTop: theme.spacing[8]

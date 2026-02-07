@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, StyleSheet, TouchableOpacity, Text, ViewStyle } from 'react-native';
+import { View, StyleSheet, TouchableOpacity, Text, ViewStyle, Animated } from 'react-native';
 import { theme } from '@/design-system/theme';
 
 interface Props {
@@ -13,16 +13,32 @@ export const FeatureCards: React.FC<Props> = ({ onFeaturePress, style }) => {
       <FeatureCard title="Skin Analysis" subtitle="AI-powered assessment" color={theme.colors.primary[500]} onPress={() => onFeaturePress('skin-analysis')} />
       <FeatureCard title="Virtual Try-On" subtitle="See looks instantly" color={theme.colors.accent[500]} onPress={() => onFeaturePress('virtual-tryon')} />
       <FeatureCard title="History" subtitle="Your past analyses" color={theme.colors.secondary[500]} onPress={() => onFeaturePress('history')} />
+      <FeatureCard title="Shop" subtitle="Products & accessories" color="#FF6B2C" onPress={() => onFeaturePress('shop')} />
+      <FeatureCard title="Performance" subtitle="Stats & nutrition" color="#00C9FF" onPress={() => onFeaturePress('performance')} />
+      <FeatureCard title="Brand" subtitle="Overview dashboard" color="#FFB800" onPress={() => onFeaturePress('brand')} />
     </View>
   );
 };
 
-const FeatureCard: React.FC<{ title: string; subtitle: string; color: string; onPress: () => void }> = ({ title, subtitle, color, onPress }) => (
-  <TouchableOpacity style={[styles.card, { borderColor: color }]} onPress={onPress} activeOpacity={0.9}>
-    <Text style={styles.cardTitle}>{title}</Text>
-    <Text style={styles.cardSubtitle}>{subtitle}</Text>
-  </TouchableOpacity>
-);
+const FeatureCard: React.FC<{ title: string; subtitle: string; color: string; onPress: () => void }> = ({ title, subtitle, color, onPress }) => {
+  const scale = React.useRef(new Animated.Value(1)).current;
+  const handlePressIn = () => Animated.spring(scale, { toValue: 0.97, useNativeDriver: true }).start();
+  const handlePressOut = () => Animated.spring(scale, { toValue: 1, useNativeDriver: true }).start();
+  return (
+    <Animated.View style={{ transform: [{ scale }] }}>
+      <TouchableOpacity
+        style={[styles.card, { borderColor: color }]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={0.9}
+      >
+        <Text style={styles.cardTitle}>{title}</Text>
+        <Text style={styles.cardSubtitle}>{subtitle}</Text>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+};
 
 const styles = StyleSheet.create({
   container: {

@@ -44,6 +44,7 @@ npm install react-native-animatable
 echo "Installing performance packages..."
 npx expo install expo-image
 npm install @shopify/flash-list
+npm install react-native-fast-image
 
 echo "Installing dev dependencies..."
 npm install -D babel-plugin-module-resolver typescript @types/react @types/react-native

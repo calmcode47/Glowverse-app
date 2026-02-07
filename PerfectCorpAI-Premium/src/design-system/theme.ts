@@ -61,12 +61,12 @@ export const darkTheme: Theme = {
   colors: {
     ...theme.colors,
     background: {
-      primary: '#0F0F0F',
-      secondary: '#1A1A1A',
-      tertiary: '#262626',
+      primary: '#0F1419',
+      secondary: '#1A1F3A',
+      tertiary: '#2D3250',
       dark: '#000000',
-      card: '#1A1A1A',
-      elevated: '#262626'
+      card: '#1A1F3A',
+      elevated: '#2D3250'
     }
   }
 };

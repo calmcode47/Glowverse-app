@@ -29,7 +29,8 @@
     },
     "ios": {
       "supportsTablet": true,
-      "deploymentTarget": "15.1"
+      "deploymentTarget": "15.1",
+      "bundleIdentifier": "com.calmcode47.PerfectCorpAI-Premium"
     },
     "android": {
       "adaptiveIcon": {

@@ -8,6 +8,7 @@ import SkinAnalysisView from '@/components/analysis/SkinAnalysisView';
 import BeforeAfterSlider from '@/components/analysis/BeforeAfterSlider';
 import InteractiveChart from '@/components/analysis/InteractiveChart';
 import ProductRecommendations from '@/components/analysis/ProductRecommendations';
+import SkinOverlayLegend from '@/components/analysis/SkinOverlayLegend';
 import { PrimaryButton } from '@/components/core/buttons/PrimaryButton';
 import { GlassCard } from '@/components/core/cards/GlassCard';
 import { theme } from '@/design-system/theme';
@@ -65,6 +66,7 @@ export const AnalysisResultsScreen: React.FC = () => {
   return (
     <View style={styles.container}>
       <LinearGradient colors={[theme.colors.primary[50], theme.colors.neutral[0]] as any} style={styles.background} />
+      <SkinOverlayLegend />
       <ScrollView style={styles.scrollView} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
         <View style={styles.header}>
           <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>

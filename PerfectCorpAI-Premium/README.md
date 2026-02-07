@@ -42,6 +42,30 @@ A premium Expo React Native application featuring AI-driven skin analysis, virtu
 - Secure tokens: `src/services/storage/secure-storage.ts`
 - Path aliases: `tsconfig.json` and `babel.config.js` allow `@/…` imports
 
+## Backend Integration
+- Environment
+  - Create a `.env` file at project root with:
+    ```
+    API_BASE_URL_DEV=http://<your-lan-ip>:<port>/api/v1
+    API_BASE_URL_PROD=https://your-api.example.com/api/v1
+    ```
+  - The app reads these via `app.config.js` and injects to Expo config extras.
+- Base URL Resolution
+  - Dev mode uses `extra.apiBaseUrlDev`
+  - Production uses `extra.apiBaseUrlProd`
+  - Fallbacks exist to LAN and sample prod URL if envs are missing
+- Health Check
+  - On Home, the app pings `/health` and shows a toast on success/failure
+  - Endpoint paths are defined in `src/constants/api-endpoints.ts`
+- Services
+  - Auth: `src/services/api/auth.api.ts`
+  - Analysis: `src/services/api/analysis.api.ts`
+  - Try-On: `src/services/api/tryon.api.ts`
+  - Axios client with interceptors and token refresh: `src/services/api/client.ts`
+    - Access token attached on requests
+    - 401 triggers refresh sequence
+    - Network errors return friendly messages
+
 ## Key Modules
 - Design System: `src/design-system/` and `src/design-system/tokens/`
 - API Services: `src/services/api/` (auth, analysis, try-on)
@@ -61,6 +85,7 @@ A premium Expo React Native application featuring AI-driven skin analysis, virtu
 - Haptic feedback via `expo-haptics`
 - Face detection integration via `expo-camera`
 - Use `ParticleSystem` and `MorphingBlob` for premium background effects
+- For Expo Go device connectivity, start your backend on LAN and set `API_BASE_URL_DEV` to your machine IP
 
 ## Contributing
 Pull requests are welcome. Ensure typecheck passes and follow the project’s coding style and alias imports.

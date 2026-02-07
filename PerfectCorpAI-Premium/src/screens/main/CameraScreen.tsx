@@ -9,8 +9,12 @@ import { useCameraStore } from '@/stores/camera.store';
 import { useAnalysisStore } from '@/stores/analysis.store';
 import { useUIStore } from '@/stores/ui.store';
 import FaceGuideOverlay from '@/components/camera/FaceGuideOverlay';
+import ProCameraOverlay from '@/components/camera/ProCameraOverlay';
 import CameraControls from '@/components/camera/CameraControls';
 import ModeSelector from '@/components/camera/ModeSelector';
+import CameraChecksPanel from '@/components/camera/CameraChecksPanel';
+import BeardMaskOverlay from '@/components/camera/BeardMaskOverlay';
+import GlareIndicator from '@/components/camera/GlareIndicator';
 import { ParticleSystem } from '@/components/advanced/animations/ParticleSystem';
 import { theme } from '@/design-system/theme';
 import * as Haptics from 'expo-haptics';
@@ -134,7 +138,11 @@ export const CameraScreen: React.FC = () => {
             onFacesDetected={({ faces }: any) => setIsFaceDetected((faces?.length ?? 0) > 0)}
           >
             {currentMode === 'analysis' && <FaceGuideOverlay faceDetected={isFaceDetected} />}
+            <BeardMaskOverlay />
+            <GlareIndicator />
+            <ProCameraOverlay mode={currentMode as any} />
             <ModeSelector style={styles.modeSelector} />
+            <CameraChecksPanel />
             <CameraControls
               onCapture={handleCapture}
               onToggleCamera={toggleCamera}

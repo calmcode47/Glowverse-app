@@ -1,12 +1,11 @@
-import { Platform } from 'react-native';
+import Constants from 'expo-constants';
 
 const getBaseUrl = () => {
+  const extras = (Constants?.expoConfig as any)?.extra || {};
   if (__DEV__) {
-    return Platform.OS === 'android'
-      ? 'http://10.0.2.2:5000/api/v1'
-      : 'http://localhost:5000/api/v1';
+    return extras.apiBaseUrlDev || 'http://192.168.1.8:5000/api/v1';
   }
-  return 'https://your-api.railway.app/api/v1';
+  return extras.apiBaseUrlProd || 'https://your-api.railway.app/api/v1';
 };
 
 export const API_CONFIG = {

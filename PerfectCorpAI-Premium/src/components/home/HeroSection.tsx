@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
-import { PrimaryButton } from '@/components/core/buttons/PrimaryButton';
+import { TouchableOpacity } from 'react-native';
 import { GlassCard } from '@/components/core/cards/GlassCard';
 import { theme } from '@/design-system/theme';
 
@@ -21,8 +21,10 @@ export const HeroSection: React.FC<HeroSectionProps> = ({ userName, onStartAnaly
           {greeting}
           {userName ? `, ${userName}` : ''}!
         </Text>
-        <Text style={styles.tagline}>Discover your best self with AI-powered beauty insights</Text>
-        <PrimaryButton title="Start AI Analysis" onPress={onStartAnalysis} size="large" variant="gradient" style={styles.button} />
+        <Text style={styles.tagline}>Precision grooming and performance insights</Text>
+        <TouchableOpacity onPress={onStartAnalysis} style={styles.cta}>
+          <Text style={styles.ctaText}>START ANALYSIS</Text>
+        </TouchableOpacity>
         <View style={styles.stats}>
           <StatItem icon="chart-line" value="98%" label="Accuracy" />
           <StatItem icon="lightning-bolt" value="<1s" label="Processing" />
@@ -67,8 +69,18 @@ const styles = StyleSheet.create({
     marginBottom: theme.spacing[6],
     lineHeight: 24
   },
-  button: {
-    marginBottom: theme.spacing[6]
+  cta: {
+    marginBottom: theme.spacing[6],
+    backgroundColor: '#FF6B2C',
+    paddingVertical: theme.spacing[3],
+    borderRadius: theme.borderRadius.lg,
+    alignItems: 'center'
+  },
+  ctaText: {
+    color: theme.colors.neutral[0],
+    fontSize: theme.typography.sizes.base,
+    fontWeight: theme.typography.weights.bold as any,
+    letterSpacing: 1
   },
   stats: {
     flexDirection: 'row',
