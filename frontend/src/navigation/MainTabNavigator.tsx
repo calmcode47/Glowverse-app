@@ -1,37 +1,65 @@
-import React from "react";
-import { Platform } from "react-native";
-import { createBottomTabNavigator } from "@react-navigation/bottom-tabs";
-import { theme as appTheme } from "@constants/theme";
-import { RootTabParamList } from "./types";
-import CustomTabBar from "@components/navigation/CustomTabBar";
-import DashboardScreen from "@screens/home/DashboardScreen";
-import ShopScreen from "@screens/shop/ShopScreen";
-import ProfileScreen from "@screens/profile/ProfileScreen";
-import { MaterialCommunityIcons } from "@expo/vector-icons";
+import React from 'react';
+import { View } from 'react-native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useTheme } from '../theme/themeContext';
+import ThemeToggle from '../components/ui/ThemeToggle';
+import type { RootTabParamList } from './types';
+
+// Screens
+import HomeScreen from '../screens/home/HomeScreen';
+import ShopScreen from '../screens/shop/ShopScreen';
+import ARCameraScreen from '../screens/camera/ARCameraScreen';
+import WishlistScreen from '../screens/wishlist/WishlistScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function MainTabNavigator() {
+  const { theme } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: false,
-        tabBarActiveTintColor: appTheme.colors.orange,
-        tabBarInactiveTintColor: appTheme.colors.text.muted,
-        tabBarStyle: {
-          position: "absolute",
-          borderTopWidth: 0,
+        headerShown: true,
+        headerStyle: {
+          backgroundColor: theme.colors.background.elevated,
           elevation: 0,
-          backgroundColor: appTheme.colors.surfaceDark,
+          shadowOpacity: 0,
+          borderBottomWidth: 1,
+          borderBottomColor: theme.colors.border.light,
+        },
+        headerTintColor: theme.colors.text.primary,
+        headerTitleStyle: {
+          fontWeight: theme.typography.weights.semibold,
+          fontSize: theme.typography.sizes.lg,
+        },
+        headerRight: () => (
+          <View style={{ marginRight: 16 }}>
+            <ThemeToggle />
+          </View>
+        ),
+        tabBarStyle: {
+          backgroundColor: theme.colors.background.elevated,
+          borderTopWidth: 1,
+          borderTopColor: theme.colors.border.light,
+          height: 65,
+          paddingBottom: 10,
+          paddingTop: 8,
+        },
+        tabBarActiveTintColor: theme.colors.accent.emerald,
+        tabBarInactiveTintColor: theme.colors.text.tertiary,
+        tabBarLabelStyle: {
+          fontSize: theme.typography.sizes.xs,
+          fontWeight: theme.typography.weights.medium,
         },
       }}
-      tabBar={(props) => <CustomTabBar {...props} />}
     >
       <Tab.Screen
         name="HomeTab"
-        component={DashboardScreen}
+        component={HomeScreen}
         options={{
-          title: "Home",
+          title: 'Home',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home-variant" size={size} color={color} />
           ),
@@ -41,9 +69,29 @@ export default function MainTabNavigator() {
         name="ShopTab"
         component={ShopScreen}
         options={{
-          title: "Shop",
+          title: 'Shop',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="shopping" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="CameraTab"
+        component={ARCameraScreen}
+        options={{
+          title: 'Try On',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="camera" size={size} color={color} />
+          ),
+        }}
+      />
+      <Tab.Screen
+        name="WishlistTab"
+        component={WishlistScreen}
+        options={{
+          title: 'Wishlist',
+          tabBarIcon: ({ color, size }) => (
+            <MaterialCommunityIcons name="heart-outline" size={size} color={color} />
           ),
         }}
       />
@@ -51,7 +99,7 @@ export default function MainTabNavigator() {
         name="ProfileTab"
         component={ProfileScreen}
         options={{
-          title: "Profile",
+          title: 'Profile',
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="account-circle" size={size} color={color} />
           ),

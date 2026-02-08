@@ -1,137 +1,468 @@
-import React from "react";
-import { View, StyleSheet, ScrollView, RefreshControl, Image } from "react-native";
-import { Text, Avatar, IconButton, useTheme, ActivityIndicator } from "react-native-paper";
-import { useNavigation } from "@react-navigation/native";
-import type { StackNavigationProp } from "@react-navigation/stack";
-import type { RootStackParamList } from "@navigation/types";
-import { useApp } from "@context/AppContext";
-import { useCameraContext } from "@context/CameraContext";
-import FeatureCard from "@components/home/FeatureCard";
-import HistoryItem from "@components/home/HistoryItem";
-import HeroBanner from "@components/home/HeroBanner";
-import TipCard from "@components/home/TipCard";
-import EmptyState from "@components/common/EmptyState";
+import React, { useState } from 'react';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+} from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+import { useTheme } from '../../theme/themeContext';
+import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
+import ScrollReveal from '../../components/animations/ScrollReveal';
+import Product3DCard from '../../components/products/Product3DCard';
+import { featuredProducts, categories } from '../../data/products';
+import type { RootStackParamList } from '../../navigation/types';
+
+const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function HomeScreen() {
-  const theme = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
-  const { user } = useApp();
-  const { capturedImages, removeImage } = useCameraContext();
-  const [refreshing, setRefreshing] = React.useState(false);
-  const [loading, setLoading] = React.useState(true);
+  const { theme, isDark } = useTheme();
+  const [activeCategory, setActiveCategory] = useState('all');
 
-  React.useEffect(() => {
-    const t = setTimeout(() => setLoading(false), 600);
-    return () => clearTimeout(t);
-  }, []);
-
-  const onRefresh = () => {
-    setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 800);
-  };
-
-  const startAnalysis = () => {
-    navigation.navigate("MainTabs", { screen: "CameraTab" } as any);
-  };
-
-  const banners = [
-    {
-      image: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?q=80&w=1920&auto=format&fit=crop",
-      title: "AI-powered beauty analysis",
-      subtitle: "Personalized insights in seconds",
-      ctaText: "Start Your Analysis",
-      onPress: startAnalysis
-    },
-    {
-      image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?q=80&w=1920&auto=format&fit=crop",
-      title: "Try makeup in AR",
-      subtitle: "Find your perfect look",
-      ctaText: "Try Now",
-      onPress: startAnalysis
-    }
-  ];
+  const styles = createStyles(theme, isDark);
 
   return (
-    <ScrollView
-      style={styles.container}
-      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-    >
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          <Text variant="titleLarge">Welcome{user.name ? `, ${user.name}` : ""}</Text>
-          <Text variant="bodyMedium" style={{ color: theme.colors.outline }}>Discover your best look</Text>
-        </View>
-        <View style={styles.headerRight}>
-          <Avatar.Text size={36} label={(user.name || "G")[0].toUpperCase()} onTouchEnd={() => navigation.navigate("MainTabs", { screen: "ProfileTab" } as any)} />
-          <IconButton icon="bell-outline" onPress={() => navigation.navigate("Settings")} />
-        </View>
-      </View>
+    <View style={styles.container}>
+      <ProfessionalBackground variant="subtle" />
 
-      <HeroBanner items={banners} />
-
-      <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>Features</Text>
-        <View style={styles.grid}>
-          <FeatureCard
-            icon="face-man-shimmer"
-            title="Skin Analysis"
-            description="Analyze your skin metrics"
-            gradient
-            onPress={startAnalysis}
-          />
-          <FeatureCard icon="lipstick" title="Virtual Makeup" description="Try looks instantly" gradient onPress={startAnalysis} />
-          <FeatureCard icon="hair-dryer" title="Hair Try-On" description="Experiment with colors" onPress={startAnalysis} />
-          <FeatureCard icon="account-circle-outline" title="Face Shape" description="Discover your shape" onPress={startAnalysis} />
-        </View>
-      </View>
-
-      <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>Recent History</Text>
-        {loading ? (
-          <View style={styles.row}>
-            <ActivityIndicator />
+      <ScrollView
+        style={styles.scroll}
+        contentContainerStyle={styles.content}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Header */}
+        <ScrollReveal delay={0}>
+          <View style={styles.header}>
+            <View>
+              <Text style={styles.greeting}>Hello, Alex 👋</Text>
+              <Text style={styles.subgreeting}>Elevate your style today</Text>
+            </View>
+            <View style={styles.headerIcons}>
+              <TouchableOpacity style={styles.iconButton}>
+                <MaterialCommunityIcons
+                  name="bell-outline"
+                  size={22}
+                  color={theme.colors.text.primary}
+                />
+                <View style={styles.badge} />
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.iconButton}>
+                <MaterialCommunityIcons
+                  name="cart-outline"
+                  size={22}
+                  color={theme.colors.text.primary}
+                />
+              </TouchableOpacity>
+            </View>
           </View>
-        ) : capturedImages.length === 0 ? (
-          <EmptyState
-            iconName="history"
-            title="No recent analyses"
-            description="Start an analysis to see results here."
-            ctaText="Start Now"
-            onPressCTA={startAnalysis}
-          />
-        ) : (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.row}>
-            {capturedImages.map((img) => (
-              <HistoryItem
-                key={img.uri}
-                thumbnail={img.uri}
-                type="Analysis"
-                date={new Date(img.timestamp).toLocaleString()}
-                onPress={() => navigation.navigate("Results", { imageUri: img.uri })}
-                onDelete={() => removeImage(img.uri)}
+        </ScrollReveal>
+
+        {/* Promo Banner */}
+        <ScrollReveal delay={100}>
+          <View style={styles.promoBanner}>
+            <LinearGradient
+              colors={theme.colors.gradients.primary}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={styles.promoGradient}
+            >
+              <View style={styles.promoContent}>
+                <View>
+                  <Text style={styles.promoTitle}>Summer Collection</Text>
+                  <Text style={styles.promoSubtitle}>Up to 40% off on sunglasses</Text>
+                </View>
+                <TouchableOpacity style={styles.promoButton}>
+                  <Text style={styles.promoButtonText}>Shop Now</Text>
+                  <MaterialCommunityIcons
+                    name="arrow-right"
+                    size={16}
+                    color={theme.colors.accent.emerald}
+                  />
+                </TouchableOpacity>
+              </View>
+            </LinearGradient>
+          </View>
+        </ScrollReveal>
+
+        {/* Stats Row */}
+        <ScrollReveal delay={200}>
+          <View style={styles.statsRow}>
+            <StatCard
+              icon="shopping-outline"
+              label="Orders"
+              value="24"
+              theme={theme}
+            />
+            <StatCard
+              icon="heart-outline"
+              label="Wishlist"
+              value="12"
+              theme={theme}
+            />
+            <StatCard
+              icon="medal-outline"
+              label="Points"
+              value="340"
+              theme={theme}
+            />
+          </View>
+        </ScrollReveal>
+
+        {/* Categories */}
+        <ScrollReveal delay={300}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Categories</Text>
+          </View>
+        </ScrollReveal>
+
+        <ScrollReveal delay={400}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoriesContainer}
+          >
+            {categories.map((category, index) => (
+              <TouchableOpacity
+                key={category.id}
+                style={[
+                  styles.categoryCard,
+                  activeCategory === category.id && styles.categoryCardActive,
+                ]}
+                onPress={() => {
+                  setActiveCategory(category.id);
+                  navigation.navigate('ShopTab' as any);
+                }}
+              >
+                <View style={[
+                  styles.categoryIcon,
+                  { backgroundColor: category.color + '15' }
+                ]}>
+                  <MaterialCommunityIcons
+                    name={category.icon as any}
+                    size={28}
+                    color={category.color}
+                  />
+                </View>
+                <Text style={styles.categoryName}>{category.name}</Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+        </ScrollReveal>
+
+        {/* Featured Products */}
+        <ScrollReveal delay={500}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Featured Products</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('ShopTab' as any)}>
+              <Text style={styles.seeAll}>See All →</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollReveal>
+
+        <ScrollReveal delay={600}>
+          <ScrollView
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            snapToInterval={SCREEN_WIDTH}
+            decelerationRate="fast"
+          >
+            {featuredProducts.map((product, index) => (
+              <Product3DCard
+                key={product.id}
+                product={product}
+                index={index}
+                onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
               />
             ))}
           </ScrollView>
-        )}
-      </View>
+        </ScrollReveal>
 
-      <View style={styles.section}>
-        <Text variant="titleMedium" style={styles.sectionTitle}>Tips & Tutorials</Text>
-        <TipCard icon="lightbulb-on-outline" title="Good lighting" content="Stand facing a light source to reduce shadows." />
-        <TipCard icon="camera-iris" title="Frame your face" content="Align your face within the guide for best results." />
-        <TipCard icon="water" title="Clean skin" content="Remove makeup for accurate skin analysis readings." />
-      </View>
-    </ScrollView>
+        {/* Trending Section */}
+        <ScrollReveal delay={700}>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Trending Now</Text>
+          </View>
+        </ScrollReveal>
+
+        <ScrollReveal delay={800}>
+          <View style={styles.trendingGrid}>
+            <TrendingCard
+              title="Classic Aviators"
+              description="Timeless style for every occasion"
+              icon="sunglasses"
+              theme={theme}
+            />
+            <TrendingCard
+              title="Smart Watches"
+              description="Stay connected in style"
+              icon="watch"
+              theme={theme}
+            />
+          </View>
+        </ScrollReveal>
+
+        {/* Bottom Spacing */}
+        <View style={{ height: 40 }} />
+      </ScrollView>
+    </View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#fff" },
-  header: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 16 },
-  headerLeft: { flex: 1 },
-  headerRight: { flexDirection: "row", alignItems: "center" },
-  section: { paddingHorizontal: 16, paddingTop: 16 },
-  sectionTitle: { marginBottom: 8 },
-  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  row: { flexDirection: "row", alignItems: "center", paddingVertical: 8 }
-});
+function StatCard({ icon, label, value, theme }: {
+  icon: string;
+  label: string;
+  value: string;
+  theme: any;
+}) {
+  return (
+    <View style={[styles.statCard, {
+      backgroundColor: theme.colors.background.elevated,
+      borderColor: theme.colors.border.light,
+    }]}>
+      <MaterialCommunityIcons
+        name={icon as any}
+        size={24}
+        color={theme.colors.accent.emerald}
+      />
+      <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>
+        {value}
+      </Text>
+      <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+function TrendingCard({ title, description, icon, theme }: {
+  title: string;
+  description: string;
+  icon: string;
+  theme: any;
+}) {
+  return (
+    <View style={[styles.trendingCard, {
+      backgroundColor: theme.colors.background.elevated,
+      borderColor: theme.colors.border.light,
+    }]}>
+      <View style={[styles.trendingIcon, {
+        backgroundColor: theme.colors.accent.emerald + '15'
+      }]}>
+        <MaterialCommunityIcons
+          name={icon as any}
+          size={32}
+          color={theme.colors.accent.emerald}
+        />
+      </View>
+      <Text style={[styles.trendingTitle, { color: theme.colors.text.primary }]}>
+        {title}
+      </Text>
+      <Text style={[styles.trendingDescription, { color: theme.colors.text.secondary }]}>
+        {description}
+      </Text>
+    </View>
+  );
+}
+
+const createStyles = (theme: any, isDark: boolean) =>
+  StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: theme.colors.background.primary,
+    },
+    scroll: {
+      flex: 1,
+    },
+    content: {
+      paddingBottom: 100,
+    },
+    header: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.lg,
+      paddingTop: theme.spacing.md,
+      marginBottom: theme.spacing.xl,
+    },
+    greeting: {
+      fontSize: theme.typography.sizes['2xl'],
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.text.primary,
+    },
+    subgreeting: {
+      fontSize: theme.typography.sizes.sm,
+      color: theme.colors.text.secondary,
+      marginTop: 4,
+    },
+    headerIcons: {
+      flexDirection: 'row',
+      gap: theme.spacing.sm,
+    },
+    iconButton: {
+      width: 40,
+      height: 40,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.background.elevated,
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+      alignItems: 'center',
+      justifyContent: 'center',
+      position: 'relative',
+    },
+    badge: {
+      position: 'absolute',
+      top: 6,
+      right: 6,
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+      backgroundColor: theme.colors.accent.rose,
+    },
+    promoBanner: {
+      marginHorizontal: theme.spacing.lg,
+      marginBottom: theme.spacing.xl,
+      borderRadius: theme.radius.xl,
+      overflow: 'hidden',
+      ...theme.shadows.md,
+    },
+    promoGradient: {
+      borderRadius: theme.radius.xl,
+    },
+    promoContent: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      padding: theme.spacing.lg,
+    },
+    promoTitle: {
+      fontSize: theme.typography.sizes.lg,
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.text.inverse,
+    },
+    promoSubtitle: {
+      fontSize: theme.typography.sizes.sm,
+      color: theme.colors.text.inverse,
+      opacity: 0.9,
+      marginTop: 4,
+    },
+    promoButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.text.inverse,
+      paddingHorizontal: theme.spacing.lg,
+      paddingVertical: theme.spacing.sm,
+      borderRadius: theme.radius.full,
+      gap: 4,
+    },
+    promoButtonText: {
+      fontSize: theme.typography.sizes.sm,
+      fontWeight: theme.typography.weights.semibold,
+      color: theme.colors.accent.emerald,
+    },
+    statsRow: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.lg,
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.xl,
+    },
+    statCard: {
+      flex: 1,
+      padding: theme.spacing.base,
+      borderRadius: theme.radius.lg,
+      alignItems: 'center',
+      borderWidth: 1,
+      ...theme.shadows.sm,
+    },
+    statValue: {
+      fontSize: theme.typography.sizes.xl,
+      fontWeight: theme.typography.weights.bold,
+      marginTop: theme.spacing.xs,
+    },
+    statLabel: {
+      fontSize: theme.typography.sizes.xs,
+      marginTop: 2,
+    },
+    sectionHeader: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+      paddingHorizontal: theme.spacing.lg,
+      marginBottom: theme.spacing.md,
+    },
+    sectionTitle: {
+      fontSize: theme.typography.sizes.lg,
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.text.primary,
+    },
+    seeAll: {
+      fontSize: theme.typography.sizes.sm,
+      color: theme.colors.accent.emerald,
+      fontWeight: theme.typography.weights.medium,
+    },
+    categoriesContainer: {
+      paddingHorizontal: theme.spacing.lg,
+      gap: theme.spacing.base,
+      paddingBottom: theme.spacing.base,
+      marginBottom: theme.spacing.xl,
+    },
+    categoryCard: {
+      alignItems: 'center',
+      width: 80,
+    },
+    categoryCardActive: {
+      transform: [{ scale: 1.05 }],
+    },
+    categoryIcon: {
+      width: 64,
+      height: 64,
+      borderRadius: theme.radius.lg,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.sm,
+    },
+    categoryName: {
+      fontSize: theme.typography.sizes.xs,
+      color: theme.colors.text.primary,
+      fontWeight: theme.typography.weights.medium,
+      textAlign: 'center',
+    },
+    trendingGrid: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.lg,
+      gap: theme.spacing.md,
+      marginBottom: theme.spacing.xl,
+    },
+    trendingCard: {
+      flex: 1,
+      padding: theme.spacing.lg,
+      borderRadius: theme.radius.xl,
+      borderWidth: 1,
+      ...theme.shadows.sm,
+    },
+    trendingIcon: {
+      width: 56,
+      height: 56,
+      borderRadius: theme.radius.md,
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: theme.spacing.md,
+    },
+    trendingTitle: {
+      fontSize: theme.typography.sizes.base,
+      fontWeight: theme.typography.weights.semibold,
+      marginBottom: theme.spacing.xs,
+    },
+    trendingDescription: {
+      fontSize: theme.typography.sizes.xs,
+      lineHeight: 16,
+    },
+  });
+
+const styles = StyleSheet.create({});

@@ -4,22 +4,37 @@ export type ColorPalette = {
   accent: string;
   orange: string;
   orangeLight: string;
+  orangeDark: string;
   yellow: string;
+  yellowLight: string;
   background: string;
   backgroundDark: string;
   surface: string;
   surfaceDark: string;
+  surfaceLight: string;
+  glass: string;
+  glassDark: string;
   text: {
     primary: string;
     secondary: string;
     inverse: string;
     muted: string;
+    light: string;
   };
   success: string;
   warning: string;
   error: string;
+  info: string;
   border: string;
   borderOrange: string;
+  borderLight: string;
+  gradient: {
+    primary: string[];
+    orange: string[];
+    yellow: string[];
+    blue: string[];
+    success: string[];
+  };
 };
 
 export type Typography = {
@@ -96,13 +111,33 @@ export type Shadow = {
     shadowRadius: number;
     shadowOffset: { width: number; height: number };
   };
+  level3: {
+    elevation: number;
+    shadowColor: string;
+    shadowOpacity: number;
+    shadowRadius: number;
+    shadowOffset: { width: number; height: number };
+  };
+  glow: {
+    elevation: number;
+    shadowColor: string;
+    shadowOpacity: number;
+    shadowRadius: number;
+    shadowOffset: { width: number; height: number };
+  };
 };
 
 export type Animation = {
   durations: {
+    instant: number;
     fast: number;
     medium: number;
     slow: number;
+    verySlow: number;
+  };
+  springConfig: {
+    damping: number;
+    stiffness: number;
   };
 };
 
@@ -123,22 +158,37 @@ export const theme: AppTheme = {
     accent: "#FFFFFF",
     orange: "#FF6B35",
     orangeLight: "#FF8C5A",
+    orangeDark: "#E55A2B",
     yellow: "#FFB347",
+    yellowLight: "#FFC870",
     background: "#F5F6F8",
     backgroundDark: "#1A2332",
     surface: "#FFFFFF",
     surfaceDark: "#16202D",
+    surfaceLight: "#F9FAFB",
+    glass: "rgba(255, 255, 255, 0.1)",
+    glassDark: "rgba(22, 32, 45, 0.7)",
     text: {
       primary: "#1E2A3B",
       secondary: "#5A6578",
       inverse: "#FFFFFF",
       muted: "#8B95A5",
+      light: "#C4C9D1",
     },
     success: "#10B981",
     warning: "#F59E0B",
     error: "#EF4444",
+    info: "#3B82F6",
     border: "#2D3E50",
     borderOrange: "#FF6B35",
+    borderLight: "#E5E7EB",
+    gradient: {
+      primary: ["#1E2A3B", "#2D3E50"],
+      orange: ["#FF6B35", "#FFB347"],
+      yellow: ["#FFB347", "#FFC870"],
+      blue: ["#3B82F6", "#1E40AF"],
+      success: ["#10B981", "#059669"],
+    },
   },
   typography: {
     fontSizes: {
@@ -211,12 +261,32 @@ export const theme: AppTheme = {
       shadowRadius: 8,
       shadowOffset: { width: 0, height: 4 },
     },
+    level3: {
+      elevation: 12,
+      shadowColor: "#000000",
+      shadowOpacity: 0.25,
+      shadowRadius: 16,
+      shadowOffset: { width: 0, height: 8 },
+    },
+    glow: {
+      elevation: 8,
+      shadowColor: "#FF6B35",
+      shadowOpacity: 0.4,
+      shadowRadius: 12,
+      shadowOffset: { width: 0, height: 0 },
+    },
   },
   animation: {
     durations: {
+      instant: 100,
       fast: 200,
       medium: 350,
       slow: 500,
+      verySlow: 800,
+    },
+    springConfig: {
+      damping: 15,
+      stiffness: 150,
     },
   },
 };
