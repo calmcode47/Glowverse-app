@@ -1,3 +1,5 @@
+import Constants from "expo-constants";
+
 export type ApiConfig = {
   baseUrl: string;
   timeoutMs: number;
@@ -18,7 +20,7 @@ export type ApiConfig = {
 };
 
 export const config: ApiConfig = {
-  baseUrl: "https://api.perfectcorp.com/v1",
+  baseUrl: (Constants.expoConfig?.extra?.apiBaseUrl as string) || "http://localhost:5000/api/v1",
   timeoutMs: 20000,
   imageQuality: {
     jpegQuality: 0.85,

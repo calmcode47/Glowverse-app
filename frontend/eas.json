@@ -11,7 +11,7 @@
         "buildType": "apk"
       },
       "env": {
-        "API_BASE_URL": "https://api.perfectcorp.com/v1",
+        "API_BASE_URL": "http://localhost:5000/api/v1",
         "PERFECT_CORP_API_KEY": "replace_me_dev",
         "ANALYTICS_ID": "dev-analytics",
         "SENTRY_DSN": ""
@@ -30,7 +30,7 @@
     "production": {
       "channel": "production",
       "env": {
-        "API_BASE_URL": "https://api.perfectcorp.com/v1",
+        "API_BASE_URL": "https://your-domain.railway.app/api/v1",
         "PERFECT_CORP_API_KEY": "replace_me_prod",
         "ANALYTICS_ID": "prod-analytics",
         "SENTRY_DSN": ""

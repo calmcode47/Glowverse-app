@@ -41,3 +41,27 @@ export function installGlobalHandler() {
     anyGlobal.ErrorUtils.setGlobalHandler(handler);
   }
 }
+
+export const handleApiError = (error: any): string => {
+  if (error?.response) {
+    return error.response.data?.message || "Server error";
+  } else if (error?.request) {
+    return "Network error - check your connection";
+  }
+  return error?.message || "An error occurred";
+};
+
+export const showErrorAlert = (error: any, title: string = "Error") => {
+  const message = handleApiError(error);
+  Alert.alert(title, message);
+};
+
+export async function retryAsync<T>(fn: () => Promise<T>, retries = 3, delay = 1000): Promise<T> {
+  try {
+    return await fn();
+  } catch (error) {
+    if (retries === 0) throw error;
+    await new Promise((r) => setTimeout(r, delay));
+    return retryAsync(fn, retries - 1, delay * 2);
+  }
+}
