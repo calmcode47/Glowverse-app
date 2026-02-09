@@ -11,9 +11,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import Animated from 'react-native-reanimated';
 import { useTheme } from '../../theme/themeContext';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import ScrollReveal from '../../components/animations/ScrollReveal';
+import { useAppleScrollHandler } from '../../components/animations/AppleScrollAnimation';
+import ParallaxView from '../../components/animations/ParallaxView';
 import Product3DCard from '../../components/products/Product3DCard';
 import { featuredProducts, categories } from '../../data/products';
 import type { RootStackParamList } from '../../navigation/types';
@@ -24,20 +27,30 @@ export default function HomeScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { theme, isDark } = useTheme();
   const [activeCategory, setActiveCategory] = useState('all');
+  const { scrollY, scrollHandler } = useAppleScrollHandler();
 
   const styles = createStyles(theme, isDark);
 
   return (
     <View style={styles.container}>
-      <ProfessionalBackground variant="subtle" />
+      {/* Parallax Background */}
+      <ParallaxView
+        scrollY={scrollY}
+        speed={0.3}
+        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+      >
+        <ProfessionalBackground variant="subtle" />
+      </ParallaxView>
 
-      <ScrollView
+      <Animated.ScrollView
         style={styles.scroll}
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
+        onScroll={scrollHandler}
+        scrollEventThrottle={16}
       >
         {/* Header */}
-        <ScrollReveal delay={0}>
+        <ScrollReveal delay={0} scale springy>
           <View style={styles.header}>
             <View>
               <Text style={styles.greeting}>Hello, Alex 👋</Text>
@@ -63,100 +76,109 @@ export default function HomeScreen() {
           </View>
         </ScrollReveal>
 
-        {/* Promo Banner */}
-        <ScrollReveal delay={100}>
-          <View style={styles.promoBanner}>
-            <LinearGradient
-              colors={theme.colors.gradients.primary}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.promoGradient}
-            >
-              <View style={styles.promoContent}>
-                <View>
-                  <Text style={styles.promoTitle}>Summer Collection</Text>
-                  <Text style={styles.promoSubtitle}>Up to 40% off on sunglasses</Text>
+        {/* Promo Banner with Parallax */}
+        <ParallaxView scrollY={scrollY} speed={0.15}>
+          <ScrollReveal delay={100} scale springy>
+            <View style={styles.promoBanner}>
+              <LinearGradient
+                colors={theme.colors.gradients.primary}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={styles.promoGradient}
+              >
+                <View style={styles.promoContent}>
+                  <View>
+                    <Text style={styles.promoTitle}>Summer Collection</Text>
+                    <Text style={styles.promoSubtitle}>Up to 40% off on sunglasses</Text>
+                  </View>
+                  <TouchableOpacity style={styles.promoButton}>
+                    <Text style={styles.promoButtonText}>Shop Now</Text>
+                    <MaterialCommunityIcons
+                      name="arrow-right"
+                      size={16}
+                      color={theme.colors.accent.emerald}
+                    />
+                  </TouchableOpacity>
                 </View>
-                <TouchableOpacity style={styles.promoButton}>
-                  <Text style={styles.promoButtonText}>Shop Now</Text>
-                  <MaterialCommunityIcons
-                    name="arrow-right"
-                    size={16}
-                    color={theme.colors.accent.emerald}
-                  />
-                </TouchableOpacity>
-              </View>
-            </LinearGradient>
-          </View>
-        </ScrollReveal>
+              </LinearGradient>
+            </View>
+          </ScrollReveal>
+        </ParallaxView>
 
-        {/* Stats Row */}
-        <ScrollReveal delay={200}>
+        {/* Stats Row with Staggered Animation */}
+        <ScrollReveal delay={200} direction="up" scale springy>
           <View style={styles.statsRow}>
-            <StatCard
-              icon="shopping-outline"
-              label="Orders"
-              value="24"
-              theme={theme}
-            />
-            <StatCard
-              icon="heart-outline"
-              label="Wishlist"
-              value="12"
-              theme={theme}
-            />
-            <StatCard
-              icon="medal-outline"
-              label="Points"
-              value="340"
-              theme={theme}
-            />
+            <ScrollReveal delay={250} scale springy>
+              <StatCard
+                icon="shopping-outline"
+                label="Orders"
+                value="24"
+                theme={theme}
+              />
+            </ScrollReveal>
+            <ScrollReveal delay={300} scale springy>
+              <StatCard
+                icon="heart-outline"
+                label="Wishlist"
+                value="12"
+                theme={theme}
+              />
+            </ScrollReveal>
+            <ScrollReveal delay={350} scale springy>
+              <StatCard
+                icon="medal-outline"
+                label="Points"
+                value="340"
+                theme={theme}
+              />
+            </ScrollReveal>
           </View>
         </ScrollReveal>
 
         {/* Categories */}
-        <ScrollReveal delay={300}>
+        <ScrollReveal delay={400} scale springy>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Categories</Text>
           </View>
         </ScrollReveal>
 
-        <ScrollReveal delay={400}>
+        <ScrollReveal delay={450} direction="left" springy>
           <ScrollView
             horizontal
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.categoriesContainer}
           >
             {categories.map((category, index) => (
-              <TouchableOpacity
-                key={category.id}
-                style={[
-                  styles.categoryCard,
-                  activeCategory === category.id && styles.categoryCardActive,
-                ]}
-                onPress={() => {
-                  setActiveCategory(category.id);
-                  navigation.navigate('ShopTab' as any);
-                }}
-              >
-                <View style={[
-                  styles.categoryIcon,
-                  { backgroundColor: category.color + '15' }
-                ]}>
-                  <MaterialCommunityIcons
-                    name={category.icon as any}
-                    size={28}
-                    color={category.color}
-                  />
-                </View>
-                <Text style={styles.categoryName}>{category.name}</Text>
-              </TouchableOpacity>
+              <ScrollReveal key={category.id} delay={500 + index * 50} scale springy>
+                <TouchableOpacity
+                  style={[
+                    styles.categoryCard,
+                    activeCategory === category.id && styles.categoryCardActive,
+                  ]}
+                  onPress={() => {
+                    setActiveCategory(category.id);
+                    navigation.navigate('ShopTab' as any);
+                  }}
+                >
+                  <View style={[
+                    styles.categoryIcon,
+                    { backgroundColor: category.color + '15' }
+                  ]}>
+                    <MaterialCommunityIcons
+                      name={category.icon as any}
+                      size={28}
+                      color={category.color}
+                    />
+                  </View>
+                  <Text style={styles.categoryName}>{category.name}</Text>
+                </TouchableOpacity>
+              </ScrollReveal>
             ))}
           </ScrollView>
         </ScrollReveal>
 
         {/* Featured Products */}
-        <ScrollReveal delay={500}>
+        <ScrollReveal delay={600} scale springy>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured Products</Text>
             <TouchableOpacity onPress={() => navigation.navigate('ShopTab' as any)}>
@@ -165,7 +187,7 @@ export default function HomeScreen() {
           </View>
         </ScrollReveal>
 
-        <ScrollReveal delay={600}>
+        <ScrollReveal delay={700} direction="up" springy>
           <ScrollView
             horizontal
             pagingEnabled
@@ -174,43 +196,48 @@ export default function HomeScreen() {
             decelerationRate="fast"
           >
             {featuredProducts.map((product, index) => (
-              <Product3DCard
-                key={product.id}
-                product={product}
-                index={index}
-                onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
-              />
+              <ScrollReveal key={product.id} delay={750 + index * 80} scale springy>
+                <Product3DCard
+                  product={product}
+                  index={index}
+                  onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+                />
+              </ScrollReveal>
             ))}
           </ScrollView>
         </ScrollReveal>
 
         {/* Trending Section */}
-        <ScrollReveal delay={700}>
+        <ScrollReveal delay={900} scale springy>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Trending Now</Text>
           </View>
         </ScrollReveal>
 
-        <ScrollReveal delay={800}>
+        <ScrollReveal delay={1000} direction="up" springy>
           <View style={styles.trendingGrid}>
-            <TrendingCard
-              title="Classic Aviators"
-              description="Timeless style for every occasion"
-              icon="sunglasses"
-              theme={theme}
-            />
-            <TrendingCard
-              title="Smart Watches"
-              description="Stay connected in style"
-              icon="watch"
-              theme={theme}
-            />
+            <ScrollReveal delay={1050} scale springy>
+              <TrendingCard
+                title="Classic Aviators"
+                description="Timeless style for every occasion"
+                icon="sunglasses"
+                theme={theme}
+              />
+            </ScrollReveal>
+            <ScrollReveal delay={1100} scale springy>
+              <TrendingCard
+                title="Smart Watches"
+                description="Stay connected in style"
+                icon="watch"
+                theme={theme}
+              />
+            </ScrollReveal>
           </View>
         </ScrollReveal>
 
         {/* Bottom Spacing */}
         <View style={{ height: 40 }} />
-      </ScrollView>
+      </Animated.ScrollView>
     </View>
   );
 }
@@ -222,19 +249,34 @@ function StatCard({ icon, label, value, theme }: {
   theme: any;
 }) {
   return (
-    <View style={[styles.statCard, {
+    <View style={{
+      flex: 1,
+      padding: theme.spacing.base,
+      borderRadius: theme.radius.lg,
+      alignItems: 'center',
+      borderWidth: 1,
       backgroundColor: theme.colors.background.elevated,
       borderColor: theme.colors.border.light,
-    }]}>
+      ...theme.shadows.sm,
+    }}>
       <MaterialCommunityIcons
         name={icon as any}
         size={24}
         color={theme.colors.accent.emerald}
       />
-      <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>
+      <Text style={{
+        fontSize: theme.typography.sizes.xl,
+        fontWeight: theme.typography.weights.bold,
+        marginTop: theme.spacing.xs,
+        color: theme.colors.text.primary,
+      }}>
         {value}
       </Text>
-      <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>
+      <Text style={{
+        fontSize: theme.typography.sizes.xs,
+        marginTop: 2,
+        color: theme.colors.text.secondary,
+      }}>
         {label}
       </Text>
     </View>
@@ -248,23 +290,43 @@ function TrendingCard({ title, description, icon, theme }: {
   theme: any;
 }) {
   return (
-    <View style={[styles.trendingCard, {
+    <View style={{
+      flex: 1,
+      padding: theme.spacing.lg,
+      borderRadius: theme.radius.xl,
+      borderWidth: 1,
       backgroundColor: theme.colors.background.elevated,
       borderColor: theme.colors.border.light,
-    }]}>
-      <View style={[styles.trendingIcon, {
+      ...theme.shadows.sm,
+    }}>
+      <View style={{
+        width: 56,
+        height: 56,
+        borderRadius: theme.radius.md,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginBottom: theme.spacing.md,
         backgroundColor: theme.colors.accent.emerald + '15'
-      }]}>
+      }}>
         <MaterialCommunityIcons
           name={icon as any}
           size={32}
           color={theme.colors.accent.emerald}
         />
       </View>
-      <Text style={[styles.trendingTitle, { color: theme.colors.text.primary }]}>
+      <Text style={{
+        fontSize: theme.typography.sizes.base,
+        fontWeight: theme.typography.weights.semibold,
+        marginBottom: theme.spacing.xs,
+        color: theme.colors.text.primary,
+      }}>
         {title}
       </Text>
-      <Text style={[styles.trendingDescription, { color: theme.colors.text.secondary }]}>
+      <Text style={{
+        fontSize: theme.typography.sizes.xs,
+        lineHeight: 16,
+        color: theme.colors.text.secondary,
+      }}>
         {description}
       </Text>
     </View>
