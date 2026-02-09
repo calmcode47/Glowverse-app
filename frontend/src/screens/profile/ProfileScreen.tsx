@@ -101,6 +101,12 @@ export default function ProfileScreen() {
               theme={theme}
             />
             <MenuItem
+              icon="history"
+              label="Analysis & Try-On History"
+              onPress={() => (navigation as any).navigate?.("UserHistory")}
+              theme={theme}
+            />
+            <MenuItem
               icon="map-marker-outline"
               label="Addresses"
               onPress={() => { }}

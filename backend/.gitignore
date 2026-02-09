@@ -11,3 +11,5 @@ coverage/
 *.tmp
 /.vscode
 /.idea
+prisma/*.db
+prisma/dev.db

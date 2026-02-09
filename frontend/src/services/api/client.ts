@@ -1,6 +1,6 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { config as appConfig } from "@constants/config";
+import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "../../config/constants";
 import { handleAPIError } from "@utils/apiHelper";
 
 declare module "axios" {
@@ -15,8 +15,8 @@ declare module "axios" {
  * Creates a shared Axios client with interceptors
  */
 export const client: AxiosInstance = axios.create({
-  baseURL: appConfig.baseUrl,
-  timeout: appConfig.timeoutMs
+  baseURL: API_BASE_URL,
+  timeout: REQUEST_TIMEOUT_MS
 });
 
 async function getAccessToken(): Promise<string | null> {
@@ -44,7 +44,7 @@ async function refreshTokens(): Promise<void> {
     }
     const overrideBase = await AsyncStorage.getItem("apiBaseUrl");
     const base = overrideBase || client.defaults.baseURL || "";
-    const res = await axios.post(`${base}/api/${"v1"}/auth/refresh`, { refreshToken: rt }, { timeout: appConfig.timeoutMs });
+    const res = await axios.post(`${base}/api/${"v1"}/auth/refresh`, { refreshToken: rt }, { timeout: REQUEST_TIMEOUT_MS });
     const data = res.data as { accessToken: string; refreshToken: string };
     await setTokens(data.accessToken, data.refreshToken);
   })();

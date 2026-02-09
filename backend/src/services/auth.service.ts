@@ -1,5 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
+import { randomUUID } from "crypto";
 import { User, UserRole } from "@prisma/client";
 import prisma from "@config/database";
 import env from "@config/env";
@@ -22,7 +23,11 @@ export class AuthService {
   }
 
   static generateRefreshToken(payload: JwtPayload): string {
-    return jwt.sign(payload, env.jwtRefreshSecret, { expiresIn: env.jwtRefreshExpiresIn } as SignOptions);
+    return jwt.sign(
+      payload,
+      env.jwtRefreshSecret,
+      { expiresIn: env.jwtRefreshExpiresIn, jwtid: randomUUID() } as SignOptions
+    );
   }
 
   static verifyAccessToken(token: string): JwtPayload {

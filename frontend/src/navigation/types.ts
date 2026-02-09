@@ -20,6 +20,7 @@ export type RootStackParamList = {
   Fitness: undefined;
   GroomingGuide: undefined;
   Orders: undefined;
+  UserHistory: undefined;
 };
 
 declare global {

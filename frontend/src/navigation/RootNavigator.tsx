@@ -3,11 +3,14 @@ import { View } from "react-native";
 import { createStackNavigator, CardStyleInterpolators } from "@react-navigation/stack";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import MainTabNavigator from "./MainTabNavigator";
-import OnboardingScreen from "@screens/onboarding/OnboardingScreen";
+import OnboardingScreen from "@screens/auth/OnboardingScreen";
+import LoginScreen from "@screens/auth/LoginPaper";
+import RegisterScreen from "@screens/auth/RegisterScreen";
 import AnalysisResultsScreen from "@screens/results/AnalysisResultsScreen";
 import SettingsScreen from "@screens/profile/SettingsScreen";
 import TutorialScreen from "@screens/onboarding/TutorialScreen";
 import ProductDetailScreen from "@screens/shop/ProductDetailScreen";
+import HistoryScreen from "@screens/history/HistoryScreen";
 import { ActivityIndicator } from "react-native-paper";
 import HeaderRight from "@components/navigation/HeaderRight";
 import BackButton from "@components/navigation/BackButton";
@@ -59,6 +62,20 @@ export default function RootNavigator() {
         }}
       />
       <Stack.Screen
+        name="Login"
+        component={LoginScreen}
+        options={{
+          title: "Login",
+        }}
+      />
+      <Stack.Screen
+        name="SignUp"
+        component={RegisterScreen}
+        options={{
+          title: "Create Account",
+        }}
+      />
+      <Stack.Screen
         name="MainTabs"
         component={MainTabNavigator}
         options={{
@@ -100,6 +117,15 @@ export default function RootNavigator() {
           title: "Tutorial",
           cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
           gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
+        name="UserHistory"
+        component={HistoryScreen}
+        options={{
+          title: "History",
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureEnabled: true
         }}
       />
     </Stack.Navigator>

@@ -41,7 +41,6 @@ interface EnvConfig {
 const validateEnv = (): EnvConfig => {
   const requiredEnvVars = [
     "PORT",
-    "DATABASE_URL",
     "JWT_SECRET",
     "CLOUDINARY_CLOUD_NAME",
     "CLOUDINARY_API_KEY",
@@ -53,11 +52,16 @@ const validateEnv = (): EnvConfig => {
     throw new Error(`Missing required environment variables: ${missingEnvVars.join(", ")}`);
   }
 
+  // In production, DATABASE_URL must be present
+  if ((process.env.NODE_ENV || "development") === "production" && !process.env.DATABASE_URL) {
+    throw new Error("Missing required environment variable: DATABASE_URL (production)");
+  }
+
   return {
     nodeEnv: process.env.NODE_ENV || "development",
     port: parseInt(process.env.PORT || "5000", 10),
     apiVersion: process.env.API_VERSION || "v1",
-    databaseUrl: process.env.DATABASE_URL as string,
+    databaseUrl: (process.env.DATABASE_URL as string) || "file:./dev.db",
     jwtSecret: process.env.JWT_SECRET as string,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
     jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET as string),

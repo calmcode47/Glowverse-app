@@ -47,7 +47,7 @@ const styles = StyleSheet.create({
     height: 320,
     borderRadius: 160,
     borderWidth: 2,
-    borderColor: "#ffffff66"
+    borderColor: "#ffffff4D"
   },
   indicators: { position: "absolute", width: 240, height: 320, alignItems: "center", justifyContent: "center" },
   line: { position: "absolute", width: 160, height: 2, backgroundColor: "#ffffff33" },

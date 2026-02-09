@@ -1,4 +1,4 @@
-import { PrismaClient, UserRole, Gender } from "@prisma/client";
+import { PrismaClient } from "@prisma/client";
 import bcrypt from "bcryptjs";
 
 const prisma = new PrismaClient();
@@ -23,11 +23,11 @@ async function main() {
       email: "admin@perfectcorp.com",
       password: hashedPassword,
       name: "Admin User",
-      role: UserRole.ADMIN,
+      role: "ADMIN",
       isVerified: true,
       profile: {
         create: {
-          gender: Gender.OTHER,
+          gender: "OTHER",
           skinType: "combination",
           skinTone: "medium"
         }
@@ -46,11 +46,11 @@ async function main() {
       email: "test@example.com",
       password: testUserPassword,
       name: "Test User",
-      role: UserRole.USER,
+      role: "USER",
       isVerified: true,
       profile: {
         create: {
-          gender: Gender.FEMALE,
+          gender: "FEMALE",
           skinType: "oily",
           skinTone: "fair"
         }
@@ -73,9 +73,9 @@ async function main() {
       price: 45.99,
       imageUrl: "https://example.com/serum.jpg",
       rating: 4.5,
-      suitableForSkinTypes: ["dry", "combination", "normal"],
-      suitableForSkinTones: ["fair", "medium", "dark"],
-      concerns: ["hydration", "fine_lines"]
+      suitableForSkinTypes: JSON.stringify(["dry", "combination", "normal"]),
+      suitableForSkinTones: JSON.stringify(["fair", "medium", "dark"]),
+      concerns: JSON.stringify(["hydration", "fine_lines"])
     },
     {
       productId: "PROD002",
@@ -86,9 +86,9 @@ async function main() {
       price: 24.99,
       imageUrl: "https://example.com/lipstick.jpg",
       rating: 4.8,
-      suitableForSkinTypes: ["all"],
-      suitableForSkinTones: ["fair", "medium", "dark"],
-      concerns: []
+      suitableForSkinTypes: JSON.stringify(["all"]),
+      suitableForSkinTones: JSON.stringify(["fair", "medium", "dark"]),
+      concerns: JSON.stringify([])
     }
   ];
 

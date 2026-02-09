@@ -9,7 +9,7 @@ import type { RootTabParamList } from './types';
 // Screens
 import HomeScreen from '../screens/home/HomeScreen';
 import ShopScreen from '../screens/shop/ShopScreen';
-import ARCameraScreen from '../screens/camera/ARCameraScreen';
+import CameraScreen from '../screens/camera/CameraScreen';
 import WishlistScreen from '../screens/wishlist/WishlistScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 
@@ -77,7 +77,7 @@ export default function MainTabNavigator() {
       />
       <Tab.Screen
         name="CameraTab"
-        component={ARCameraScreen}
+        component={CameraScreen}
         options={{
           title: 'Try On',
           tabBarIcon: ({ color, size }) => (

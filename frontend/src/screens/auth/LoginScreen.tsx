@@ -58,14 +58,8 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     }));
 
     const handleLogin = async () => {
-        // Animate button
-        buttonScale.value = withSequence(
-            withSpring(0.95, { damping: 10 }),
-            withSpring(1, { damping: 10 })
-        );
-
+        buttonScale.value = withSequence(withSpring(0.95, { damping: 10 }), withSpring(1, { damping: 10 }));
         setIsLoading(true);
-        // Simulate API call
         setTimeout(() => {
             setIsLoading(false);
             navigation.replace('MainTabs');
