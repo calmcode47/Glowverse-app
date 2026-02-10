@@ -15,7 +15,10 @@ import Animated, {
     useSharedValue,
     useAnimatedStyle,
     withSpring,
+    withTiming,
+    withRepeat,
     withSequence,
+    Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../theme/themeContext';
 import { StackNavigationProp } from '@react-navigation/stack';
@@ -39,6 +42,19 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
     const buttonScale = useSharedValue(1);
     const checkboxScale = useSharedValue(1);
+    const logoScale = useSharedValue(1);
+    const inputScale = useSharedValue(1);
+
+    React.useEffect(() => {
+        logoScale.value = withRepeat(
+            withSequence(
+                withTiming(1.05, { duration: 2000, easing: Easing.inOut(Easing.ease) }),
+                withTiming(1, { duration: 2000, easing: Easing.inOut(Easing.ease) })
+            ),
+            -1,
+            true
+        );
+    }, []);
 
     const buttonAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: buttonScale.value }],
@@ -46,6 +62,10 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
 
     const checkboxAnimatedStyle = useAnimatedStyle(() => ({
         transform: [{ scale: checkboxScale.value }],
+    }));
+
+    const logoAnimatedStyle = useAnimatedStyle(() => ({
+        transform: [{ scale: logoScale.value }],
     }));
 
     const handleSignUp = async () => {
@@ -100,7 +120,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
             >
                 <ScrollReveal delay={0} scale springy>
                     <View style={styles.header}>
-                        <View style={styles.logoContainer}>
+                        <Animated.View style={[styles.logoContainer, logoAnimatedStyle]}>
                             <LinearGradient
                                 colors={theme.colors.gradients.primary}
                                 style={styles.logoGradient}
@@ -111,7 +131,7 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
                                     color={theme.colors.text.inverse}
                                 />
                             </LinearGradient>
-                        </View>
+                        </Animated.View>
                         <Text style={styles.title}>Create Account</Text>
                         <Text style={styles.subtitle}>Join us and elevate your style</Text>
                     </View>
@@ -272,64 +292,64 @@ export default function SignUpScreen({ navigation }: SignUpScreenProps) {
                                     ) : (
                                         <Text style={styles.signUpButtonText}>Create Account</Text>
                                     )}
-                            </LinearGradient>
+                                </LinearGradient>
+                            </TouchableOpacity>
+                        </Animated.View>
+                    </View>
+                </ScrollReveal>
+
+                <ScrollReveal delay={400} direction="up">
+                    <View style={styles.divider}>
+                        <View style={styles.dividerLine} />
+                        <Text style={styles.dividerText}>or sign up with</Text>
+                        <View style={styles.dividerLine} />
+                    </View>
+                </ScrollReveal>
+
+                <ScrollReveal delay={500} direction="up">
+                    <View style={styles.socialContainer}>
+                        <TouchableOpacity
+                            style={styles.socialButton}
+                            onPress={() => handleSocialSignUp('Google')}
+                        >
+                            <MaterialCommunityIcons
+                                name="google"
+                                size={24}
+                                color={theme.colors.text.primary}
+                            />
                         </TouchableOpacity>
-                    </Animated.View>
-                </View>
-            </ScrollReveal>
+                        <TouchableOpacity
+                            style={styles.socialButton}
+                            onPress={() => handleSocialSignUp('Apple')}
+                        >
+                            <MaterialCommunityIcons
+                                name="apple"
+                                size={24}
+                                color={theme.colors.text.primary}
+                            />
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                            style={styles.socialButton}
+                            onPress={() => handleSocialSignUp('Facebook')}
+                        >
+                            <MaterialCommunityIcons
+                                name="facebook"
+                                size={24}
+                                color={theme.colors.text.primary}
+                            />
+                        </TouchableOpacity>
+                    </View>
+                </ScrollReveal>
 
-            <ScrollReveal delay={400} direction="up">
-                <View style={styles.divider}>
-                    <View style={styles.dividerLine} />
-                    <Text style={styles.dividerText}>or sign up with</Text>
-                    <View style={styles.dividerLine} />
-                </View>
-            </ScrollReveal>
-
-            <ScrollReveal delay={500} direction="up">
-                <View style={styles.socialContainer}>
-                    <TouchableOpacity
-                        style={styles.socialButton}
-                        onPress={() => handleSocialSignUp('Google')}
-                    >
-                        <MaterialCommunityIcons
-                            name="google"
-                            size={24}
-                            color={theme.colors.text.primary}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.socialButton}
-                        onPress={() => handleSocialSignUp('Apple')}
-                    >
-                        <MaterialCommunityIcons
-                            name="apple"
-                            size={24}
-                            color={theme.colors.text.primary}
-                        />
-                    </TouchableOpacity>
-                    <TouchableOpacity
-                        style={styles.socialButton}
-                        onPress={() => handleSocialSignUp('Facebook')}
-                    >
-                        <MaterialCommunityIcons
-                            name="facebook"
-                            size={24}
-                            color={theme.colors.text.primary}
-                        />
-                    </TouchableOpacity>
-                </View>
-            </ScrollReveal>
-
-            <ScrollReveal delay={600} direction="up">
-                <View style={styles.footer}>
-                    <Text style={styles.footerText}>Already have an account? </Text>
-                    <TouchableOpacity onPress={() => navigation.navigate('Login')}>
-                        <Text style={styles.footerLink}>Sign In</Text>
-                    </TouchableOpacity>
-                </View>
-            </ScrollReveal>
-        </ScrollView>
+                <ScrollReveal delay={600} direction="up">
+                    <View style={styles.footer}>
+                        <Text style={styles.footerText}>Already have an account? </Text>
+                        <TouchableOpacity onPress={() => navigation.navigate('Login')}>
+                            <Text style={styles.footerLink}>Sign In</Text>
+                        </TouchableOpacity>
+                    </View>
+                </ScrollReveal>
+            </ScrollView>
         </KeyboardAvoidingView >
     );
 }

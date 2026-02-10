@@ -76,8 +76,8 @@ export default function WishlistScreen() {
         setProducts(products.filter((p) => p.id !== id));
     };
 
-    const handleNavigateToProduct = (productId: string) => {
-        navigation.navigate('ProductDetail', { productId });
+    const handleNavigateToProduct = (product: any) => {
+        navigation.navigate('ProductDetail', { productId: product.id, product });
     };
 
     const styles = createStyles(theme, isDark);
@@ -165,7 +165,7 @@ export default function WishlistScreen() {
                                 theme={theme}
                                 isDark={isDark}
                                 onRemove={() => handleRemove(product.id)}
-                                onPress={() => handleNavigateToProduct(product.id)}
+                                onPress={() => handleNavigateToProduct(product)}
                             />
                         </ScrollReveal>
                     ))}

@@ -110,12 +110,12 @@ export default function Product3DCard({ product, onPress, index = 0 }: Product3D
                             {/* Badges */}
                             <View style={styles.badges}>
                                 {product.isNew && (
-                                    <View style={[styles.badge, { backgroundColor: darkTheme.colors.accent.neonGreen }]}>
+                                    <View style={[styles.badge, { backgroundColor: darkTheme.colors.accent.emerald }]}>
                                         <Text style={styles.badgeText}>NEW</Text>
                                     </View>
                                 )}
                                 {hasDiscount && (
-                                    <View style={[styles.badge, { backgroundColor: darkTheme.colors.accent.orange }]}>
+                                    <View style={[styles.badge, { backgroundColor: darkTheme.colors.accent.rose }]}>
                                         <Text style={styles.badgeText}>-{product.discount}%</Text>
                                     </View>
                                 )}
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
     },
     price: {
         fontSize: darkTheme.typography.sizes.xl,
-        color: darkTheme.colors.accent.neonGreen,
+        color: darkTheme.colors.accent.emerald,
         fontWeight: darkTheme.typography.weights.bold,
     },
     originalPrice: {

@@ -25,11 +25,7 @@ export default function ParticleBackground({ variant = 'default' }: ParticleBack
         <View style={styles.container} pointerEvents="none">
             {/* Base Gradient */}
             <LinearGradient
-                colors={
-                    variant === 'hero'
-                        ? darkTheme.colors.gradients.hero
-                        : darkTheme.colors.gradients.darkOverlay
-                }
+                colors={['#0D1117', '#161B22']}
                 style={StyleSheet.absoluteFill}
             />
 
@@ -109,8 +105,8 @@ function FloatingParticle({ index, variant }: { index: number; variant: string }
 
     const getParticleColor = () => {
         const colors = [
-            darkTheme.colors.accent.neonGreen,
-            darkTheme.colors.accent.electricBlue,
+            darkTheme.colors.accent.emerald,
+            darkTheme.colors.accent.blue,
             darkTheme.colors.accent.purple,
         ];
         return colors[index % colors.length];

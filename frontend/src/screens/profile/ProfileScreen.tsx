@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -6,22 +6,33 @@ import {
   TouchableOpacity,
   StyleSheet,
   Switch,
+  Alert,
 } from 'react-native';
-import { LinearGradient } from 'expo-linear-gradient';
+import { useNavigation } from '@react-navigation/native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeContext';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import ScrollReveal from '../../components/animations/ScrollReveal';
+import ProfileHeader from '../../components/profile/ProfileHeader';
+import EditProfileModal from '../../components/profile/EditProfileModal';
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
+  const navigation = useNavigation<any>();
 
-  const user = {
+  const [user, setUser] = useState({
     name: 'Alex Morgan',
     email: 'alex.morgan@example.com',
-    avatar: null,
+    avatar: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?auto=format&fit=crop&w=400&q=80',
     level: 'Gold Member',
     points: 3420,
+  });
+
+  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+
+  const handleUpdateProfile = (name: string, email: string) => {
+    setUser(prev => ({ ...prev, name, email }));
+    // Ideally call an API here
   };
 
   const styles = createStyles(theme, isDark);
@@ -37,239 +48,136 @@ export default function ProfileScreen() {
       >
         {/* Profile Header */}
         <ScrollReveal delay={0}>
-          <View style={styles.profileHeader}>
-            <View style={styles.avatarContainer}>
-              <LinearGradient
-                colors={theme.colors.gradients.primary}
-                style={styles.avatarGradient}
-              >
-                <MaterialCommunityIcons
-                  name="account"
-                  size={48}
-                  color={theme.colors.text.inverse}
-                />
-              </LinearGradient>
-              <TouchableOpacity style={styles.editAvatarButton}>
-                <MaterialCommunityIcons
-                  name="camera"
-                  size={16}
-                  color={theme.colors.text.inverse}
-                />
-              </TouchableOpacity>
-            </View>
-
-            <Text style={styles.userName}>{user.name}</Text>
-            <Text style={styles.userEmail}>{user.email}</Text>
-
-            <View style={styles.levelBadge}>
-              <MaterialCommunityIcons
-                name="crown"
-                size={16}
-                color={theme.colors.accent.gold}
-              />
-              <Text style={styles.levelText}>{user.level}</Text>
-              <View style={styles.pointsBadge}>
-                <Text style={styles.pointsText}>{user.points} pts</Text>
-              </View>
-            </View>
-          </View>
+          <ProfileHeader
+            user={user}
+            onEditAvatar={() => setIsEditModalVisible(true)}
+          />
         </ScrollReveal>
 
-        {/* Stats Cards */}
+        {/* Stats Row */}
         <ScrollReveal delay={100}>
           <View style={styles.statsRow}>
-            <StatCard icon="shopping-outline" value="29" label="Orders" theme={theme} />
-            <StatCard icon="heart-outline" value="12" label="Wishlist" theme={theme} />
-            <StatCard icon="star-outline" value="4.8" label="Rating" theme={theme} />
+            <StatCard
+              icon="package-variant-closed"
+              value="29"
+              label="Orders"
+              onPress={() => navigation.navigate('OrderHistory')}
+              styles={styles}
+            />
+            <StatCard
+              icon="heart"
+              value="12"
+              label="Wishlist"
+              onPress={() => navigation.navigate('WishlistTab')}
+              styles={styles}
+            />
+            <StatCard
+              icon="star"
+              value="4.8"
+              label="Rating"
+              onPress={() => { }}
+              styles={styles}
+            />
           </View>
         </ScrollReveal>
 
         {/* Account Section */}
         <ScrollReveal delay={200}>
-          <Text style={styles.sectionTitle}>Account</Text>
+          <Text style={styles.sectionTitle}>Account & Beauty Profile</Text>
           <View style={styles.menuSection}>
             <MenuItem
-              icon="account-edit-outline"
-              label="Edit Profile"
-              onPress={() => { }}
-              theme={theme}
+              icon="account-edit"
+              label="Edit Personal Info"
+              onPress={() => setIsEditModalVisible(true)}
+              styles={styles}
             />
             <MenuItem
-              icon="file-document-outline"
-              label="Order History"
-              onPress={() => { }}
-              theme={theme}
+              icon="face-man-shimmer"
+              label="Skin Analysis History"
+              onPress={() => navigation.navigate('UserHistory')}
+              styles={styles}
             />
             <MenuItem
-              icon="history"
-              label="Analysis & Try-On History"
-              onPress={() => (navigation as any).navigate?.("UserHistory")}
-              theme={theme}
-            />
-            <MenuItem
-              icon="map-marker-outline"
-              label="Addresses"
+              icon="wallet-membership"
+              label="Elite Rewards"
+              badge="Active"
               onPress={() => { }}
-              theme={theme}
-            />
-            <MenuItem
-              icon="credit-card-outline"
-              label="Payment Methods"
-              onPress={() => { }}
-              theme={theme}
+              styles={styles}
             />
           </View>
         </ScrollReveal>
 
-        {/* Preferences Section */}
+        {/* Settings & Preferences */}
         <ScrollReveal delay={300}>
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.menuSection}>
+            <MenuItem
+              icon="cog"
+              label="Settings"
+              onPress={() => navigation.navigate('Settings')}
+              styles={styles}
+            />
             <View style={styles.menuItem}>
               <View style={styles.menuItemLeft}>
-                <View style={[styles.menuIconContainer, {
-                  backgroundColor: theme.colors.accent.emerald + '15'
-                }]}>
-                  <MaterialCommunityIcons
-                    name="theme-light-dark"
-                    size={20}
-                    color={theme.colors.accent.emerald}
-                  />
+                <View style={[styles.menuIconContainer, { backgroundColor: theme.colors.accent.emerald + '15' }]}>
+                  <MaterialCommunityIcons name="moon-waning-crescent" size={20} color={theme.colors.accent.emerald} />
                 </View>
-                <Text style={styles.menuLabel}>Dark Mode</Text>
+                <Text style={[styles.menuLabel, { color: theme.colors.text.primary }]}>Dark Mode</Text>
               </View>
               <Switch
                 value={isDark}
                 onValueChange={toggleTheme}
-                trackColor={{
-                  false: theme.colors.border.DEFAULT,
-                  true: theme.colors.accent.emerald
-                }}
-                thumbColor={theme.colors.background.primary}
+                trackColor={{ false: theme.colors.border.DEFAULT, true: theme.colors.accent.emerald }}
+                thumbColor="#fff"
               />
             </View>
-            <MenuItem
-              icon="bell-outline"
-              label="Notifications"
-              onPress={() => { }}
-              theme={theme}
-            />
-            <MenuItem
-              icon="translate"
-              label="Language"
-              badge="English"
-              onPress={() => { }}
-              theme={theme}
-            />
           </View>
         </ScrollReveal>
 
-        {/* Support Section */}
+        {/* Support */}
         <ScrollReveal delay={400}>
           <Text style={styles.sectionTitle}>Support</Text>
           <View style={styles.menuSection}>
             <MenuItem
-              icon="help-circle-outline"
+              icon="help-circle"
               label="Help Center"
               onPress={() => { }}
-              theme={theme}
+              styles={styles}
             />
             <MenuItem
-              icon="shield-check-outline"
-              label="Privacy & Security"
-              onPress={() => { }}
-              theme={theme}
-            />
-            <MenuItem
-              icon="information-outline"
-              label="About"
-              badge="v2.0.1"
-              onPress={() => { }}
-              theme={theme}
+              icon="information"
+              label="About Glowverse"
+              badge="v2.1.0"
+              onPress={() => navigation.navigate('About')}
+              styles={styles}
             />
           </View>
         </ScrollReveal>
 
-        {/* Logout Button */}
+        {/* Logout */}
         <ScrollReveal delay={500}>
-          <TouchableOpacity style={styles.logoutButton}>
-            <MaterialCommunityIcons
-              name="logout"
-              size={20}
-              color={theme.colors.error}
-            />
-            <Text style={styles.logoutText}>Logout</Text>
+          <TouchableOpacity
+            style={styles.logoutButton}
+            onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
+              { text: 'Cancel', style: 'cancel' },
+              { text: 'Logout', style: 'destructive' }
+            ])}
+          >
+            <MaterialCommunityIcons name="logout" size={20} color={theme.colors.error} />
+            <Text style={styles.logoutText}>Sign Out</Text>
           </TouchableOpacity>
         </ScrollReveal>
 
-        <View style={{ height: 40 }} />
+        <View style={{ height: 100 }} />
       </ScrollView>
-    </View>
-  );
-}
 
-function StatCard({ icon, value, label, theme }: {
-  icon: string;
-  value: string;
-  label: string;
-  theme: any;
-}) {
-  return (
-    <View style={[styles.statCard, {
-      backgroundColor: theme.colors.background.elevated,
-      borderColor: theme.colors.border.light,
-    }]}>
-      <MaterialCommunityIcons
-        name={icon as any}
-        size={24}
-        color={theme.colors.accent.emerald}
+      <EditProfileModal
+        isVisible={isEditModalVisible}
+        onClose={() => setIsEditModalVisible(false)}
+        user={user}
+        onSave={handleUpdateProfile}
       />
-      <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>
-        {value}
-      </Text>
-      <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>
-        {label}
-      </Text>
     </View>
-  );
-}
-
-function MenuItem({ icon, label, onPress, badge, theme }: {
-  icon: string;
-  label: string;
-  onPress: () => void;
-  badge?: string;
-  theme: any;
-}) {
-  return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
-      <View style={styles.menuItemLeft}>
-        <View style={[styles.menuIconContainer, {
-          backgroundColor: theme.colors.accent.emerald + '15'
-        }]}>
-          <MaterialCommunityIcons
-            name={icon as any}
-            size={20}
-            color={theme.colors.accent.emerald}
-          />
-        </View>
-        <Text style={[styles.menuLabel, { color: theme.colors.text.primary }]}>
-          {label}
-        </Text>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        {badge && (
-          <Text style={[styles.badgeText, { color: theme.colors.text.tertiary }]}>
-            {badge}
-          </Text>
-        )}
-        <MaterialCommunityIcons
-          name="chevron-right"
-          size={20}
-          color={theme.colors.text.tertiary}
-        />
-      </View>
-    </TouchableOpacity>
   );
 }
 
@@ -284,75 +192,6 @@ const createStyles = (theme: any, isDark: boolean) =>
     },
     content: {
       paddingBottom: 100,
-    },
-    profileHeader: {
-      alignItems: 'center',
-      paddingVertical: theme.spacing.xl,
-      paddingHorizontal: theme.spacing.lg,
-    },
-    avatarContainer: {
-      position: 'relative',
-      marginBottom: theme.spacing.base,
-    },
-    avatarGradient: {
-      width: 100,
-      height: 100,
-      borderRadius: 50,
-      alignItems: 'center',
-      justifyContent: 'center',
-      ...theme.shadows.lg,
-    },
-    editAvatarButton: {
-      position: 'absolute',
-      bottom: 0,
-      right: 0,
-      width: 32,
-      height: 32,
-      borderRadius: 16,
-      backgroundColor: theme.colors.accent.blue,
-      alignItems: 'center',
-      justifyContent: 'center',
-      borderWidth: 3,
-      borderColor: theme.colors.background.primary,
-    },
-    userName: {
-      fontSize: theme.typography.sizes['2xl'],
-      fontWeight: theme.typography.weights.bold,
-      color: theme.colors.text.primary,
-      marginBottom: 4,
-    },
-    userEmail: {
-      fontSize: theme.typography.sizes.sm,
-      color: theme.colors.text.secondary,
-      marginBottom: theme.spacing.md,
-    },
-    levelBadge: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      paddingHorizontal: theme.spacing.base,
-      paddingVertical: theme.spacing.sm,
-      backgroundColor: theme.colors.background.elevated,
-      borderRadius: theme.radius.full,
-      borderWidth: 1,
-      borderColor: theme.colors.accent.gold + '40',
-      gap: 6,
-    },
-    levelText: {
-      fontSize: theme.typography.sizes.sm,
-      color: theme.colors.accent.gold,
-      fontWeight: theme.typography.weights.semibold,
-    },
-    pointsBadge: {
-      marginLeft: theme.spacing.xs,
-      paddingHorizontal: theme.spacing.sm,
-      paddingVertical: 2,
-      backgroundColor: theme.colors.accent.emerald + '20',
-      borderRadius: theme.radius.sm,
-    },
-    pointsText: {
-      fontSize: theme.typography.sizes.xs,
-      color: theme.colors.accent.emerald,
-      fontWeight: theme.typography.weights.semibold,
     },
     statsRow: {
       flexDirection: 'row',
@@ -417,8 +256,14 @@ const createStyles = (theme: any, isDark: boolean) =>
       fontSize: theme.typography.sizes.base,
       fontWeight: theme.typography.weights.medium,
     },
+    badgeContainer: {
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+    },
     badgeText: {
       fontSize: theme.typography.sizes.sm,
+      fontWeight: '600',
     },
     logoutButton: {
       flexDirection: 'row',
@@ -440,4 +285,51 @@ const createStyles = (theme: any, isDark: boolean) =>
     },
   });
 
-const styles = StyleSheet.create({});
+function StatCard({ icon, value, label, onPress, styles }: {
+  icon: string;
+  value: string;
+  label: string;
+  onPress: () => void;
+  styles: any;
+}) {
+  const { theme } = useTheme();
+  return (
+    <TouchableOpacity
+      style={[styles.statCard, { backgroundColor: theme.colors.background.elevated, borderColor: theme.colors.border.light }]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <MaterialCommunityIcons name={icon as any} size={24} color={theme.colors.accent.emerald} />
+      <Text style={[styles.statValue, { color: theme.colors.text.primary }]}>{value}</Text>
+      <Text style={[styles.statLabel, { color: theme.colors.text.secondary }]}>{label}</Text>
+    </TouchableOpacity>
+  );
+}
+
+function MenuItem({ icon, label, onPress, badge, styles }: {
+  icon: string;
+  label: string;
+  onPress: () => void;
+  badge?: string;
+  styles: any;
+}) {
+  const { theme } = useTheme();
+  return (
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+      <View style={styles.menuItemLeft}>
+        <View style={[styles.menuIconContainer, { backgroundColor: theme.colors.accent.emerald + '15' }]}>
+          <MaterialCommunityIcons name={icon as any} size={20} color={theme.colors.accent.emerald} />
+        </View>
+        <Text style={[styles.menuLabel, { color: theme.colors.text.primary }]}>{label}</Text>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        {badge && (
+          <View style={[styles.badgeContainer, { backgroundColor: theme.colors.accent.blue + '15' }]}>
+            <Text style={[styles.badgeText, { color: theme.colors.accent.blue }]}>{badge}</Text>
+          </View>
+        )}
+        <MaterialCommunityIcons name="chevron-right" size={20} color={theme.colors.text.tertiary} />
+      </View>
+    </TouchableOpacity>
+  );
+}

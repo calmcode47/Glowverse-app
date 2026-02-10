@@ -1,9 +1,10 @@
+import React from "react";
 import "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
-import { Text } from "react-native";
+import { Text, View } from "react-native";
 import { ThemeProvider } from "./src/theme/themeContext";
 import { useTheme } from "./src/theme/themeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
@@ -14,25 +15,10 @@ import ErrorBoundary from "./src/components/common/ErrorBoundary";
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
   const { theme } = useTheme();
   if (connected) return null;
-  return (
-    <GestureHandlerRootView
-      style={{
-        position: "absolute",
-        top: 0,
-        left: 0,
-        right: 0,
-        padding: 10,
-        backgroundColor: theme.colors.error,
-        zIndex: 1000
-      }}
-    >
-      <Text style={{ color: theme.colors.text.inverse }}>
-        Backend unreachable: {base}
-      </Text>
-      <StatusBar style="light" />
-    </GestureHandlerRootView>
-  );
+  // User requested to remove the "crashing error" banner
+  return null;
 }
+
 
 export default function App() {
   const [connected, setConnected] = React.useState(true);

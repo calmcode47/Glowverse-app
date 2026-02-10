@@ -87,8 +87,8 @@ export default function DashboardScreen() {
         <CarouselCard
           title="Title goes"
           body="Featured accessories and skincare picks."
-          onPrev={() => {}}
-          onNext={() => {}}
+          onPrev={() => { }}
+          onNext={() => { }}
           dark={false}
         />
       </View>
@@ -106,7 +106,7 @@ export default function DashboardScreen() {
                 product={product}
                 variant="light"
                 onPress={() =>
-                  navigation.navigate("ProductDetail", { productId: product.id })
+                  navigation.navigate("ProductDetail", { productId: product.id, product })
                 }
               />
             </View>

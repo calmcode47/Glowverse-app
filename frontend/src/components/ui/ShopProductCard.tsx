@@ -31,44 +31,63 @@ export default function ShopProductCard({ product, variant = "light", onPress, f
     scale.value = withTiming(1, { duration: 150 });
   };
 
+  const [imageError, setImageError] = React.useState(false);
+
   return (
     <AnimatedTouchable
-      activeOpacity={1}
+      activeOpacity={0.9}
       onPress={onPress}
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
-      style={[styles.card, fullWidth && styles.cardFullWidth, { backgroundColor: bg, borderColor }, animatedStyle]}
+      style={[
+        styles.card,
+        fullWidth && styles.cardFullWidth,
+        animatedStyle
+      ]}
     >
-      <View style={styles.imageWrap}>
-        <Image
-          source={{ uri: product.imageUri }}
-          style={styles.image}
-          resizeMode="cover"
-        />
-        {product.badge ? (
-          <View style={styles.badge}>
-            <Text style={styles.badgeText}>{product.badge}</Text>
-          </View>
-        ) : null}
-      </View>
-      <View style={styles.content}>
-        <Text style={[styles.name, isDark && styles.textLight]} numberOfLines={2}>
-          {product.name}
-        </Text>
-        <View style={styles.row}>
-          <View style={styles.stars}>
-            <MaterialCommunityIcons
-              name="star"
-              size={14}
-              color={theme.colors.orange}
+      <View style={[styles.innerContainer, { backgroundColor: bg, borderColor }]}>
+        <View style={styles.imageWrap}>
+          {product.image && !imageError ? (
+            <Image
+              source={{ uri: product.image }}
+              style={styles.image}
+              resizeMode="cover"
+              onError={() => setImageError(true)}
             />
-            <Text style={[styles.rating, isDark && styles.textMuted]}>
-              {product.rating}
+          ) : (
+            <View style={styles.placeholder}>
+              <MaterialCommunityIcons
+                name="image-off-outline"
+                size={32}
+                color={theme.colors.text.muted}
+              />
+            </View>
+          )}
+          {product.badge ? (
+            <View style={styles.badge}>
+              <Text style={styles.badgeText}>{product.badge}</Text>
+            </View>
+          ) : null}
+        </View>
+        <View style={styles.content}>
+          <Text style={[styles.name, isDark && styles.textLight]} numberOfLines={2}>
+            {product.name}
+          </Text>
+          <View style={styles.row}>
+            <View style={styles.stars}>
+              <MaterialCommunityIcons
+                name="star"
+                size={14}
+                color={theme.colors.orange}
+              />
+              <Text style={[styles.rating, isDark && styles.textMuted]}>
+                {product.rating}
+              </Text>
+            </View>
+            <Text style={[styles.price, isDark && styles.textLight]}>
+              ${product.price.toFixed(2)}
             </Text>
           </View>
-          <Text style={[styles.price, isDark && styles.textLight]}>
-            ${product.price.toFixed(2)}
-          </Text>
         </View>
       </View>
     </AnimatedTouchable>
@@ -76,25 +95,47 @@ export default function ShopProductCard({ product, variant = "light", onPress, f
 }
 
 const styles = StyleSheet.create({
+  // Outer layer: Handles Shadow & Layout
   card: {
-    borderRadius: theme.radius.lg,
-    borderWidth: 1,
-    overflow: "hidden",
     width: 160,
-    ...(Platform.OS === "android" ? { elevation: 2 } : {}),
+    backgroundColor: theme.colors.surface, // Matches inner container for correct shadow casting
+    borderRadius: theme.radius.lg,
+    // iOS Shadow
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    // Android Elevation
+    elevation: 4,
   },
   cardFullWidth: {
     width: "100%",
     maxWidth: "100%",
   },
+  // Inner layer: Handles Content Clipping & Background
+  innerContainer: {
+    flex: 1,
+    backgroundColor: theme.colors.surface, // Default bg
+    borderRadius: theme.radius.lg,
+    overflow: "hidden", // Clips the image
+    borderWidth: 1,
+  },
   imageWrap: {
     width: "100%",
     height: 140,
     backgroundColor: theme.colors.background,
+    position: "relative",
   },
   image: {
     width: "100%",
     height: "100%",
+  },
+  placeholder: {
+    width: "100%",
+    height: "100%",
+    alignItems: "center",
+    justifyContent: "center",
+    backgroundColor: theme.colors.background,
   },
   badge: {
     position: "absolute",
@@ -104,6 +145,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: theme.radius.xs,
+    zIndex: 1,
   },
   badgeText: {
     fontSize: 10,

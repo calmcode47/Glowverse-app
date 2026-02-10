@@ -1,3 +1,4 @@
+import { Product } from "../data/products";
 import { NavigatorScreenParams } from "@react-navigation/native";
 
 export type RootTabParamList = {
@@ -13,14 +14,18 @@ export type RootStackParamList = {
   Login: undefined;
   SignUp: undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList>;
-  ProductDetail: { productId: string };
+  ProductDetail: { productId?: string; product?: Product };
   Results: { imageUri?: string } | undefined;
   Settings: undefined;
   Tutorial: undefined;
   Fitness: undefined;
   GroomingGuide: undefined;
-  Orders: undefined;
+  OrderHistory: undefined;
   UserHistory: undefined;
+  About: undefined;
+  Cart: undefined;
+  Search: undefined;
+  Notifications: undefined;
 };
 
 declare global {

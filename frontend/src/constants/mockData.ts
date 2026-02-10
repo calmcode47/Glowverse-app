@@ -10,50 +10,12 @@ export type Product = {
   price: number;
   rating: number;
   reviewCount: number;
-  imageUri: string;
+  image: string; // Renamed from imageUri to match main product schema
   badge?: "Good" | "Our Brands" | "Offers";
   description?: string;
 };
 
-export type ChartDataPoint = {
-  label: string;
-  value: number;
-  color?: "primary" | "orange";
-};
-
-export type DashboardStat = {
-  id: string;
-  value: number | string;
-  label?: string;
-  icon?: "home" | "bell" | "user";
-};
-
-// Bar chart data – "Your Brand" analytics style
-export const brandChartData: ChartDataPoint[] = [
-  { label: "Jan", value: 18000, color: "primary" },
-  { label: "Feb", value: 32000, color: "orange" },
-  { label: "Mar", value: 25000, color: "primary" },
-  { label: "Apr", value: 42000, color: "orange" },
-  { label: "May", value: 38000, color: "primary" },
-  { label: "Jun", value: 55000, color: "orange" },
-  { label: "Jul", value: 48000, color: "primary" },
-  { label: "Aug", value: 62000, color: "orange" },
-];
-
-export const categoryChartData: ChartDataPoint[] = [
-  { label: "Skincare", value: 72, color: "orange" },
-  { label: "Grooming", value: 58, color: "primary" },
-  { label: "Hair", value: 45, color: "orange" },
-  { label: "Accessories", value: 89, color: "primary" },
-];
-
-// Dashboard stats (43, 69, etc.)
-export const dashboardStats: DashboardStat[] = [
-  { id: "score", value: 43, label: "NAME" },
-  { id: "engagement", value: 69, label: "Engagement" },
-  { id: "notifications", value: "", icon: "bell" },
-  { id: "profile", value: "", icon: "user" },
-];
+// ... (omitted charts) ...
 
 // Boys beauty & accessories – full mock catalog
 export const mockProducts: Product[] = [
@@ -65,7 +27,7 @@ export const mockProducts: Product[] = [
     price: 12.99,
     rating: 4.8,
     reviewCount: 234,
-    imageUri: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400",
+    image: "https://images.unsplash.com/photo-1556228578-0d85b1a4d571?w=600&auto=format&fit=crop&q=80",
     badge: "Good",
     description: "Oil-control face wash for clear skin.",
   },
@@ -77,7 +39,7 @@ export const mockProducts: Product[] = [
     price: 14.99,
     rating: 4.6,
     reviewCount: 189,
-    imageUri: "https://images.unsplash.com/photo-1597939907322-a1d8491e4768?w=400",
+    image: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=600&auto=format&fit=crop&q=80",
     badge: "Our Brands",
     description: "Post-shave soothing balm.",
   },
@@ -89,7 +51,7 @@ export const mockProducts: Product[] = [
     price: 16.99,
     rating: 4.9,
     reviewCount: 412,
-    imageUri: "https://images.unsplash.com/photo-1522338243402-2f46124e2f28?w=400",
+    image: "https://images.unsplash.com/photo-1593743284583-135800073e5e?w=600&auto=format&fit=crop&q=80",
     badge: "Offers",
     description: "Strong hold, natural finish.",
   },
@@ -101,7 +63,7 @@ export const mockProducts: Product[] = [
     price: 18.99,
     rating: 4.7,
     reviewCount: 567,
-    imageUri: "https://images.unsplash.com/photo-1612817159949-195b6eb9e31a?w=400",
+    image: "https://images.unsplash.com/photo-1629198688000-71f23e745b6e?w=600&auto=format&fit=crop&q=80",
     badge: "Good",
     description: "Lightweight daily hydration.",
   },
@@ -113,7 +75,7 @@ export const mockProducts: Product[] = [
     price: 34.99,
     rating: 4.5,
     reviewCount: 98,
-    imageUri: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400",
+    image: "https://images.unsplash.com/photo-1595425970377-c9703cf48b6d?w=600&auto=format&fit=crop&q=80",
     badge: "Our Brands",
     description: "Fresh, long-lasting scent.",
   },
@@ -125,7 +87,7 @@ export const mockProducts: Product[] = [
     price: 24.99,
     rating: 4.8,
     reviewCount: 312,
-    imageUri: "https://images.unsplash.com/photo-1611651338412-3f973b695fa0?w=400",
+    image: "https://images.unsplash.com/photo-1517130038641-a774d04afb3c?w=600&auto=format&fit=crop&q=80",
     badge: "Offers",
     description: "Durable silicone rings for active wear.",
   },
@@ -137,7 +99,7 @@ export const mockProducts: Product[] = [
     price: 19.99,
     rating: 4.9,
     reviewCount: 445,
-    imageUri: "https://images.unsplash.com/photo-1631730486572-9a8e857c5b8d?w=400",
+    image: "https://images.unsplash.com/photo-1626285861696-9f0bf5a49c6d?w=600&auto=format&fit=crop&q=80",
     badge: "Good",
     description: "Nourishing beard and skin oil.",
   },
@@ -149,7 +111,7 @@ export const mockProducts: Product[] = [
     price: 22.99,
     rating: 4.6,
     reviewCount: 178,
-    imageUri: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400",
+    image: "https://images.unsplash.com/photo-1615900119312-2acd3a71f344?w=600&auto=format&fit=crop&q=80",
     badge: "Our Brands",
     description: "Cooling jade roller set.",
   },
@@ -161,7 +123,7 @@ export const mockProducts: Product[] = [
     price: 15.99,
     rating: 4.7,
     reviewCount: 223,
-    imageUri: "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?w=400",
+    image: "https://images.unsplash.com/photo-1596462502278-27bfdd403348?w=600&auto=format&fit=crop&q=80",
     badge: "Offers",
     description: "Deep pore cleansing mask.",
   },
@@ -173,7 +135,7 @@ export const mockProducts: Product[] = [
     price: 29.99,
     rating: 4.8,
     reviewCount: 156,
-    imageUri: "https://images.unsplash.com/photo-1585747860715-2ba37e788b70?w=400",
+    image: "https://images.unsplash.com/photo-1621607512214-68297480165e?w=600&auto=format&fit=crop&q=80",
     badge: "Good",
     description: "Compact kit for on-the-go.",
   },
@@ -185,7 +147,7 @@ export const mockProducts: Product[] = [
     price: 11.99,
     rating: 4.4,
     reviewCount: 892,
-    imageUri: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400",
+    image: "https://images.unsplash.com/photo-1556228852-6d35a585d566?w=600&auto=format&fit=crop&q=80",
     badge: "Our Brands",
     description: "Time-saving 2-in-1 formula.",
   },
@@ -197,7 +159,7 @@ export const mockProducts: Product[] = [
     price: 49.99,
     rating: 4.9,
     reviewCount: 267,
-    imageUri: "https://images.unsplash.com/photo-1572635196237-14b3f281503f?w=400",
+    image: "https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=600&auto=format&fit=crop&q=80",
     badge: "Offers",
     description: "UV protection, timeless style.",
   },

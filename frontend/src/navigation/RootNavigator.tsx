@@ -11,6 +11,11 @@ import SettingsScreen from "@screens/profile/SettingsScreen";
 import TutorialScreen from "@screens/onboarding/TutorialScreen";
 import ProductDetailScreen from "@screens/shop/ProductDetailScreen";
 import HistoryScreen from "@screens/history/HistoryScreen";
+import OrderHistoryScreen from "@screens/profile/OrderHistoryScreen";
+import AboutScreen from "@screens/profile/AboutScreen";
+import CartScreen from '../screens/shop/CartScreen';
+import SearchScreen from '../screens/search/SearchScreen';
+import NotificationsScreen from '../screens/notifications/NotificationsScreen';
 import { ActivityIndicator } from "react-native-paper";
 import HeaderRight from "@components/navigation/HeaderRight";
 import BackButton from "@components/navigation/BackButton";
@@ -124,6 +129,48 @@ export default function RootNavigator() {
         component={HistoryScreen}
         options={{
           title: "History",
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureEnabled: true
+        }}
+      />
+      <Stack.Screen
+        name="Cart"
+        component={CartScreen}
+        options={{
+          presentation: 'modal',
+        }}
+      />
+      <Stack.Screen
+        name="Search"
+        component={SearchScreen}
+        options={{
+          presentation: 'modal',
+          headerShown: false,
+          cardStyleInterpolator: CardStyleInterpolators.forFadeFromBottomAndroid
+        }}
+      />
+      <Stack.Screen
+        name="Notifications"
+        component={NotificationsScreen}
+        options={{
+          headerShown: false,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS
+        }}
+      />
+      <Stack.Screen
+        name="OrderHistory"
+        component={OrderHistoryScreen}
+        options={{
+          title: "Order History",
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureEnabled: true
+        }}
+      />
+      <Stack.Screen
+        name="About"
+        component={AboutScreen}
+        options={{
+          title: "About Glowverse",
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           gestureEnabled: true
         }}

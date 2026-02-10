@@ -17,8 +17,14 @@ import ProfessionalBackground from '../../components/animated/ProfessionalBackgr
 import ScrollReveal from '../../components/animations/ScrollReveal';
 import { useAppleScrollHandler } from '../../components/animations/AppleScrollAnimation';
 import ParallaxView from '../../components/animations/ParallaxView';
-import Product3DCard from '../../components/products/Product3DCard';
-import { featuredProducts, categories } from '../../data/products';
+import ModernProductCard from '../../components/products/ModernProductCard';
+import StatsSection from '../../components/home/StatsSection';
+import CircularStats from '../../components/home/CircularStats';
+import ActionGrid from '../../components/home/ActionGrid';
+import FeaturedCarousel from '../../components/home/FeaturedCarousel';
+import TrendingCarousel from '../../components/home/TrendingCarousel';
+import PriceTrendGraph from '../../components/home/PriceTrendGraph';
+import { products, featuredProducts, categories, newProducts, bestsellers } from '../../data/products';
 import type { RootStackParamList } from '../../navigation/types';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
@@ -57,7 +63,10 @@ export default function HomeScreen() {
               <Text style={styles.subgreeting}>Elevate your style today</Text>
             </View>
             <View style={styles.headerIcons}>
-              <TouchableOpacity style={styles.iconButton}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => navigation.navigate('Notifications')}
+              >
                 <MaterialCommunityIcons
                   name="bell-outline"
                   size={22}
@@ -65,7 +74,10 @@ export default function HomeScreen() {
                 />
                 <View style={styles.badge} />
               </TouchableOpacity>
-              <TouchableOpacity style={styles.iconButton}>
+              <TouchableOpacity
+                style={styles.iconButton}
+                onPress={() => navigation.navigate('Cart')}
+              >
                 <MaterialCommunityIcons
                   name="cart-outline"
                   size={22}
@@ -75,6 +87,9 @@ export default function HomeScreen() {
             </View>
           </View>
         </ScrollReveal>
+
+        {/* Quick Actions */}
+        <ActionGrid />
 
         {/* Promo Banner with Parallax */}
         <ParallaxView scrollY={scrollY} speed={0.15}>
@@ -91,7 +106,10 @@ export default function HomeScreen() {
                     <Text style={styles.promoTitle}>Summer Collection</Text>
                     <Text style={styles.promoSubtitle}>Up to 40% off on sunglasses</Text>
                   </View>
-                  <TouchableOpacity style={styles.promoButton}>
+                  <TouchableOpacity
+                    style={styles.promoButton}
+                    onPress={() => navigation.navigate('ShopTab' as any)}
+                  >
                     <Text style={styles.promoButtonText}>Shop Now</Text>
                     <MaterialCommunityIcons
                       name="arrow-right"
@@ -105,34 +123,9 @@ export default function HomeScreen() {
           </ScrollReveal>
         </ParallaxView>
 
-        {/* Stats Row with Staggered Animation */}
-        <ScrollReveal delay={200} direction="up" scale springy>
-          <View style={styles.statsRow}>
-            <ScrollReveal delay={250} scale springy>
-              <StatCard
-                icon="shopping-outline"
-                label="Orders"
-                value="24"
-                theme={theme}
-              />
-            </ScrollReveal>
-            <ScrollReveal delay={300} scale springy>
-              <StatCard
-                icon="heart-outline"
-                label="Wishlist"
-                value="12"
-                theme={theme}
-              />
-            </ScrollReveal>
-            <ScrollReveal delay={350} scale springy>
-              <StatCard
-                icon="medal-outline"
-                label="Points"
-                value="340"
-                theme={theme}
-              />
-            </ScrollReveal>
-          </View>
+        {/* Circular Stats Section (New) */}
+        <ScrollReveal delay={200} scale springy>
+          <CircularStats />
         </ScrollReveal>
 
         {/* Categories */}
@@ -187,56 +180,111 @@ export default function HomeScreen() {
           </View>
         </ScrollReveal>
 
+        {/* Featured Products Carousel */}
         <ScrollReveal delay={700} direction="up" springy>
+          <FeaturedCarousel products={featuredProducts} />
+        </ScrollReveal>
+
+        {/* Price Tracking Section (New) */}
+        <ScrollReveal delay={800} scale springy>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Market Trends</Text>
+            <View style={styles.liveBadge}>
+              <View style={styles.liveDot} />
+              <Text style={styles.liveText}>LIVE</Text>
+            </View>
+          </View>
           <ScrollView
             horizontal
-            pagingEnabled
             showsHorizontalScrollIndicator={false}
-            snapToInterval={SCREEN_WIDTH}
-            decelerationRate="fast"
+            contentContainerStyle={styles.priceTrendsContainer}
           >
-            {featuredProducts.map((product, index) => (
-              <ScrollReveal key={product.id} delay={750 + index * 80} scale springy>
-                <Product3DCard
-                  product={product}
-                  index={index}
-                  onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+            {products.filter(p => p.priceHistory).slice(0, 5).map((product, idx) => (
+              <TouchableOpacity
+                key={product.id}
+                style={styles.priceTrendCard}
+                onPress={() => navigation.navigate('ProductDetail', { productId: product.id, product })}
+              >
+                <View style={styles.trendInfo}>
+                  <Text style={styles.trendName} numberOfLines={1}>{product.name}</Text>
+                  <Text style={styles.trendPrice}>${product.price}</Text>
+                </View>
+                <PriceTrendGraph
+                  data={product.priceHistory!}
+                  width={100}
+                  height={35}
+                  color={idx % 2 === 0 ? theme.colors.accent.emerald : theme.colors.accent.rose}
                 />
-              </ScrollReveal>
+              </TouchableOpacity>
             ))}
           </ScrollView>
         </ScrollReveal>
 
-        {/* Trending Section */}
+        {/* Trending Section (Swipable) */}
         <ScrollReveal delay={900} scale springy>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Trending Now</Text>
           </View>
         </ScrollReveal>
 
-        <ScrollReveal delay={1000} direction="up" springy>
-          <View style={styles.trendingGrid}>
-            <ScrollReveal delay={1050} scale springy>
-              <TrendingCard
-                title="Classic Aviators"
-                description="Timeless style for every occasion"
-                icon="sunglasses"
-                theme={theme}
-              />
-            </ScrollReveal>
-            <ScrollReveal delay={1100} scale springy>
-              <TrendingCard
-                title="Smart Watches"
-                description="Stay connected in style"
-                icon="watch"
-                theme={theme}
-              />
-            </ScrollReveal>
+        <View style={{ marginBottom: theme.spacing.xl }}>
+          <TrendingCarousel products={bestsellers} />
+        </View>
+
+        {/* New Arrivals (Extra Content) */}
+        <ScrollReveal delay={1100} scale springy>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>New Arrivals</Text>
+          </View>
+          <View style={styles.newArrivalsGrid}>
+            {newProducts.slice(0, 2).map((product, index) => (
+              <ScrollReveal key={product.id} delay={1150 + index * 100} direction="up" springy>
+                <ModernProductCard
+                  product={product}
+                  width={SCREEN_WIDTH * 0.44}
+                  onPress={() => navigation.navigate('ProductDetail', { productId: product.id, product })}
+                />
+              </ScrollReveal>
+            ))}
+          </View>
+        </ScrollReveal>
+
+        {/* Daily Tips (Extended Content) */}
+        <ScrollReveal delay={1200} scale springy>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Daily Tips</Text>
+          </View>
+        </ScrollReveal>
+
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 16, paddingBottom: 20 }}>
+          <TipCard title="Dress for Success" description="Tips on formal wear matching." color="#3B82F6" theme={theme} />
+          <TipCard title="Summer Vibes" description="Choosing the right sunglasses." color="#F59E0B" theme={theme} />
+          <TipCard title="Shoe Care" description="Keep your sneakers fresh." color="#10B981" theme={theme} />
+          <TipCard title="Smart Style" description="Accessorizing with tech gadgets." color="#8B5CF6" theme={theme} />
+          <TipCard title="Glow Guide" description="Maintaining your premium look." color="#EC4899" theme={theme} />
+        </ScrollView>
+
+        {/* Brand Spotlight */}
+        <ScrollReveal delay={1300} scale springy>
+          <View style={styles.sectionHeader}>
+            <Text style={styles.sectionTitle}>Brand Spotlight</Text>
+          </View>
+          <View style={styles.brandSpotlight}>
+            <LinearGradient
+              colors={['#1F2937', '#111827']}
+              style={styles.spotlightGradient}
+            >
+              <MaterialCommunityIcons name="star-face" size={32} color={theme.colors.accent.gold} />
+              <View style={{ flex: 1, marginLeft: 16 }}>
+                <Text style={styles.spotlightTitle}>Elite Member Early Access</Text>
+                <Text style={styles.spotlightSubtitle}>Ray-Ban Custom Lab is now open for you.</Text>
+              </View>
+            </LinearGradient>
           </View>
         </ScrollReveal>
 
         {/* Bottom Spacing */}
-        <View style={{ height: 40 }} />
+        <View style={{ height: 80 }} />
       </Animated.ScrollView>
     </View>
   );
@@ -282,6 +330,40 @@ function StatCard({ icon, label, value, theme }: {
     </View>
   );
 }
+
+const TipCard = ({ title, description, color, theme }: any) => (
+  <TouchableOpacity style={{
+    width: 200,
+    padding: theme.spacing.md,
+    backgroundColor: theme.colors.background.elevated,
+    borderRadius: theme.radius.lg,
+    borderWidth: 1,
+    borderColor: theme.colors.border.light,
+    ...theme.shadows.sm,
+  }}>
+    <View style={{
+      width: 40,
+      height: 40,
+      borderRadius: 20,
+      backgroundColor: color + '20',
+      alignItems: 'center',
+      justifyContent: 'center',
+      marginBottom: 12
+    }}>
+      <MaterialCommunityIcons name="lightbulb-on-outline" size={20} color={color} />
+    </View>
+    <Text style={{
+      fontSize: theme.typography.sizes.base,
+      fontWeight: 'bold',
+      color: theme.colors.text.primary,
+      marginBottom: 4
+    }}>{title}</Text>
+    <Text style={{
+      fontSize: theme.typography.sizes.xs,
+      color: theme.colors.text.secondary
+    }}>{description}</Text>
+  </TouchableOpacity>
+);
 
 function TrendingCard({ title, description, icon, theme }: {
   title: string;
@@ -524,6 +606,85 @@ const createStyles = (theme: any, isDark: boolean) =>
     trendingDescription: {
       fontSize: theme.typography.sizes.xs,
       lineHeight: 16,
+    },
+    // New Styles
+    priceTrendsContainer: {
+      paddingHorizontal: theme.spacing.lg,
+      gap: theme.spacing.md,
+      paddingBottom: theme.spacing.xl,
+    },
+    priceTrendCard: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.background.elevated,
+      padding: theme.spacing.base,
+      borderRadius: theme.radius.lg,
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+      gap: theme.spacing.md,
+      ...theme.shadows.sm,
+    },
+    trendInfo: {
+      width: 80,
+    },
+    trendName: {
+      fontSize: theme.typography.sizes.xs,
+      color: theme.colors.text.secondary,
+      fontWeight: theme.typography.weights.medium,
+    },
+    trendPrice: {
+      fontSize: theme.typography.sizes.base,
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.text.primary,
+    },
+    liveBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: theme.colors.accent.rose + '15',
+      paddingHorizontal: 8,
+      paddingVertical: 2,
+      borderRadius: 4,
+      gap: 4,
+    },
+    liveDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      backgroundColor: theme.colors.accent.rose,
+    },
+    liveText: {
+      fontSize: 10,
+      fontWeight: 'bold',
+      color: theme.colors.accent.rose,
+    },
+    newArrivalsGrid: {
+      flexDirection: 'row',
+      paddingHorizontal: theme.spacing.lg,
+      justifyContent: 'space-between',
+      marginBottom: theme.spacing.xl,
+    },
+    brandSpotlight: {
+      marginHorizontal: theme.spacing.lg,
+      marginBottom: theme.spacing.xl,
+      borderRadius: theme.radius.xl,
+      overflow: 'hidden',
+      ...theme.shadows.md,
+    },
+    spotlightGradient: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      padding: theme.spacing.lg,
+    },
+    spotlightTitle: {
+      fontSize: theme.typography.sizes.base,
+      fontWeight: theme.typography.weights.bold,
+      color: theme.colors.text.inverse,
+    },
+    spotlightSubtitle: {
+      fontSize: theme.typography.sizes.xs,
+      color: theme.colors.text.inverse,
+      opacity: 0.8,
+      marginTop: 2,
     },
   });
 
