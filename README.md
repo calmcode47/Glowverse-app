@@ -10,45 +10,55 @@ An immersive AI- and AR-powered shopping experience that uses virtual try-on, sk
 
 ## Frontend (Expo React Native)
 
-### Key Paths
-- App root: `frontend/`
-- Entry: `frontend/App.tsx`
-- Config: `frontend/app.json`, `frontend/eas.json`
-- Tests: `frontend/__tests__/`
-- Assets: `frontend/assets/`
+Glowverse features a cutting-edge mobile experience built with **React Native** and **Expo SDK 52**, delivering a premium, designer-label feel through advanced animations and AI/AR integrations.
 
-### Commands
-- Install dependencies: `npm install` (run inside `frontend/`)
-- Start dev server: `npx expo start`
-- Typecheck: `npx tsc --noEmit`
-- Tests: `npx jest`
-- EAS builds:
-  - iOS dev: `eas build -p ios --profile development`
-  - Android dev: `eas build -p android --profile development`
-  - iOS prod: `eas build -p ios --profile production`
-  - Android prod: `eas build -p android --profile production`
+### 🌟 Key Features
 
-### Environment
-- Copy `frontend/.env.example` to `frontend/.env`
-- Common variables:
-  - `API_BASE_URL`
-  - `PERFECT_CORP_API_KEY`
-  - `ANALYTICS_ID`
-  - `SENTRY_DSN`
-- Expo reads env via `expo.extra` in `app.json`
+*   **AI-Powered Skin Analysis**: Advanced face detection and skin scanning via [Perfect Corp](https://www.perfectcorp.com/) API to provide detailed hydration, texture, and clarity scores.
+*   **Virtual Try-On (AR)**: Real-time makeup application (Lipstick, Eyeshadow, Blush) using AR overlays on live camera feeds.
+*   **Premium Visual Experience**:
+    *   **Parallax Backgrounds**: Smooth, depth-defying scroll effects using `react-native-reanimated`.
+    *   **Scroll Reveals**: Content that fades and scales elegantly into view as you browse.
+    *   **Glassmorphic UI**: Modern, translucent elements with vibrant gradients and subtle shadows.
+*   **Market Insights**: Live price tracking and market trend visualization for premium products.
+*   **Smart Search**: Dynamic product discovery with brand-based filtering and instant search.
 
-### Device Testing
-- Expo Go: `npx expo start` and scan QR
-- Development builds:
-  - iOS via EAS dev profile
-  - Android via EAS dev profile or APK
+### 🏗️ Application Architecture
 
-### Publishing
-- Configure metadata in `app.json` (name, slug, version)
-- Submit:
-  - iOS: `eas submit -p ios --profile production`
-  - Android: `eas submit -p android --profile production`
-- OTA updates: `eas update --branch production`
+The frontend follows a modular, feature-based architecture for scalability and maintainability:
+
+*   **`src/screens/`**: Feature-grouped screens (AR, Shop, Home, Profile, Results).
+*   **`src/components/`**: Atomic and complex UI components.
+    *   `ui/`: Reusable primitive components (Buttons, Inputs).
+    *   `animations/`: Custom animation wrappers (ScrollReveal, ParallaxView).
+    *   `ar/`: AR-specific UI elements (ColorPicker, MakeupDrawer).
+*   **`src/services/`**: API client logic and third-party integrations (Perfect Corp, Backend).
+*   **`src/context/`**: Global state management using React Context (AI Results, Camera State, Authentication).
+*   **`src/theme/`**: Centralized design system with support for dynamic theme switching.
+
+### 🛠️ Technology Stack
+
+| Category | Technology |
+| :--- | :--- |
+| **Framework** | React Native, Expo (SDK 52) |
+| **Language** | TypeScript |
+| **UI Library** | React Native Paper (v5) |
+| **Animations** | React Native Reanimated (v3), Moti |
+| **Vector Icons** | Expo Vector Icons |
+| **CI/CD** | EAS (Expo Application Services) |
+
+### 🚀 Getting Started
+
+1.  **Install dependencies**: `npm install` (run inside `frontend/`)
+2.  **Environment Setup**: Copy `.env.example` to `.env` and fill in `API_BASE_URL` and `PERFECT_CORP_API_KEY`.
+3.  **Start Development**: `npx expo start`
+4.  **Testing**: `npx jest`
+
+### 📱 Build & Deployment
+
+*   **Development Builds**: `eas build --profile development`
+*   **Production Submissions**: `eas submit --profile production`
+*   **OTA Updates**: `eas update --branch production`
 
 ---
 
