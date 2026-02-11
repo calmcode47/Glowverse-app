@@ -6,14 +6,7 @@ import morgan from "morgan";
 import env from "@config/env";
 import { errorHandler, notFoundHandler } from "@middleware/errorHandler";
 import { apiLimiter } from "@middleware/rateLimiter";
-import authRoutes from "@routes/auth.routes";
-import userRoutes from "@routes/user.routes";
-import analysisRoutes from "@routes/analysis.routes";
-import tryonRoutes from "@routes/tryon.routes";
-import favoriteRoutes from "@routes/favorite.routes";
-import uploadRoutes from "@routes/upload.routes";
-import perfectcorpRoutes from "@routes/perfectcorp.routes";
-import productRoutes from "@routes/product.routes";
+import { registerRoutes } from "@routes/index";
 
 const app: Application = express();
 
@@ -51,14 +44,8 @@ app.get("/health", (req, res) => {
 const API_PREFIX = `/api/${env.apiVersion}`;
 app.use(API_PREFIX, apiLimiter);
 
-app.use(`${API_PREFIX}/auth`, authRoutes);
-app.use(`${API_PREFIX}/users`, userRoutes);
-app.use(`${API_PREFIX}/analysis`, analysisRoutes);
-app.use(`${API_PREFIX}/tryon`, tryonRoutes);
-app.use(`${API_PREFIX}/favorites`, favoriteRoutes);
-app.use(`${API_PREFIX}/upload`, uploadRoutes);
-app.use(`${API_PREFIX}/perfectcorp`, perfectcorpRoutes);
-app.use(`${API_PREFIX}/products`, productRoutes);
+// Register all routes
+registerRoutes(app, API_PREFIX);
 
 app.use(notFoundHandler);
 app.use(errorHandler);

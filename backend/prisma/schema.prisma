@@ -3,9 +3,126 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
-  url      = "file:./dev.db"
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum ProductCategory {
+  SKINCARE
+  MAKEUP
+  HAIRCARE
+  FRAGRANCE
+  TOOLS
+  SUPPLEMENTS
+}
+
+enum OrderStatus {
+  PENDING
+  PROCESSING
+  SHIPPED
+  DELIVERED
+  CANCELLED
+  REFUNDED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  FAILED
+  REFUNDED
+}
+
+enum NotificationType {
+  ORDER_PLACED
+  ORDER_SHIPPED
+  ORDER_DELIVERED
+  ANALYSIS_COMPLETE
+  TRYON_COMPLETE
+  PROMOTION
+  SYSTEM
+  GENERAL
+}
+
+enum PromotionType {
+  GENERAL
+  FIRST_ORDER
+  SEASONAL
+  FLASH_SALE
+  REFERRAL
+  LOYALTY
+}
+
+enum DiscountType {
+  PERCENTAGE
+  FIXED_AMOUNT
+}
+
+enum ReferralStatus {
+  PENDING
+  REGISTERED
+  COMPLETED
+  EXPIRED
+}
+
+enum ActivityType {
+  CARDIO
+  STRENGTH
+  YOGA
+  STRETCHING
+  SPORTS
+  WALKING
+  RUNNING
+  CYCLING
+  SWIMMING
+  OTHER
+}
+
+enum IntensityLevel {
+  LOW
+  MODERATE
+  HIGH
+  VERY_HIGH
+}
+
+enum GoalType {
+  WEEKLY_MINUTES
+  WEEKLY_SESSIONS
+  MONTHLY_CALORIES
+  DAILY_STEPS
+  CUSTOM
+}
+
+enum GoalPeriod {
+  DAILY
+  WEEKLY
+  MONTHLY
+}
+
+enum GuideCategory {
+  SKINCARE_ROUTINE
+  HAIRCARE
+  GROOMING_TIPS
+  MAKEUP_TUTORIAL
+  PRODUCT_USAGE
+  WELLNESS
+  NUTRITION
+  LIFESTYLE
+  GENERAL
+}
+
+enum DifficultyLevel {
+  BEGINNER
+  INTERMEDIATE
+  ADVANCED
+}
+
+// ============================================
+// USER MODELS
+// ============================================
 
 model User {
   id            String    @id @default(uuid())
@@ -24,6 +141,19 @@ model User {
   favorites     Favorite[]
   tryOns        VirtualTryOn[]
   refreshTokens RefreshToken[]
+  cart          Cart?
+  orders        Order[]
+  notifications Notification[]
+  promotionUsages PromotionUsage[]
+  referralsGiven  Referral[] @relation("ReferrerRelation")
+  referralUsed    Referral?  @relation("RefereeRelation")
+  referralCode    String?    @unique
+  referralEarnings Float     @default(0)
+  fitnessActivities FitnessActivity[]
+  fitnessGoals      FitnessGoal[]
+  guides            Guide[]
+  guideLikes        GuideLike[]
+  guideBookmarks    GuideBookmark[]
 
   @@map("users")
 }
@@ -164,4 +294,415 @@ model ApiUsage {
   @@map("api_usage")
   @@index([endpoint])
   @@index([createdAt])
+}
+
+// ============================================
+// E-COMMERCE MODELS
+// ============================================
+
+/// Product model for the e-commerce catalog
+/// Stores all product information including pricing, inventory, and metadata
+model Product {
+  id                    String          @id @default(uuid())
+  name                  String
+  slug                  String          @unique
+  description           String?
+  brand                 String
+  category              ProductCategory
+  subCategory           String?
+  price                 Float
+  compareAtPrice        Float?          // For showing discounts
+  currency              String          @default("USD")
+  stock                 Int             @default(0)
+  lowStockThreshold     Int             @default(10)
+  images                String          @default("[]") // JSON array of image URLs
+  thumbnailUrl          String?
+  tags                  String          @default("[]") // JSON array for search
+  ingredients           String?         // Text field for ingredients list
+  benefits              String          @default("[]") // JSON array of benefits
+  howToUse              String?         // Instructions for use
+  isActive              Boolean         @default(true)
+  isFeatured            Boolean         @default(false)
+  rating                Float?
+  reviewCount           Int             @default(0)
+  perfectCorpProductId  String?         // For AR try-on integration
+  metadata              String?         // JSON for flexible additional data
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+  
+  // Relations
+  cartItems             CartItem[]
+  orderItems            OrderItem[]
+
+  @@map("products")
+  @@index([category])
+  @@index([brand])
+  @@index([isActive, isFeatured])
+  @@index([createdAt])
+  @@index([slug])
+}
+
+/// Cart model - one cart per user
+model Cart {
+  id        String     @id @default(uuid())
+  userId    String     @unique
+  user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items     CartItem[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  @@map("carts")
+}
+
+/// CartItem model - items within a cart
+/// Stores snapshot of price at time of addition
+model CartItem {
+  id        String   @id @default(uuid())
+  cartId    String
+  cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  quantity  Int      @default(1)
+  price     Float    // Price snapshot at add time
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([cartId, productId])
+  @@map("cart_items")
+  @@index([cartId])
+  @@index([productId])
+}
+
+/// Order model - stores customer orders
+/// Includes full address and payment information
+model Order {
+  id              String        @id @default(uuid())
+  orderNumber     String        @unique  // Auto-generated unique order number
+  userId          String
+  user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  status          OrderStatus   @default(PENDING)
+  items           OrderItem[]
+  subtotal        Float
+  tax             Float         @default(0)
+  shippingCost    Float         @default(0)
+  discount        Float         @default(0)
+  total           Float
+  currency        String        @default("USD")
+  shippingAddress String        // JSON: { name, address, city, state, zip, country, phone }
+  billingAddress  String?       // JSON: { name, address, city, state, zip, country }
+  paymentMethod   String        @default("PENDING")
+  paymentStatus   PaymentStatus @default(PENDING)
+  trackingNumber  String?
+  notes           String?
+  promotionUsage  PromotionUsage?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@map("orders")
+  @@index([userId])
+  @@index([orderNumber])
+  @@index([status])
+  @@index([createdAt])
+}
+
+/// OrderItem model - line items within an order
+/// Stores product snapshots to preserve order history even if product changes
+model OrderItem {
+  id           String   @id @default(uuid())
+  orderId      String
+  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId    String
+  product      Product  @relation(fields: [productId], references: [id])
+  productName  String   // Snapshot: product name at purchase time
+  productImage String   // Snapshot: product image at purchase time
+  quantity     Int
+  price        Float    // Snapshot: unit price at purchase time
+  total        Float    // quantity * price
+  createdAt    DateTime @default(now())
+
+  @@map("order_items")
+  @@index([orderId])
+  @@index([productId])
+}
+
+// ============================================
+// NOTIFICATION SYSTEM
+// ============================================
+
+/// Notification model - user notifications for orders, analysis, promotions, etc.
+model Notification {
+  id        String           @id @default(uuid())
+  userId    String
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type      NotificationType
+  title     String
+  message   String
+  data      String?          // JSON: Additional context data
+  
+  isRead    Boolean          @default(false)
+  readAt    DateTime?
+  
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  
+  @@map("notifications")
+  @@index([userId, isRead])
+  @@index([userId, createdAt])
+}
+
+// ============================================
+// PROMOTIONS & REFERRALS SYSTEM
+// ============================================
+
+/// Promotion model - discount codes and promotional campaigns
+model Promotion {
+  id          String    @id @default(uuid())
+  code        String    @unique
+  description String
+  type        PromotionType
+  
+  // Discount details
+  discountType      DiscountType
+  discountValue     Float
+  maxDiscount       Float?  // For percentage discounts
+  minOrderValue     Float?  // Minimum order value
+  
+  // Applicability (stored as JSON strings)
+  applicableCategories String  @default("[]") // JSON array of categories
+  applicableProducts   String  @default("[]") // JSON array of product IDs
+  
+  // Limits
+  usageLimit       Int?     // Total times can be used
+  usageCount       Int      @default(0)
+  
+  // Validity
+  startDate    DateTime
+  endDate      DateTime
+  isActive     Boolean  @default(true)
+  
+  // Tracking
+  usages       PromotionUsage[]
+  
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  
+  @@map("promotions")
+  @@index([code])
+  @@index([isActive, startDate, endDate])
+}
+
+/// PromotionUsage model - tracks each promotion redemption
+model PromotionUsage {
+  id           String    @id @default(uuid())
+  promotionId  String
+  promotion    Promotion @relation(fields: [promotionId], references: [id], onDelete: Cascade)
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  orderId      String?   @unique
+  order        Order?    @relation(fields: [orderId], references: [id])
+  
+  discountAmount Float
+  
+  createdAt    DateTime  @default(now())
+  
+  @@map("promotion_usages")
+  @@index([userId])
+  @@index([promotionId])
+}
+
+/// Referral model - user referral tracking and rewards
+model Referral {
+  id           String    @id @default(uuid())
+  referrerId   String
+  referrer     User      @relation("ReferrerRelation", fields: [referrerId], references: [id], onDelete: Cascade)
+  refereeId    String?   @unique
+  referee      User?     @relation("RefereeRelation", fields: [refereeId], references: [id], onDelete: Cascade)
+  
+  code         String    @unique
+  
+  // Status
+  status       ReferralStatus @default(PENDING)
+  
+  // Rewards
+  referrerReward Float   @default(0)
+  refereeReward  Float   @default(0)
+  referrerPaid   Boolean @default(false)
+  refereePaid    Boolean @default(false)
+  
+  // Tracking
+  refereeEmail   String?  // Referee email before signup
+  completedAt    DateTime?
+  
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  
+  @@map("referrals")
+  @@index([referrerId])
+  @@index([code])
+}
+
+// ============================================
+// FITNESS TRACKING SYSTEM
+// ============================================
+
+/// FitnessActivity model - track user workout and wellness activities
+model FitnessActivity {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        ActivityType
+  title       String?
+  description String?
+  
+  // Duration and intensity
+  durationMinutes Int
+  intensity       IntensityLevel
+  caloriesBurned  Int?
+  
+  // Additional metrics (optional)
+  distance        Float? // in km
+  steps           Int?
+  heartRate       Int?   // average BPM
+  
+  // Timing
+  activityDate    DateTime
+  
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  
+  @@map("fitness_activities")
+  @@index([userId, activityDate])
+  @@index([userId, type])
+}
+
+/// FitnessGoal model - user fitness and wellness goals
+model FitnessGoal {
+  id          String   @id @default(uuid())
+  userId      String
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  type        GoalType
+  target      Float
+  current     Float    @default(0)
+  unit        String   // e.g., "minutes", "calories", "sessions"
+  
+  period      GoalPeriod // DAILY, WEEKLY, MONTHLY
+  
+  startDate   DateTime
+  endDate     DateTime
+  
+  isActive    Boolean  @default(true)
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("fitness_goals")
+  @@index([userId, isActive])
+}
+
+// ============================================
+// GROOMING GUIDES & CONTENT SYSTEM
+// ============================================
+
+/// Guide model - educational content and tutorials
+model Guide {
+  id          String   @id @default(uuid())
+  
+  // Content
+  title       String
+  slug        String   @unique
+  description String
+  content     String   @db.Text
+  excerpt     String?
+  
+  // Media
+  thumbnailUrl String?
+  images       String   @default("[]")
+  videoUrl     String?
+  
+  // Categorization
+  category    GuideCategory
+  tags        String   @default("[]")
+  difficulty  DifficultyLevel?
+  
+  // Duration
+  readTime    Int?     // in minutes
+  duration    Int?     // for routines/tutorials in minutes
+  
+  // Metadata
+  authorId    String?
+  author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  viewCount   Int      @default(0)
+  likeCount   Int      @default(0)
+  
+  // Publishing
+  isPublished Boolean  @default(false)
+  publishedAt DateTime?
+  
+  // Relations
+  steps       GuideStep[]
+  likes       GuideLike[]
+  bookmarks   GuideBookmark[]
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("guides")
+  @@index([category, isPublished])
+  @@index([slug])
+  @@index([tags])
+}
+
+/// GuideStep model - individual steps in multi-step guides
+model GuideStep {
+  id          String   @id @default(uuid())
+  guideId     String
+  guide       Guide    @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  
+  order       Int
+  title       String
+  content     String   @db.Text
+  imageUrl    String?
+  videoUrl    String?
+  tips        String   @default("[]")
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  @@map("guide_steps")
+  @@index([guideId, order])
+}
+
+/// GuideLike model - user likes/favorites for guides
+model GuideLike {
+  id        String   @id @default(uuid())
+  guideId   String
+  guide     Guide    @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([guideId, userId])
+  @@map("guide_likes")
+  @@index([userId])
+}
+
+/// GuideBookmark model - saved guides for users
+model GuideBookmark {
+  id        String   @id @default(uuid())
+  guideId   String
+  guide     Guide    @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  createdAt DateTime @default(now())
+  
+  @@unique([guideId, userId])
+  @@map("guide_bookmarks")
+  @@index([userId])
 }
