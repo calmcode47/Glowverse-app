@@ -68,7 +68,7 @@ class OrderService {
 
         // Calculate totals
         const subtotal = cart.items.reduce(
-            (sum, item) => sum + (item.price * item.quantity),
+            (sum: number, item: any) => sum + (item.price * item.quantity),
             0
         );
         const tax = subtotal * 0.08; // 8% tax
@@ -109,7 +109,7 @@ class OrderService {
                 status: OrderStatus.PENDING,
                 subtotal,
                 tax,
-                shipping,
+                shippingCost: shipping,
                 discount,
                 total,
                 shippingAddress: JSON.stringify(shippingAddress),
@@ -117,10 +117,10 @@ class OrderService {
                 paymentMethod,
                 notes,
                 items: {
-                    create: cart.items.map(item => ({
-                        productId: item.productId,
+                    create: cart.items.map((item: any) => ({
+                        product: { connect: { id: item.productId } },
                         productName: item.product.name,
-                        productImage: item.product.thumbnailUrl,
+                        productImage: item.product.thumbnailUrl || '',
                         quantity: item.quantity,
                         price: item.price,
                         total: item.price * item.quantity
@@ -208,7 +208,7 @@ class OrderService {
             prisma.order.count({ where })
         ]);
 
-        const formattedOrders = orders.map(order => this.formatOrder(order));
+        const formattedOrders = orders.map((order: any) => this.formatOrder(order));
 
         return {
             items: formattedOrders,
@@ -361,11 +361,11 @@ class OrderService {
 
         // Calculate total spent
         const totalSpent = orders
-            .filter(order => order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.REFUNDED)
-            .reduce((sum, order) => sum + order.total, 0);
+            .filter((order: any) => order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.REFUNDED)
+            .reduce((sum: number, order: any) => sum + order.total, 0);
 
         // Recent orders (last 5)
-        const recentOrders = orders.slice(0, 5).map(order => ({
+        const recentOrders = orders.slice(0, 5).map((order: any) => ({
             id: order.id,
             orderNumber: order.orderNumber,
             total: order.total,

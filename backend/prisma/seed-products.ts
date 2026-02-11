@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaClient, ProductCategory } from "@prisma/client";
 
 const prisma = new PrismaClient();
@@ -322,8 +323,9 @@ async function main() {
     // Seed products
     console.log("📦 Seeding products...");
     for (const productData of sampleProducts) {
+        const slug = productData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
         const product = await prisma.product.create({
-            data: productData
+            data: { ...productData, slug } as any
         });
         console.log(`✅ Created product: ${product.name} (${product.category})`);
     }

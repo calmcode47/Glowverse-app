@@ -1,5 +1,5 @@
 import prisma from "@config/database";
-import { NotFoundError, AppError } from "@utils/errors";
+// No utility errors needed in this service
 
 /**
  * Promotion Type Enum
@@ -36,18 +36,19 @@ class PromotionService {
             where: {
                 isActive: true,
                 startDate: { lte: now },
-                endDate: { gte: now },
-                OR: [
-                    { maxUsageCount: null },
-                    { maxUsageCount: { gt: prisma.promotion.fields.currentUsageCount } }
-                ]
+                endDate: { gte: now }
             },
             orderBy: {
                 endDate: 'asc'
             }
         });
 
-        return promotions.map(p => this.formatPromotion(p));
+        // Filter out promotions that have exceeded their usage limit (Prisma can't compare two columns)
+        const available = promotions.filter(p =>
+            p.usageLimit === null || p.usageCount < p.usageLimit
+        );
+
+        return available.map(p => this.formatPromotion(p));
     }
 
     /**
@@ -105,11 +106,11 @@ class PromotionService {
         }
 
         // 4. Check total usage limit
-        if (promotion.maxUsageCount !== null && promotion.currentUsageCount >= promotion.maxUsageCount) {
+        if (promotion.usageLimit !== null && promotion.usageCount >= promotion.usageLimit) {
             return { isValid: false, error: "This promotion has reached its usage limit" };
         }
 
-        // 5. Check per-user usage limit
+        // 5. Check per-user usage limit (max 1 use per user by default)
         const userUsageCount = await prisma.promotionUsage.count({
             where: {
                 promotionId: promotion.id,
@@ -117,18 +118,19 @@ class PromotionService {
             }
         });
 
-        if (userUsageCount >= promotion.maxUsagePerUser) {
+        const maxPerUser = 1; // Default: 1 use per user
+        if (userUsageCount >= maxPerUser) {
             return {
                 isValid: false,
-                error: `You have already used this promotion ${promotion.maxUsagePerUser} time(s)`
+                error: `You have already used this promotion`
             };
         }
 
         // 6. Check minimum purchase amount
-        if (promotion.minPurchaseAmount !== null && orderData.subtotal < promotion.minPurchaseAmount) {
+        if (promotion.minOrderValue !== null && orderData.subtotal < promotion.minOrderValue) {
             return {
                 isValid: false,
-                error: `Minimum purchase amount of $${promotion.minPurchaseAmount.toFixed(2)} required`
+                error: `Minimum purchase amount of $${promotion.minOrderValue.toFixed(2)} required`
             };
         }
 
@@ -193,7 +195,7 @@ class PromotionService {
         await prisma.promotion.update({
             where: { id: promotionId },
             data: {
-                currentUsageCount: {
+                usageCount: {
                     increment: 1
                 }
             }
@@ -268,9 +270,9 @@ class PromotionService {
     calculateDiscount(promotion: any, subtotal: number): number {
         if (promotion.discountType === DiscountType.PERCENTAGE) {
             const discount = subtotal * (promotion.discountValue / 100);
-            // Cap at maxDiscountAmount if set
-            if (promotion.maxDiscountAmount !== null) {
-                return Math.min(discount, promotion.maxDiscountAmount);
+            // Cap at maxDiscount if set
+            if (promotion.maxDiscount !== null) {
+                return Math.min(discount, promotion.maxDiscount);
             }
             return discount;
         } else {

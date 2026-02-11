@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import ProductService from "@services/product.service";
-import { ProductCategory, ProductFilters } from "@types/ecommerce.types";
+import { ProductCategory, ProductFilters } from "@app-types/ecommerce.types";
 import { AppError } from "@utils/errors";
 
 /**

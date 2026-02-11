@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -67,7 +68,7 @@ async function seedTestData() {
                         category: 'SKINCARE',
                         brand: 'GlowLab',
                         stock: 100,
-                        images: [`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`],
+                        images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: i < 2
                     }
@@ -84,7 +85,7 @@ async function seedTestData() {
                         category: 'MAKEUP',
                         brand: 'BeautyPro',
                         stock: 80,
-                        images: [`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`],
+                        images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: i === 0
                     }
@@ -101,7 +102,7 @@ async function seedTestData() {
                         category: 'HAIRCARE',
                         brand: 'HairCare+',
                         stock: 120,
-                        images: [`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`],
+                        images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: false
                     }
@@ -118,7 +119,7 @@ async function seedTestData() {
                         category: 'FRAGRANCE',
                         brand: 'ScentLux',
                         stock: 50,
-                        images: [`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`],
+                        images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: i === 0
                     }
@@ -166,7 +167,7 @@ async function seedTestData() {
                     code: 'FLAT5',
                     description: '$5 flat discount',
                     type: 'GENERAL',
-                    discountType: 'FIXED',
+                    discountType: 'FIXED_AMOUNT',
                     discountValue: 5,
                     startDate: new Date(),
                     endDate: new Date(Date.now() + 60 * 24 * 60 * 60 * 1000),
@@ -191,7 +192,7 @@ async function seedTestData() {
                     content: '# Morning Skincare\n\nYour complete guide to morning skincare...',
                     excerpt: 'A simple 5-step morning routine for glowing skin',
                     category: 'SKINCARE_ROUTINE',
-                    tags: ['morning', 'skincare', 'routine', 'beginner'],
+                    tags: JSON.stringify(['morning', 'skincare', 'routine', 'beginner']),
                     difficulty: 'BEGINNER',
                     readTime: 8,
                     duration: 10,
@@ -208,7 +209,7 @@ async function seedTestData() {
                     content: '# Natural Makeup\n\nStep-by-step tutorial for natural makeup...',
                     excerpt: 'Master the no-makeup makeup look',
                     category: 'MAKEUP_TUTORIAL',
-                    tags: ['makeup', 'natural', 'beginner', 'tutorial'],
+                    tags: JSON.stringify(['makeup', 'natural', 'beginner', 'tutorial']),
                     difficulty: 'BEGINNER',
                     readTime: 12,
                     duration: 20,
@@ -225,7 +226,7 @@ async function seedTestData() {
                     content: '# Hair Repair\n\nComprehensive guide to repairing damaged hair...',
                     excerpt: 'Bring your hair back to life',
                     category: 'HAIRCARE',
-                    tags: ['haircare', 'repair', 'damaged-hair', 'treatment'],
+                    tags: JSON.stringify(['haircare', 'repair', 'damaged-hair', 'treatment']),
                     difficulty: 'INTERMEDIATE',
                     readTime: 10,
                     duration: 30,
@@ -242,7 +243,7 @@ async function seedTestData() {
                     content: '# Wellness for Beauty\n\nSimple daily habits for radiant skin...',
                     excerpt: 'Beauty starts from within',
                     category: 'WELLNESS',
-                    tags: ['wellness', 'lifestyle', 'healthy-habits', 'skin-health'],
+                    tags: JSON.stringify(['wellness', 'lifestyle', 'healthy-habits', 'skin-health']),
                     difficulty: 'BEGINNER',
                     readTime: 7,
                     thumbnailUrl: 'https://via.placeholder.com/600x400?text=Wellness',

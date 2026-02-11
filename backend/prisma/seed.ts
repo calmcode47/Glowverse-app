@@ -1,3 +1,4 @@
+/// <reference types="node" />
 import { PrismaClient } from '@prisma/client';
 import bcrypt from 'bcryptjs';
 
@@ -94,7 +95,7 @@ async function main() {
           category: data.category as any,
           brand: data.brand,
           stock: data.stock,
-          images: [`https://via.placeholder.com/600x600?text=${encodeURIComponent(data.name)}`],
+          images: JSON.stringify([`https://via.placeholder.com/600x600?text=${encodeURIComponent(data.name)}`]),
           isActive: true,
           isFeatured: data.featured
         }
@@ -144,7 +145,7 @@ async function main() {
           code: 'FLAT10',
           description: '$10 flat discount on all orders',
           type: 'GENERAL',
-          discountType: 'FIXED',
+          discountType: 'FIXED_AMOUNT',
           discountValue: 10,
           startDate: new Date(),
           endDate: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000),
@@ -171,7 +172,7 @@ async function main() {
           content: `# Morning Skincare Routine\n\nYour skin works hard overnight to repair itself. A morning routine protects and prepares your skin for the day ahead.\n\n## The Perfect Morning Routine\n\nFollow these steps in order for maximum effectiveness.`,
           excerpt: 'A simple 5-step morning routine for glowing, protected skin',
           category: 'SKINCARE_ROUTINE',
-          tags: ['morning', 'skincare', 'routine', 'beginner', 'daily'],
+          tags: JSON.stringify(['morning', 'skincare', 'routine', 'beginner', 'daily']),
           difficulty: 'BEGINNER',
           readTime: 8,
           duration: 10,
@@ -180,11 +181,11 @@ async function main() {
           publishedAt: new Date('2026-01-15'),
           steps: {
             create: [
-              { order: 1, title: 'Cleanse', content: 'Start with a gentle, pH-balanced cleanser...', tips: ['Use lukewarm water', 'Massage gently', 'Choose cleanser for your skin type'] },
-              { order: 2, title: 'Tone', content: 'Apply toner to balance pH...', tips: ['Avoid alcohol-based toners', 'Pat gently', 'Choose hydrating formulas'] },
-              { order: 3, title: 'Serum', content: 'Apply vitamin C serum for brightening...', tips: ['Vitamin C is great for morning', 'Wait 30 seconds', 'Store away from light'] },
-              { order: 4, title: 'Moisturize', content: 'Lock in hydration with lightweight moisturizer...', tips: ['Use upward motions', 'Don\'t forget neck', 'Gel for oily skin'] },
-              { order: 5, title: 'SPF', content: 'Apply broad-spectrum SPF 30+...', tips: ['Never skip sunscreen', 'Reapply every 2 hours', 'SPF goes last'] }
+              { order: 1, title: 'Cleanse', content: 'Start with a gentle, pH-balanced cleanser...', tips: JSON.stringify(['Use lukewarm water', 'Massage gently', 'Choose cleanser for your skin type']) },
+              { order: 2, title: 'Tone', content: 'Apply toner to balance pH...', tips: JSON.stringify(['Avoid alcohol-based toners', 'Pat gently', 'Choose hydrating formulas']) },
+              { order: 3, title: 'Serum', content: 'Apply vitamin C serum for brightening...', tips: JSON.stringify(['Vitamin C is great for morning', 'Wait 30 seconds', 'Store away from light']) },
+              { order: 4, title: 'Moisturize', content: 'Lock in hydration with lightweight moisturizer...', tips: JSON.stringify(['Use upward motions', 'Don\'t forget neck', 'Gel for oily skin']) },
+              { order: 5, title: 'SPF', content: 'Apply broad-spectrum SPF 30+...', tips: JSON.stringify(['Never skip sunscreen', 'Reapply every 2 hours', 'SPF goes last']) }
             ]
           }
         }
@@ -197,7 +198,7 @@ async function main() {
           content: '# Evening Skincare\n\nYour skin repairs itself at night. Maximize this natural process with the right products.',
           excerpt: 'Wind down with this 6-step evening routine for maximum repair',
           category: 'SKINCARE_ROUTINE',
-          tags: ['evening', 'skincare', 'anti-aging', 'repair'],
+          tags: JSON.stringify(['evening', 'skincare', 'anti-aging', 'repair']),
           difficulty: 'BEGINNER',
           readTime: 10,
           duration: 15,
@@ -214,7 +215,7 @@ async function main() {
           content: '# Natural Makeup Guide\n\nCreate a fresh, natural makeup look that enhances your features.',
           excerpt: 'Achieve the perfect natural look in just 15 minutes',
           category: 'MAKEUP_TUTORIAL',
-          tags: ['makeup', 'natural', 'beginner', 'everyday'],
+          tags: JSON.stringify(['makeup', 'natural', 'beginner', 'everyday']),
           difficulty: 'BEGINNER',
           readTime: 12,
           thumbnailUrl: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8',

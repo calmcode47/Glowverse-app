@@ -1,5 +1,5 @@
 import prisma from "@config/database";
-import { NotFoundError, AppError, ConflictError } from "@utils/errors";
+import { NotFoundError, ConflictError } from "@utils/errors";
 
 /**
  * Guide Category Enum
@@ -66,14 +66,21 @@ class GuideService {
         }
 
         if (tags && tags.length > 0) {
-            where.tags = { hasSome: tags };
+            // tags is stored as JSON string, use contains to search
+            const tagConditions = tags.map((tag: string) => ({ tags: { contains: tag, mode: 'insensitive' as const } }));
+            where.AND = [...(where.AND || []), { OR: tagConditions }];
         }
 
         if (search) {
-            where.OR = [
-                { title: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { content: { contains: search, mode: 'insensitive' } }
+            where.AND = [
+                ...(where.AND || []),
+                {
+                    OR: [
+                        { title: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } },
+                        { content: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
             ];
         }
 
@@ -259,7 +266,7 @@ class GuideService {
                     { title: { contains: query, mode: 'insensitive' } },
                     { description: { contains: query, mode: 'insensitive' } },
                     { content: { contains: query, mode: 'insensitive' } },
-                    { tags: { hasSome: [query] } }
+                    { tags: { contains: query, mode: 'insensitive' } }
                 ]
             },
             select: {
@@ -586,8 +593,8 @@ class GuideService {
                 id: { not: guideId },
                 isPublished: true,
                 OR: [
-                    { category: currentGuide.category },
-                    { tags: { hasSome: currentGuide.tags } }
+                    // tags is a JSON string; find guides with same category
+                    { category: currentGuide.category }
                 ]
             },
             select: {

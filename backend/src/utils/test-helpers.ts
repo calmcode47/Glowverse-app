@@ -50,7 +50,7 @@ export class TestHelpers {
                 category: (data?.category as any) || "SKINCARE",
                 brand: "Test Brand",
                 stock: data?.stock || 100,
-                images: ["https://via.placeholder.com/300"],
+                images: JSON.stringify(["https://via.placeholder.com/300"]),
                 isActive: true,
                 isFeatured: false
             }
@@ -80,9 +80,15 @@ export class TestHelpers {
             products.map((product) =>
                 prisma.cartItem.create({
                     data: {
-                        userId,
-                        productId: product.id,
-                        quantity: 2
+                        cart: {
+                            connectOrCreate: {
+                                where: { userId },
+                                create: { userId }
+                            }
+                        },
+                        product: { connect: { id: product.id } },
+                        quantity: 2,
+                        price: product.price
                     }
                 })
             )
@@ -108,21 +114,21 @@ export class TestHelpers {
                 tax: 10.0,
                 shippingCost: 5.0,
                 total: products.reduce((sum, p) => sum + p.price * 2, 0) + 15.0,
-                shippingAddress: {
+                shippingAddress: JSON.stringify({
                     street: "123 Test St",
                     city: "Test City",
                     state: "TS",
                     country: "Test Country",
                     zipCode: "12345"
-                },
+                }),
                 items: {
                     create: products.map((product) => ({
                         productId: product.id,
                         productName: product.name,
-                        productImage: product.images[0],
+                        productImage: "https://via.placeholder.com/300",
                         price: product.price,
                         quantity: 2,
-                        subtotal: product.price * 2
+                        total: product.price * 2
                     }))
                 }
             },
@@ -150,7 +156,7 @@ export class TestHelpers {
                 content: "# Test Guide Content",
                 excerpt: "Test excerpt",
                 category: (data?.category as any) || "SKINCARE_ROUTINE",
-                tags: ["test", "guide"],
+                tags: JSON.stringify(["test", "guide"]),
                 isPublished: data?.isPublished !== undefined ? data.isPublished : true,
                 publishedAt: new Date(),
                 readTime: 5

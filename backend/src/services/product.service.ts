@@ -1,6 +1,6 @@
 import prisma from "@config/database";
-import { NotFoundError, AppError } from "@utils/errors";
-import { ProductCategory, ProductFilters, PaginatedResponse, PaginationMetadata } from "@types/ecommerce.types";
+import { NotFoundError } from "@utils/errors";
+import { ProductCategory, ProductFilters, PaginatedResponse, PaginationMetadata } from "@app-types/ecommerce.types";
 import { Product } from "@prisma/client";
 
 /**
@@ -71,11 +71,22 @@ class ProductService {
         }
 
         if (search) {
-            where.OR = [
-                { name: { contains: search, mode: 'insensitive' } },
-                { description: { contains: search, mode: 'insensitive' } },
-                { brand: { contains: search, mode: 'insensitive' } }
+            where.AND = [
+                ...(where.AND || []),
+                {
+                    OR: [
+                        { name: { contains: search, mode: 'insensitive' } },
+                        { description: { contains: search, mode: 'insensitive' } },
+                        { brand: { contains: search, mode: 'insensitive' } }
+                    ]
+                }
             ];
+        }
+
+        if (tags && tags.length > 0) {
+            // tags is stored as a JSON string, use contains to search
+            const tagConditions = tags.map((tag: string) => ({ tags: { contains: tag, mode: 'insensitive' as const } }));
+            where.AND = [...(where.AND || []), { OR: tagConditions }];
         }
 
         if (minPrice !== undefined || maxPrice !== undefined) {
