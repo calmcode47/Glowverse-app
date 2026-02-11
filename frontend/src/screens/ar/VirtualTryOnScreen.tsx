@@ -9,7 +9,6 @@ import ColorPicker from "@components/ar/ColorPicker";
 import IntensitySlider from "@components/ar/IntensitySlider";
 import SaveLookModal from "@components/ar/SaveLookModal";
 import * as TryOnAPI from "@services/api/tryon.api";
-import * as FaceDetector from "expo-face-detector";
 import Toast, { ToastRef } from "@components/common/Toast";
 import { useCameraContext } from "@context/CameraContext";
 
@@ -78,11 +77,6 @@ export default function VirtualTryOnScreen() {
   const tryOnProduct = async (prod: { id: string }) => {
     const result = await capturePhoto(cameraRef.current as any);
     if (!result?.uri) return;
-    const fd = await FaceDetector.detectFacesAsync(result.uri as any);
-    if (!fd?.faces?.length) {
-      toastRef.current?.show({ title: "No face detected", variant: "warning" });
-      return;
-    }
     try {
       setProcessing(true);
       const created = await TryOnAPI.createTryOn(
