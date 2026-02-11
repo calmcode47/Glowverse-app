@@ -29,11 +29,11 @@ export type ColorPalette = {
   borderOrange: string;
   borderLight: string;
   gradient: {
-    primary: string[];
-    orange: string[];
-    yellow: string[];
-    blue: string[];
-    success: string[];
+    primary: readonly [string, string];
+    orange: readonly [string, string];
+    yellow: readonly [string, string];
+    blue: readonly [string, string];
+    success: readonly [string, string];
   };
 };
 

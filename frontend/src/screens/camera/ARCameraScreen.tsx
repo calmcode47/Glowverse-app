@@ -1,4 +1,5 @@
-import React, { useState, useRef, useEffect } from 'react';
+import * as React from 'react';
+import { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -61,6 +62,23 @@ export default function ARCameraScreen() {
 
     const styles = createStyles(theme, isDark);
 
+    function FeatureTag({ icon, label }: { icon: string; label: string }) {
+        return (
+            <View
+                style={[
+                    styles.featureTag,
+                    {
+                        backgroundColor: theme.colors.accent.emerald + '10',
+                        borderColor: theme.colors.accent.emerald + '30',
+                    },
+                ]}
+            >
+                <MaterialCommunityIcons name={icon as any} size={14} color={theme.colors.accent.emerald} />
+                <Text style={[styles.featureText, { color: theme.colors.accent.emerald }]}>{label}</Text>
+            </View>
+        );
+    }
+
     if (hasPermission === null) {
         return (
             <View style={styles.container}>
@@ -111,7 +129,7 @@ export default function ARCameraScreen() {
         <View style={styles.container}>
             {/* Camera View */}
             <CameraView
-                ref={cameraRef}
+                ref={(r: any) => (cameraRef.current = r)}
                 style={styles.camera}
                 facing="front"
             >
@@ -138,7 +156,7 @@ export default function ARCameraScreen() {
                     colors={[
                         isDark ? 'rgba(13, 17, 23, 0.8)' : 'rgba(249, 250, 251, 0.8)',
                         'transparent',
-                    ]}
+                    ] as const}
                     style={styles.topGradient}
                 >
                     <View style={styles.topControls}>
@@ -177,7 +195,7 @@ export default function ARCameraScreen() {
                                 onPress={() => setSelectedFrame(frame)}
                             >
                                 <LinearGradient
-                                    colors={[frame.color + '40', frame.color + '20']}
+                                    colors={[frame.color + '40', frame.color + '20'] as const}
                                     style={styles.frameGradient}
                                 >
                                     <MaterialCommunityIcons
@@ -199,7 +217,7 @@ export default function ARCameraScreen() {
                     colors={[
                         'transparent',
                         isDark ? 'rgba(13, 17, 23, 0.9)' : 'rgba(249, 250, 251, 0.9)',
-                    ]}
+                    ] as const}
                     style={styles.bottomGradient}
                 >
                     <View style={styles.bottomControls}>
@@ -239,9 +257,9 @@ export default function ARCameraScreen() {
                     </View>
 
                     <View style={styles.features}>
-                        <FeatureTag icon="face-recognition" label="Face Detection" theme={theme} />
-                        <FeatureTag icon="ruler" label="Best Fit" theme={theme} />
-                        <FeatureTag icon="palette" label="Color Match" theme={theme} />
+                        <FeatureTag icon="face-recognition" label="Face Detection" />
+                        <FeatureTag icon="ruler" label="Best Fit" />
+                        <FeatureTag icon="palette" label="Color Match" />
                     </View>
                 </LinearGradient>
             </CameraView>
@@ -249,23 +267,7 @@ export default function ARCameraScreen() {
     );
 }
 
-function FeatureTag({ icon, label, theme }: { icon: string; label: string; theme: any }) {
-    return (
-        <View style={[styles.featureTag, {
-            backgroundColor: theme.colors.accent.emerald + '10',
-            borderColor: theme.colors.accent.emerald + '30',
-        }]}>
-            <MaterialCommunityIcons
-                name={icon as any}
-                size={14}
-                color={theme.colors.accent.emerald}
-            />
-            <Text style={[styles.featureText, { color: theme.colors.accent.emerald }]}>
-                {label}
-            </Text>
-        </View>
-    );
-}
+ 
 
 const createStyles = (theme: any, isDark: boolean) =>
     StyleSheet.create({

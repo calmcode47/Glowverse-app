@@ -8,6 +8,7 @@ interface EnvConfig {
   port: number;
   apiVersion: string;
   databaseUrl: string;
+  localDataDir: string;
   jwtSecret: string;
   jwtExpiresIn: string;
   jwtRefreshSecret: string;
@@ -62,6 +63,7 @@ const validateEnv = (): EnvConfig => {
     port: parseInt(process.env.PORT || "5000", 10),
     apiVersion: process.env.API_VERSION || "v1",
     databaseUrl: (process.env.DATABASE_URL as string) || "file:./dev.db",
+    localDataDir: process.env.LOCAL_DATA_DIR || "N:\\\\trae data",
     jwtSecret: process.env.JWT_SECRET as string,
     jwtExpiresIn: process.env.JWT_EXPIRES_IN || "7d",
     jwtRefreshSecret: process.env.JWT_REFRESH_SECRET || (process.env.JWT_SECRET as string),

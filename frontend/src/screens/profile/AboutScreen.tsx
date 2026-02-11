@@ -22,6 +22,33 @@ export default function AboutScreen({ navigation }: any) {
 
     const styles = createStyles(theme, isDark);
 
+    function FeatureItem({ icon, title, description }: { icon: string; title: string; description: string }) {
+        return (
+            <View style={styles.featureItem}>
+                <View
+                    style={[
+                        styles.featureIcon,
+                        { backgroundColor: theme.colors.accent.emerald + '15' },
+                    ]}
+                >
+                    <MaterialCommunityIcons
+                        name={icon as any}
+                        size={24}
+                        color={theme.colors.accent.emerald}
+                    />
+                </View>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.featureTitle, { color: theme.colors.text.primary }]}>
+                        {title}
+                    </Text>
+                    <Text style={[styles.featureDescription, { color: theme.colors.text.secondary }]}>
+                        {description}
+                    </Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
             <ProfessionalBackground variant="subtle" />
@@ -87,25 +114,21 @@ export default function AboutScreen({ navigation }: any) {
                                 icon="shopping-outline"
                                 title="Easy Shopping"
                                 description="Browse and buy with just a few taps"
-                                theme={theme}
                             />
                             <FeatureItem
                                 icon="camera-outline"
                                 title="AR Try-On"
                                 description="Try products virtually before buying"
-                                theme={theme}
                             />
                             <FeatureItem
                                 icon="heart-outline"
                                 title="Wishlist"
                                 description="Save your favorite items for later"
-                                theme={theme}
                             />
                             <FeatureItem
                                 icon="shield-check-outline"
                                 title="Secure Payments"
                                 description="Shop safely with encrypted transactions"
-                                theme={theme}
                             />
                         </View>
                     </View>
@@ -233,32 +256,7 @@ export default function AboutScreen({ navigation }: any) {
     );
 }
 
-function FeatureItem({ icon, title, description, theme }: any) {
-    return (
-        <View style={styles.featureItem}>
-            <View
-                style={[
-                    styles.featureIcon,
-                    { backgroundColor: theme.colors.accent.emerald + '15' },
-                ]}
-            >
-                <MaterialCommunityIcons
-                    name={icon}
-                    size={24}
-                    color={theme.colors.accent.emerald}
-                />
-            </View>
-            <View style={{ flex: 1 }}>
-                <Text style={[styles.featureTitle, { color: theme.colors.text.primary }]}>
-                    {title}
-                </Text>
-                <Text style={[styles.featureDescription, { color: theme.colors.text.secondary }]}>
-                    {description}
-                </Text>
-            </View>
-        </View>
-    );
-}
+ 
 
 const createStyles = (theme: any, isDark: boolean) =>
     StyleSheet.create({
@@ -420,4 +418,4 @@ const createStyles = (theme: any, isDark: boolean) =>
         },
     });
 
-const styles = StyleSheet.create({});
+ 

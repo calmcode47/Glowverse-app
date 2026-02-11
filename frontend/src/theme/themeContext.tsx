@@ -5,7 +5,7 @@ import { darkTheme } from './darkTheme';
 import { lightTheme } from './lightTheme';
 
 type ThemeMode = 'light' | 'dark' | 'auto';
-type Theme = typeof darkTheme;
+type Theme = typeof darkTheme | typeof lightTheme;
 
 interface ThemeContextType {
     theme: Theme;

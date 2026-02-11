@@ -3,6 +3,10 @@
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
+    "target": "ES2017",
+    "lib": ["ES2017", "DOM"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
     "paths": {
       "@components/*": ["src/components/*"],
       "@navigation/*": ["src/navigation/*"],

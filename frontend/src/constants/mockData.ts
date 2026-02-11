@@ -17,6 +17,28 @@ export type Product = {
 
 // ... (omitted charts) ...
 
+export type ChartDataPoint = {
+  label: string;
+  value: number;
+  color?: "orange" | "primary";
+};
+
+export const dashboardStats: { id: string; label: string; value: number }[] = [
+  { id: "score", label: "Score", value: 89 },
+  { id: "engagement", label: "Engagement", value: 72 }
+];
+
+export const brandChartData: ChartDataPoint[] = [
+  { label: "A", value: 24, color: "primary" },
+  { label: "B", value: 32, color: "orange" },
+  { label: "C", value: 18, color: "primary" },
+  { label: "D", value: 40, color: "orange" },
+  { label: "E", value: 28, color: "primary" },
+  { label: "F", value: 35, color: "orange" },
+  { label: "G", value: 22, color: "primary" },
+  { label: "H", value: 30, color: "orange" }
+];
+
 // Boys beauty & accessories – full mock catalog
 export const mockProducts: Product[] = [
   {

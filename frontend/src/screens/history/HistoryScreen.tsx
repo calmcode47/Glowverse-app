@@ -1,14 +1,15 @@
 import React from "react";
 import { View, ScrollView, StyleSheet } from "react-native";
-import { Text, useTheme, ActivityIndicator, Button } from "react-native-paper";
+import { Text, ActivityIndicator, Button } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import type { RootStackParamList } from "@navigation/types";
 import * as UserAPI from "@services/api/user.api";
 import HistoryItem from "@components/history/HistoryItem";
 
+import { useTheme } from "../../theme/themeContext";
 export default function HistoryScreen() {
-  const theme = useTheme();
+  const { theme } = useTheme();
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [loading, setLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);

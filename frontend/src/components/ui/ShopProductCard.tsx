@@ -1,14 +1,14 @@
-import React from "react";
+import * as React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, Image, Platform } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import Animated, { useAnimatedStyle, withTiming, useSharedValue } from "react-native-reanimated";
 import { theme } from "@constants/theme";
-import type { Product } from "@constants/mockData";
+import type { Product as CatalogProduct } from "../../data/products";
 
 const AnimatedTouchable = Animated.createAnimatedComponent(TouchableOpacity);
 
 type ShopProductCardProps = {
-  product: Product;
+  product: CatalogProduct & { badge?: string };
   variant?: "dark" | "light";
   onPress?: () => void;
   fullWidth?: boolean;

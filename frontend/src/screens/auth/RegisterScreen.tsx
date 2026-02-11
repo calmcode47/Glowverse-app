@@ -26,7 +26,7 @@ export default function RegisterScreen() {
     try {
       setLoading(true);
       await AuthAPI.register({ email, password, name });
-      navigation.navigate("MainTabs");
+      navigation.navigate("MainTabs", { screen: "HomeTab" } as any);
     } catch (e: any) {
       setError(e?.message || "Registration failed");
     } finally {

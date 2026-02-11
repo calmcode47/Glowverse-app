@@ -67,7 +67,7 @@ export default function StatisticsScreen() {
                 {/* Total Spending Card */}
                 <View style={styles.totalCard}>
                     <LinearGradient
-                        colors={darkTheme.colors.gradients.neonGreen}
+                        colors={darkTheme.colors.gradients.primary}
                         start={{ x: 0, y: 0 }}
                         end={{ x: 1, y: 1 }}
                         style={styles.totalGradient}
@@ -89,7 +89,7 @@ export default function StatisticsScreen() {
                             <View key={label} style={styles.barContainer}>
                                 <View style={styles.barWrapper}>
                                     <LinearGradient
-                                        colors={darkTheme.colors.gradients.electricBlue}
+                                        colors={darkTheme.colors.gradients.secondary}
                                         style={[
                                             styles.bar,
                                             {
@@ -119,7 +119,7 @@ export default function StatisticsScreen() {
                             </View>
                             <View style={styles.progressBar}>
                                 <LinearGradient
-                                    colors={[item.color, item.color + '80']}
+                                    colors={[item.color, item.color + '80'] as const}
                                     start={{ x: 0, y: 0 }}
                                     end={{ x: 1, y: 0 }}
                                     style={[styles.progressFill, { width: `${item.percentage}%` }]}
@@ -132,10 +132,10 @@ export default function StatisticsScreen() {
 
                 {/* Stats Grid */}
                 <View style={styles.statsGrid}>
-                    <StatGridItem icon="package-variant" label="Total Orders" value="29" color={darkTheme.colors.accent.neonGreen} />
+                    <StatGridItem icon="package-variant" label="Total Orders" value="29" color={darkTheme.colors.accent.emerald} />
                     <StatGridItem icon="star" label="Avg Rating" value="4.8" color={darkTheme.colors.accent.gold} />
-                    <StatGridItem icon="truck-delivery" label="In Transit" value="3" color={darkTheme.colors.accent.electricBlue} />
-                    <StatGridItem icon="arrow-u-left-top" label="Returns" value="1" color={darkTheme.colors.accent.orange} />
+                    <StatGridItem icon="truck-delivery" label="In Transit" value="3" color={darkTheme.colors.accent.blue} />
+                    <StatGridItem icon="arrow-u-left-top" label="Returns" value="1" color={darkTheme.colors.accent.gold} />
                 </View>
 
                 <View style={{ height: 100 }} />
@@ -206,8 +206,8 @@ const styles = StyleSheet.create({
         alignItems: 'center',
     },
     periodButtonActive: {
-        backgroundColor: darkTheme.colors.accent.neonGreen,
-        borderColor: darkTheme.colors.accent.neonGreen,
+        backgroundColor: darkTheme.colors.accent.emerald,
+        borderColor: darkTheme.colors.accent.emerald,
     },
     periodText: {
         fontSize: darkTheme.typography.sizes.sm,

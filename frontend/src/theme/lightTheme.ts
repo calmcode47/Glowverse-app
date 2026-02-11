@@ -30,6 +30,7 @@ export const lightTheme = {
             blue: '#2563EB',         // Secondary accent
             blueLight: '#3B82F6',
             blueDark: '#1D4ED8',
+            purple: '#B537F2',
             gold: '#F59E0B',         // Premium/Featured
             amber: '#F59E0B',
             rose: '#F43F5E',         // Alerts/Discounts

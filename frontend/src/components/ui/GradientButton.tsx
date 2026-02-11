@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { TouchableOpacity, Text, StyleSheet, ViewStyle, TextStyle, ActivityIndicator } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
@@ -48,8 +48,8 @@ export default function GradientButton({
         primary: theme.colors.gradient.primary,
         orange: theme.colors.gradient.orange,
         success: theme.colors.gradient.success,
-        outline: ["transparent", "transparent"],
-    };
+        outline: ["transparent", "transparent"] as const,
+    } as const;
 
     const sizeStyles = {
         small: { paddingVertical: 8, paddingHorizontal: 16 },

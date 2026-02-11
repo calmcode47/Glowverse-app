@@ -80,7 +80,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             }}
             scrollEventThrottle={16}
           >
-            {productImages.length > 0 ? productImages.map((imgUrl, idx) => (
+            {productImages.length > 0 ? productImages.map((imgUrl: string, idx: number) => (
               <View key={idx} style={styles.imageContainer}>
                 <Image source={{ uri: imgUrl }} style={styles.productImage} />
               </View>
@@ -99,7 +99,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           {/* Image Indicators */}
           {productImages.length > 1 && (
             <View style={styles.imageIndicators}>
-              {productImages.map((_, index) => (
+              {productImages.map((_: string, index: number) => (
                 <View
                   key={index}
                   style={[
@@ -175,7 +175,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Size</Text>
               <View style={styles.sizeSelector}>
-                {product.sizes.map((size) => (
+                {product.sizes.map((size: string) => (
                   <TouchableOpacity
                     key={size}
                     style={[
@@ -201,7 +201,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Features</Text>
             <View style={styles.features}>
-              {product.features.map((feature, index) => (
+              {product.features.map((feature: string, index: number) => (
                 <View key={index} style={styles.featureItem}>
                   <MaterialCommunityIcons name="check-circle" size={18} color={theme.colors.accent.emerald} />
                   <Text style={styles.featureText}>{feature}</Text>

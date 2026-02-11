@@ -1,11 +1,11 @@
-import React from "react";
+import * as React from "react";
 import { View } from "react-native";
 import { TextInput, Button, HelperText, Text, ActivityIndicator } from "react-native-paper";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
 import type { RootStackParamList } from "@navigation/types";
 import { useTheme } from "../../theme/themeContext";
-import * as AuthAPI from "../../services/api/auth.api";
+import { AuthAPI } from "@services/api";
 
 export default function LoginPaper() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -16,18 +16,24 @@ export default function LoginPaper() {
   const [error, setError] = React.useState<string | null>(null);
   const emailError = !!email && !/.+@.+\..+/.test(email);
   const passwordError = !!password && password.length < 6;
-  const submit = async () => {
-    setError(null);
-    if (!email || emailError || !password || passwordError) {
-      setError("Check your inputs");
-      return;
-    }
+  const handleLogin = async () => {
     try {
       setLoading(true);
-      await AuthAPI.login({ email, password });
-      navigation.navigate("MainTabs");
-    } catch (e: any) {
-      setError(e?.message || "Login failed");
+      setError(null);
+      if (!email || !password) {
+        setError("Please enter both email and password");
+        return;
+      }
+      await AuthAPI.login({ email: email.trim(), password });
+      navigation.navigate("MainTabs", { screen: "HomeTab" } as any);
+    } catch (err: any) {
+      if (err?.response?.status === 401) {
+        setError("Invalid email or password");
+      } else if (err?.response?.status === 429) {
+        setError("Too many login attempts. Please try again later.");
+      } else {
+        setError(err?.response?.data?.message || err?.message || "Login failed. Please try again.");
+      }
     } finally {
       setLoading(false);
     }
@@ -58,7 +64,7 @@ export default function LoginPaper() {
           <Text>{error}</Text>
         </View>
       ) : null}
-      <Button mode="contained" onPress={submit} loading={loading} disabled={loading} style={{ marginTop: 16 }}>
+      <Button mode="contained" onPress={handleLogin} loading={loading} disabled={loading} style={{ marginTop: 16 }}>
         Login
       </Button>
       <Button onPress={() => navigation.navigate("SignUp")} style={{ marginTop: 8 }}>

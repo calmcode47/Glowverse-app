@@ -7,7 +7,7 @@ import ImageService from "@services/image.service";
 import perfectCorpService from "@services/perfectcorp.service";
 import PerfectCorpMock from "@utils/perfectcorp-mock";
 import env from "@config/env";
-import { TryOnType, TryOnStatus } from "@prisma/client";
+ 
 
 export class TryOnController {
   static async createTryOn(req: Request, res: Response, next: NextFunction) {
@@ -21,14 +21,15 @@ export class TryOnController {
       }
 
       const { type, productId, productName, productBrand, intensity } = req.body as {
-        type: TryOnType;
+        type: string;
         productId?: string;
         productName?: string;
         productBrand?: string;
         intensity?: string | number;
       };
 
-      if (!Object.values(TryOnType).includes(type)) {
+      const allowedTypes = ["LIPSTICK", "EYESHADOW", "BLUSH", "FOUNDATION", "HAIR_COLOR", "FULL_MAKEUP"] as const;
+      if (!allowedTypes.includes(type as any)) {
         throw new AppError("Invalid try-on type", 400);
       }
 
@@ -39,8 +40,8 @@ export class TryOnController {
       const tryOn = await prisma.virtualTryOn.create({
         data: {
           userId: req.user.userId,
-          type,
-          status: TryOnStatus.PROCESSING,
+          type: type as any,
+          status: "PROCESSING",
           originalImageUrl: uploadResult.secureUrl,
           originalImagePublicId: uploadResult.publicId,
           productId,
@@ -49,6 +50,7 @@ export class TryOnController {
           intensity: intensity ? parseFloat(String(intensity)) : 1.0
         }
       });
+      void StorageService.saveJsonToLocal({ stage: "created", tryOn }, "tryon");
 
       void TryOnController.processTryOn(tryOn.id, uploadResult.secureUrl, {
         type,
@@ -75,7 +77,7 @@ export class TryOnController {
     tryOnId: string,
     imageUrl: string,
     options: {
-      type: TryOnType;
+      type: string;
       productId?: string;
       intensity?: number;
     }
@@ -88,10 +90,19 @@ export class TryOnController {
         await PerfectCorpMock.delay(3000);
         result = PerfectCorpMock.mockVirtualTryOn();
       } else {
+        const map: Record<string, "lipstick" | "eyeshadow" | "blush" | "foundation"> = {
+          LIPSTICK: "lipstick",
+          EYESHADOW: "eyeshadow",
+          BLUSH: "blush",
+          FOUNDATION: "foundation",
+          FULL_MAKEUP: "foundation",
+          HAIR_COLOR: "foundation"
+        };
+        const productType = map[options.type] || "foundation";
         result = await perfectCorpService.applyVirtualMakeup({
           imageUrl,
           productId: options.productId || "",
-          productType: options.type as any,
+          productType,
           intensity: options.intensity
         });
       }
@@ -101,12 +112,13 @@ export class TryOnController {
       await prisma.virtualTryOn.update({
         where: { id: tryOnId },
         data: {
-          status: TryOnStatus.COMPLETED,
+          status: "COMPLETED",
           resultImageUrl: result.resultImageUrl,
           results: result as any,
           processingTime
         }
       });
+      void StorageService.saveJsonToLocal({ stage: "completed", tryOnId, result }, "tryon");
 
       const tryOn = await prisma.virtualTryOn.findUnique({ where: { id: tryOnId } });
       if (tryOn) {
@@ -121,7 +133,7 @@ export class TryOnController {
       await prisma.virtualTryOn.update({
         where: { id: tryOnId },
         data: {
-          status: TryOnStatus.FAILED,
+          status: "FAILED",
           errorMessage: error.message || "Try-on failed",
           processingTime: Date.now() - startTime
         }
@@ -261,7 +273,7 @@ export class TryOnController {
         where: {
           id,
           userId: req.user.userId,
-          status: TryOnStatus.COMPLETED
+          status: "COMPLETED"
         }
       });
 

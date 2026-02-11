@@ -7,6 +7,7 @@ import OnboardingScreen from "@screens/auth/OnboardingScreen";
 import LoginScreen from "@screens/auth/LoginPaper";
 import RegisterScreen from "@screens/auth/RegisterScreen";
 import AnalysisResultsScreen from "@screens/results/AnalysisResultsScreen";
+import ProcessingScreen from "@screens/analysis/ProcessingScreen";
 import SettingsScreen from "@screens/profile/SettingsScreen";
 import TutorialScreen from "@screens/onboarding/TutorialScreen";
 import ProductDetailScreen from "@screens/shop/ProductDetailScreen";
@@ -16,6 +17,7 @@ import AboutScreen from "@screens/profile/AboutScreen";
 import CartScreen from '../screens/shop/CartScreen';
 import SearchScreen from '../screens/search/SearchScreen';
 import NotificationsScreen from '../screens/notifications/NotificationsScreen';
+import VirtualTryOnScreen from "@screens/ar/VirtualTryOnScreen";
 import { ActivityIndicator } from "react-native-paper";
 import HeaderRight from "@components/navigation/HeaderRight";
 import BackButton from "@components/navigation/BackButton";
@@ -98,6 +100,15 @@ export default function RootNavigator() {
         }}
       />
       <Stack.Screen
+        name="Processing"
+        component={ProcessingScreen}
+        options={{
+          title: "Processing",
+          cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
+          gestureEnabled: true,
+        }}
+      />
+      <Stack.Screen
         name="Results"
         component={AnalysisResultsScreen}
         options={{
@@ -155,6 +166,16 @@ export default function RootNavigator() {
         options={{
           headerShown: false,
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS
+        }}
+      />
+      <Stack.Screen
+        name="TryOn"
+        component={VirtualTryOnScreen}
+        options={{
+          title: "Try On",
+          headerShown: false,
+          cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+          gestureEnabled: true
         }}
       />
       <Stack.Screen

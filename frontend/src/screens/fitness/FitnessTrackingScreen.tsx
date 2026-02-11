@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 import {
     View,
     Text,
@@ -43,7 +44,7 @@ export default function FitnessTrackingScreen() {
     return (
         <View style={styles.container}>
             <LinearGradient
-                colors={[theme.colors.primary, theme.colors.backgroundDark]}
+                colors={[theme.colors.primary, theme.colors.backgroundDark] as const}
                 style={StyleSheet.absoluteFill}
             />
 
@@ -95,7 +96,7 @@ export default function FitnessTrackingScreen() {
                                             colors={
                                                 selectedDay === index
                                                     ? theme.colors.gradient.orange
-                                                    : ['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)']
+                                                    : (['rgba(255,255,255,0.2)', 'rgba(255,255,255,0.1)'] as const)
                                             }
                                             style={[styles.bar, { height: `${weeklyData[index]}%` }]}
                                         />

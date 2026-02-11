@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import * as React from "react";
+import { useState } from "react";
 import {
   View,
   Text,
@@ -20,11 +21,8 @@ import {
   CarouselCard,
   ShopProductCard,
 } from "@components/ui";
-import {
-  brandChartData,
-  dashboardStats,
-  mockProducts,
-} from "@constants/mockData";
+import { brandChartData, dashboardStats } from "@constants/mockData";
+import { products } from "../../data/products";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const CARD_GAP = 12;
@@ -32,10 +30,10 @@ const CARD_GAP = 12;
 export default function DashboardScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const [carouselIndex, setCarouselIndex] = useState(0);
-  const featured = mockProducts.slice(0, 4);
+  const featured = products.slice(0, 4);
 
-  const scoreStat = dashboardStats.find((s) => s.id === "score");
-  const engagementStat = dashboardStats.find((s) => s.id === "engagement");
+  const scoreStat = dashboardStats.find((s: { id: string; label: string; value: number }) => s.id === "score");
+  const engagementStat = dashboardStats.find((s: { id: string; label: string; value: number }) => s.id === "engagement");
 
   return (
     <ScrollView
@@ -101,8 +99,9 @@ export default function DashboardScreen() {
           contentContainerStyle={styles.horizontalList}
         >
           {featured.map((product, i) => (
-            <View key={product.id} style={styles.productCardWrap}>
+            <View style={styles.productCardWrap}>
               <ShopProductCard
+                key={product.id}
                 product={product}
                 variant="light"
                 onPress={() =>

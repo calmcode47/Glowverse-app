@@ -1,7 +1,7 @@
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
 import { randomUUID } from "crypto";
-import { User, UserRole } from "@prisma/client";
+import { User } from "@prisma/client";
 import prisma from "@config/database";
 import env from "@config/env";
 import { AppError } from "@utils/errors";
@@ -9,7 +9,7 @@ import { AppError } from "@utils/errors";
 interface JwtPayload {
   userId: string;
   email: string;
-  role: UserRole;
+  role: string;
 }
 
 interface AuthTokens {

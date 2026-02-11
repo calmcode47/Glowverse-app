@@ -15,7 +15,9 @@ export type RootStackParamList = {
   SignUp: undefined;
   MainTabs: NavigatorScreenParams<RootTabParamList>;
   ProductDetail: { productId?: string; product?: Product };
+  Processing: { analysisId?: string; tryOnId?: string; imageUri?: string };
   Results: { imageUri?: string } | undefined;
+  TryOn: undefined;
   Settings: undefined;
   Tutorial: undefined;
   Fitness: undefined;

@@ -6,7 +6,7 @@ import StorageService from "@services/storage.service";
 import perfectCorpService from "@services/perfectcorp.service";
 import PerfectCorpMock from "@utils/perfectcorp-mock";
 import env from "@config/env";
-import { AnalysisStatus, AnalysisType } from "@prisma/client";
+ 
 
 const AnalysisController = {
   async createSkinAnalysis(req: Request, res: Response, next: NextFunction) {
@@ -23,12 +23,13 @@ const AnalysisController = {
       const analysis = await prisma.analysis.create({
         data: {
           userId: req.user.userId,
-          type: AnalysisType.SKIN_ANALYSIS,
-          status: AnalysisStatus.PROCESSING,
+          type: "SKIN_ANALYSIS",
+          status: "PROCESSING",
           originalImageUrl: uploadResult.secureUrl,
           originalImagePublicId: uploadResult.publicId
         }
       });
+      void StorageService.saveJsonToLocal({ stage: "created", analysis }, "analysis");
       void AnalysisController.processAnalysis(analysis.id, uploadResult.secureUrl).catch((error) => {
         console.error("Analysis processing error:", error);
       });
@@ -52,11 +53,12 @@ const AnalysisController = {
       await prisma.analysis.update({
         where: { id: analysisId },
         data: {
-          status: AnalysisStatus.COMPLETED,
+          status: "COMPLETED",
           results: result as any,
           processingTime
         }
       });
+      void StorageService.saveJsonToLocal({ stage: "completed", analysisId, result }, "analysis");
       await prisma.userProfile.update({
         where: { userId: (await prisma.analysis.findUnique({ where: { id: analysisId } }))!.userId },
         data: { totalAnalyses: { increment: 1 } }
@@ -65,7 +67,7 @@ const AnalysisController = {
       await prisma.analysis.update({
         where: { id: analysisId },
         data: {
-          status: AnalysisStatus.FAILED,
+          status: "FAILED",
           errorMessage: error.message || "Analysis failed",
           processingTime: Date.now() - startTime
         }

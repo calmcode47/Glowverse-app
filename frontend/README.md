@@ -31,6 +31,14 @@ npm install
 > [!TIP]
 > For physical devices, download the **Expo Go** app from the App Store or Play Store and scan the QR code generated in your terminal after running `npm start`.
 
+### 🔧 Environment
+- API base:
+  - Set `API_BASE_URL` via `app.json` extra or environment (web)
+  - Defaults to `http://localhost:5000`
+  - Runtime override: AsyncStorage key `apiBaseUrl` (used by the Axios client)
+- Perfect Corp:
+  - `PERFECT_CORP_API_KEY` in `app.json` extra if needed for direct mobile usage
+
 ## 🛠️ Utilities & Helpers (`src/utils/`)
 
 The application includes a suite of robust utility functions to handle common logic:
@@ -54,5 +62,5 @@ The application includes a suite of robust utility functions to handle common lo
 
 ## 🧪 Testing & Quality
 
-*   **Unit Tests**: Run `npm test` to execute the Jest test suite.
-*   **Linting**: Run `npx tsc --noEmit` to verify type safety.
+*   **Unit Tests**: `npm test`
+*   **Type Safety**: `npx tsc --noEmit`

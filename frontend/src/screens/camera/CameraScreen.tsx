@@ -1,5 +1,6 @@
-import React from "react";
-import { View, Alert } from "react-native";
+import * as React from "react";
+import { View, Text } from "react-native";
+import { Button } from "react-native-paper";
 import { useTheme } from "../../theme/themeContext";
 import { useNavigation } from "@react-navigation/native";
 import type { StackNavigationProp } from "@react-navigation/stack";
@@ -40,17 +41,15 @@ export default function CameraScreen() {
       setGalleryUri(photo.uri);
       if (mode === "skin") {
         const res = await AnalysisAPI.createSkinAnalysis({ uri: photo.uri, name: "capture.jpg", type: "image/jpeg" });
-        navigation.navigate("Results", { imageUri: photo.uri });
-        void res;
+        navigation.navigate("Processing", { analysisId: res.analysis.id, imageUri: photo.uri } as any);
       } else {
         const res = await TryOnAPI.createTryOn({ uri: photo.uri, name: "capture.jpg", type: "image/jpeg" }, { type: "FULL_MAKEUP" });
-        navigation.navigate("Results", { imageUri: photo.uri });
-        void res;
+        navigation.navigate("Processing", { tryOnId: res.tryOn.id, imageUri: photo.uri } as any);
       }
       setSuccess(true);
       setTimeout(() => setSuccess(false), 1200);
     } catch (e: any) {
-      Alert.alert("Error", e?.message || "Upload failed");
+      console.error(e);
     } finally {
       setLoading(false);
     }
@@ -62,7 +61,11 @@ export default function CameraScreen() {
   if (hasPerm === false) {
     return (
       <View style={{ flex: 1, alignItems: "center", justifyContent: "center", padding: 16 }}>
-        <Alert title="No camera access" />
+        <Text>No camera access</Text>
+        <Button onPress={async () => {
+          const { status } = await Camera.requestCameraPermissionsAsync();
+          setHasPerm(status === "granted");
+        }}>Grant Access</Button>
       </View>
     );
   }

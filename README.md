@@ -8,6 +8,22 @@ An immersive AI- and AR-powered shopping experience that uses virtual try-on, sk
 
 ---
 
+## Quick Start (Full Stack)
+- Prerequisites: Node 18+, npm, Expo CLI
+- Backend
+  - cd backend && npm install
+  - Copy .env.example to .env and set at least PORT, JWT secrets
+  - Optional: set CLOUDINARY_* to enable uploads; if missing or set to "mock"/"root", uploads fall back to local snapshots
+  - Optional: set PERFECTCORP_API_KEY; when "mock" or empty, mock responses are used
+  - npm run dev
+- Frontend
+  - cd frontend && npm install
+  - Set API_BASE_URL for web via environment or app.json extra; default http://localhost:5000
+  - npm run web (or npm start, then scan with Expo Go)
+- Health checks
+  - Backend: http://localhost:5000/health
+  - Frontend (web dev): http://localhost:8081/
+
 ## Frontend (Expo React Native)
 
 Glowverse features a cutting-edge mobile experience built with **React Native** and **Expo SDK 52**, delivering a premium, designer-label feel through advanced animations and AI/AR integrations.
@@ -49,10 +65,13 @@ The frontend follows a modular, feature-based architecture for scalability and m
 
 ### 🚀 Getting Started
 
-1.  **Install dependencies**: `npm install` (run inside `frontend/`)
-2.  **Environment Setup**: Copy `.env.example` to `.env` and fill in `API_BASE_URL` and `PERFECT_CORP_API_KEY`.
-3.  **Start Development**: `npx expo start`
-4.  **Testing**: `npx jest`
+1.  **Install**: `npm install` (inside `frontend/`)
+2.  **Environment**:
+    - `API_BASE_URL` via `app.json` extra or environment (web)
+    - Defaults to `http://localhost:5000`
+    - Runtime override supported via AsyncStorage key `apiBaseUrl`
+3.  **Start**: `npm run web` (or `npm start` for QR + Expo Go)
+4.  **Tests**: `npm test`
 
 ### 📱 Build & Deployment
 
@@ -63,91 +82,171 @@ The frontend follows a modular, feature-based architecture for scalability and m
 ---
 
 ## Backend (Node.js + Express + TypeScript)
-
-### Key Paths
-- App root: `backend/`
-- Entry: `backend/src/server.ts`, `backend/src/app.ts`
-- Config: `backend/src/config/*` (env, database, cloudinary)
-- API: `backend/src/controllers/*`, `backend/src/routes/*`
-- Middleware: `backend/src/middleware/*`
-- Services: `backend/src/services/*`
-- Types: `backend/src/types/*`
-- Utils: `backend/src/utils/*`
-- Prisma: `backend/prisma/schema.prisma`, `backend/prisma/seed.ts`
-
-### Commands
-- Install: `npm install` (run inside `backend/`)
-- Dev: `npm run dev`
-- Build: `npm run build`
-- Start: `npm start`
-- Lint: `npm run lint`
-- Prisma:
-  - Generate: `npm run prisma:generate`
-  - Migrate: `npm run prisma:migrate`
-  - Seed: `npm run prisma:seed`
-  - Studio: `npm run prisma:studio`
-
-### Environment Variables
-Copy `backend/.env.example` to `backend/.env` and fill:
-- `DATABASE_URL`
-- `JWT_SECRET`, `JWT_REFRESH_SECRET`
-- `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
-- `PERFECTCORP_API_KEY`, `PERFECTCORP_BASE_URL`
-- `CORS_ORIGIN`, `RATE_LIMIT_*`
-
-### Docker (Local Dev)
-Inside `backend/`:
-```bash
-docker-compose up -d
-docker-compose logs -f backend
-docker-compose down
-```
-Services:
-- Postgres (with healthcheck, persistent volume)
-- Redis (optional caching)
-- Backend API (port 5000, health at /health)
-
-### Deployment
-#### Railway
-- Config: `/railway.json`
-- Build: `cd backend && npm install && npx prisma generate && npm run build`
-- Start: `cd backend && npx prisma migrate deploy && npm start`
-
-#### Render
-- Config: `/render.yaml`
-- Build: `cd backend && npm install && npx prisma generate && npm run build`
-- Start: `cd backend && npx prisma migrate deploy && npm start`
-- Health: `/health`
-
-#### GitHub Actions
-- CI/CD workflow: [deploy.yml](.github/workflows/deploy.yml)
-- Jobs: Lint, Typecheck, deploy to Railway on push to `main`
-
-### Database Migrations
-```bash
-npm run prisma:migrate        # create dev migration
-npx prisma migrate deploy     # deploy migrations in production
-npx prisma migrate reset      # reset database (DANGER)
-```
-
-### Monitoring
-- Health: `GET /health`
-- Logs: `backend/logs/` or platform logs
-
-### Rate Limits
-- Auth: 5 requests / 15 minutes
-- Upload: 20 requests / hour
-- Perfect Corp API: 10 requests / minute
-- General API: 100 requests / 15 minutes
-
-### Security Checklist
-- Change all default secrets
-- Enable HTTPS
-- Configure CORS properly
-- Store secrets in env or platform secret store
-- Enable rate limiting
-- Regular security updates and dependency audits
-- Database backups configured
+ 
+ ### Overview
+- Detailed documentation: [backend README](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/README.md)
+ - API server using Express, TypeScript, Prisma, Cloudinary, and Perfect Corp integrations.
+ - API prefix: `/api/v1` (configurable via `API_VERSION`).
+ - Health check: `GET /health`.
+ - Authentication: JWT (access + refresh tokens) with Bearer scheme.
+ 
+ ### Architecture
+ - Request pipeline: Helmet, CORS, Compression, JSON body parsing, Rate Limiting, Routing, Error Handling.
+ - Authentication: `Authorization: Bearer <token>` via [auth middleware](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/middleware/auth.ts).
+ - Validation: `express-validator` centralized in [validation.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/middleware/validation.ts).
+ - Rate Limiting: global and endpoint-specific limits in [rateLimiter.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/middleware/rateLimiter.ts).
+ - Error Handling: consistent JSON errors via [errorHandler.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/middleware/errorHandler.ts) and [errors.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/utils/errors.ts).
+ - Storage:
+   - Cloudinary for image hosting via [cloudinary.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/config/cloudinary.ts) and [StorageService](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/services/storage.service.ts).
+   - Local snapshots in `LOCAL_DATA_DIR` (default `N:\trae data`) for debugging and audit trails.
+ - Imaging: validation/compression with Sharp in [ImageService](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/services/image.service.ts).
+ - Perfect Corp: resilient client with retries and normalization in [PerfectCorpService](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/services/perfectcorp.service.ts); mock fallback when API key is `mock` or empty.
+ - Data Access: Prisma client in [database.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/config/database.ts).
+ - Logging: Winston with environment-sensitive levels in [logger.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/utils/logger.ts).
+ 
+ ### Directory Map
+ - Entry: [server.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/server.ts), [app.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/app.ts)
+ - Config: [env.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/config/env.ts), [database.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/config/database.ts), [cloudinary.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/config/cloudinary.ts)
+ - Controllers: [controllers/*](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/controllers)
+ - Routes: [routes/*](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/routes)
+ - Middleware: [middleware/*](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/middleware)
+ - Services: [services/*](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/services)
+ - Types: [types/*](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/types)
+ - Prisma: [schema.prisma](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/prisma/schema.prisma), [migrations](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/prisma/migrations), [seed.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/prisma/seed.ts)
+ 
+ ### Commands
+ - Install: `npm install` (inside `backend/`)
+ - Dev: `npm run dev`
+ - Build: `npm run build`
+ - Start: `npm start`
+ - Lint: `npm run lint`
+ - Prisma:
+   - Generate: `npm run prisma:generate`
+   - Dev migrate: `npm run prisma:migrate`
+   - Deploy migrate: `npm run prisma:deploy`
+   - Seed: `npm run prisma:seed`
+   - Studio: `npm run prisma:studio`
+ 
+ ### Environment
+ - Required:
+   - `PORT` (default 5000)
+   - `JWT_SECRET`
+   - `CLOUDINARY_CLOUD_NAME`, `CLOUDINARY_API_KEY`, `CLOUDINARY_API_SECRET`
+ - Recommended:
+   - `API_VERSION` (default `v1`)
+   - `LOCAL_DATA_DIR` (default `N:\trae data`)
+   - `CORS_ORIGIN` (comma separated)
+   - `MAX_FILE_SIZE` (default `10485760`)
+   - `ALLOWED_FILE_TYPES` (default `image/jpeg,image/png,image/jpg`)
+   - `RATE_LIMIT_WINDOW_MS`, `RATE_LIMIT_MAX_REQUESTS`
+ - Optional:
+   - `DATABASE_URL` (if unset, Prisma default is SQLite `file:./dev.db`)
+   - `JWT_REFRESH_SECRET` (defaults to `JWT_SECRET`), `JWT_EXPIRES_IN`, `JWT_REFRESH_EXPIRES_IN`
+  - `PERFECTCORP_API_KEY`, `PERFECTCORP_API_SECRET`, `PERFECTCORP_BASE_URL` (use `mock` to enable local mock mode)
+   - `REDIS_URL`, `REDIS_ENABLED`
+ 
+ ### Rate Limits
+ - Global API: `RATE_LIMIT_MAX_REQUESTS` per `RATE_LIMIT_WINDOW_MS` (default 100 / 15m).
+ - Auth: 5 requests / 15 minutes, successful requests skipped.
+ - Upload: 20 requests / hour.
+ - Perfect Corp proxy: 10 requests / minute.
+ 
+ ### Storage & Uploads
+ - Uploads use in-memory Multer with file-type/size validation in [upload.ts](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/middleware/upload.ts).
+ - Images are validated and compressed via [ImageService](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/src/services/image.service.ts).
+- Cloudinary stores originals/results when configured; if Cloudinary is disabled, uploads fall back to local storage paths with JSON snapshots under `LOCAL_DATA_DIR` for traceability.
+ 
+ ### API Endpoints (v1)
+ - Auth
+   - `POST /auth/register` — email/password register
+   - `POST /auth/login` — email/password login
+   - `POST /auth/refresh` — exchange refresh token for new tokens
+   - `POST /auth/logout` — invalidate one refresh token (optional body `refreshToken`)
+   - `POST /auth/logout-all` — invalidate all tokens (auth required)
+   - `GET /auth/me` — current profile (auth required)
+   - `POST /auth/change-password` — change password (auth required)
+   - `DELETE /auth/account` — delete account (auth required)
+ - Users
+   - `PATCH /users/profile` — update profile fields (auth required)
+   - `PATCH /users/preferences` — update skin preferences (auth required)
+   - `POST /users/avatar` — upload avatar (`image` form field) (auth required)
+   - `GET /users/stats`, `GET /users/history`, `DELETE /users/history/:id` (auth required)
+ - Analysis
+   - `POST /analysis/skin` — upload image (`image` form field) to start analysis (auth required)
+   - `GET /analysis` — list analyses (`page`, `limit`, `type`, `status`) (auth required)
+   - `GET /analysis/:id` — get one (auth required)
+   - `GET /analysis/:id/recommendations` — product recs (auth required)
+   - `DELETE /analysis/:id` — delete (auth required)
+ - Try-on
+   - `POST /tryon` — upload image and body `{ type, productId?, intensity? }` (auth required)
+   - `GET /tryon` — list (`page`, `limit`, `type`, `status`) (auth required)
+   - `GET /tryon/:id` — get one (auth required)
+   - `DELETE /tryon/:id` — delete (auth required)
+   - `POST /tryon/:id/favorite` — save as favorite (auth required)
+ - Favorites & Products
+   - `GET /favorites` — list favorites (auth required)
+   - `POST /favorites` — add favorite `{ productId, productName }` (auth required)
+   - `DELETE /favorites/:productId`, `PATCH /favorites/:productId` (auth required)
+   - `GET /products/search` — proxy product search (auth required)
+   - `GET /products/recommendations` — proxy recommendations (auth required)
+ - Upload (utility)
+   - `POST /upload` — upload image (`image` form field) to Cloudinary (auth required)
+ - Perfect Corp (proxy)
+   - `GET /perfectcorp/health` (auth required)
+   - `POST /perfectcorp/skin-analysis` (auth required)
+   - `GET /perfectcorp/skin-analysis/:id` (auth required)
+   - `POST /perfectcorp/virtual-tryon` (auth required)
+   - `GET /perfectcorp/virtual-tryon/:id` (auth required)
+   - `GET /perfectcorp/recommendations/:analysisId` (auth required)
+   - `GET /perfectcorp/products/search` (auth required)
+   - `POST /perfectcorp/face-detection` (auth required)
+ 
+ ### Example Requests
+ ```bash
+ # Register
+ curl -X POST http://localhost:5000/api/v1/auth/register \
+   -H "Content-Type: application/json" \
+   -d '{"email":"user@example.com","password":"StrongPass123","name":"Alex"}'
+ 
+ # Login
+ TOKEN=$(curl -s -X POST http://localhost:5000/api/v1/auth/login \
+   -H "Content-Type: application/json" \
+   -d '{"email":"user@example.com","password":"StrongPass123"}' | jq -r '.tokens.accessToken')
+ 
+ # Start skin analysis (multipart)
+ curl -X POST http://localhost:5000/api/v1/analysis/skin \
+   -H "Authorization: Bearer $TOKEN" \
+   -F "image=@./face.jpg;type=image/jpeg"
+ 
+ # Create try-on (multipart + JSON fields)
+ curl -X POST http://localhost:5000/api/v1/tryon \
+   -H "Authorization: Bearer $TOKEN" \
+   -F "image=@./face.jpg;type=image/jpeg" \
+   -F "type=FULL_MAKEUP" \
+   -F "productId=MOCK-LIPSTICK-001" \
+   -F "intensity=0.8"
+ ```
+ 
+ ### Database
+ - Default dev provider: SQLite (`file:./dev.db`) as defined in [schema.prisma](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/prisma/schema.prisma).
+ - To use Postgres in production:
+   - Change `provider` to `postgresql` in `schema.prisma`.
+   - Set `DATABASE_URL` accordingly.
+   - Regenerate and deploy: `npx prisma generate && npx prisma migrate deploy`.
+ 
+ ### Docker & Deployment
+ - Local stack via [docker-compose.yml](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/docker-compose.yml): Postgres, Redis, Backend.
+ - Docker build via [Dockerfile](file:///n:/github-repos/Glowverse-app/Glowverse-app/backend/Dockerfile) (multi-stage, healthcheck).
+ - Render: [render.yaml](file:///n:/github-repos/Glowverse-app/Glowverse-app/render.yaml)
+ - Railway: [railway.json](file:///n:/github-repos/Glowverse-app/Glowverse-app/railway.json)
+ - CI/CD: [deploy.yml](file:///n:/github-repos/Glowverse-app/Glowverse-app/.github/workflows/deploy.yml)
+ 
+ ### Security
+ - Store secrets in environment or platform secret store; never commit actual keys.
+ - Configure CORS (`CORS_ORIGIN`) to trusted origins.
+ - Rotate JWT secrets regularly; set refresh token TTLs.
+ - Enforce upload constraints (`MAX_FILE_SIZE`, `ALLOWED_FILE_TYPES`).
+ - Keep dependencies updated; monitor logs and rate limits.
 
 ---
 

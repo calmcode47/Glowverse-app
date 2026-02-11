@@ -1,4 +1,5 @@
-import React, { useEffect } from "react";
+import * as React from "react";
+import { useEffect } from "react";
 import { StyleSheet, ViewStyle } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -46,11 +47,11 @@ export default function AnimatedBackground({
     });
 
     const gradientColors = {
-        orange: [...theme.colors.gradient.orange, theme.colors.yellow],
-        primary: [...theme.colors.gradient.primary, theme.colors.secondary],
-        yellow: [...theme.colors.gradient.yellow, theme.colors.orangeLight],
-        blue: [...theme.colors.gradient.blue, theme.colors.primary],
-    };
+        orange: theme.colors.gradient.orange,
+        primary: theme.colors.gradient.primary,
+        yellow: theme.colors.gradient.yellow,
+        blue: theme.colors.gradient.blue,
+    } as const;
 
     return (
         <AnimatedLinearGradient

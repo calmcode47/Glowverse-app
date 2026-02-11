@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import * as React from 'react';
+import { useState } from 'react';
 import {
     View,
     Text,
@@ -21,6 +22,7 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../theme/themeContext';
+import { AuthAPI } from "@services/api";
 import { StackNavigationProp } from '@react-navigation/stack';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import ScrollReveal from '../../components/animations/ScrollReveal';
@@ -35,6 +37,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
 
@@ -80,11 +83,26 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
 
     const handleLogin = async () => {
         buttonScale.value = withSequence(withSpring(0.95, { damping: 10 }), withSpring(1, { damping: 10 }));
-        setIsLoading(true);
-        setTimeout(() => {
+        try {
+            setIsLoading(true);
+            setError(null);
+            if (!email || !password) {
+                setError("Please enter both email and password");
+                return;
+            }
+            await AuthAPI.login({ email: email.trim(), password });
+            navigation.navigate('MainTabs', { screen: 'HomeTab' } as any);
+        } catch (err: any) {
+            if (err?.response?.status === 401) {
+                setError("Invalid email or password");
+            } else if (err?.response?.status === 429) {
+                setError("Too many login attempts. Please try again later.");
+            } else {
+                setError(err?.response?.data?.message || err?.message || "Login failed. Please try again.");
+            }
+        } finally {
             setIsLoading(false);
-            navigation.replace('MainTabs');
-        }, 1500);
+        }
     };
 
     const handleSocialLogin = (provider: string) => {
@@ -241,6 +259,11 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                                 </LinearGradient>
                             </TouchableOpacity>
                         </Animated.View>
+                        {error ? (
+                            <View style={{ marginTop: 12, alignItems: "center" }}>
+                                <Text style={{ color: theme.colors.error }}>{error}</Text>
+                            </View>
+                        ) : null}
                     </View>
                 </ScrollReveal>
 

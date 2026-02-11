@@ -97,7 +97,7 @@ export class FavoriteController {
           productImageUrl,
           price,
           notes,
-          tags: tags || []
+          tags: (Array.isArray(tags) ? tags : []) as any
         }
       });
 
@@ -184,7 +184,7 @@ export class FavoriteController {
         },
         data: {
           notes,
-          tags: tags || undefined
+          tags: (Array.isArray(tags) ? tags : undefined) as any
         }
       });
 

@@ -53,9 +53,36 @@ export default function ReferEarnScreen({ navigation }: any) {
 
     const styles = createStyles(theme, isDark);
 
+    function StepItem({ number, title, description }: { number: string; title: string; description: string }) {
+        return (
+            <View style={styles.stepItem}>
+                <View
+                    style={[
+                        styles.stepNumber,
+                        { backgroundColor: theme.colors.accent.emerald + '20' },
+                    ]}
+                >
+                    <Text
+                        style={[styles.stepNumberText, { color: theme.colors.accent.emerald }]}
+                    >
+                        {number}
+                    </Text>
+                </View>
+                <View style={{ flex: 1 }}>
+                    <Text style={[styles.stepTitle, { color: theme.colors.text.primary }]}>
+                        {title}
+                    </Text>
+                    <Text style={[styles.stepDescription, { color: theme.colors.text.secondary }]}>
+                        {description}
+                    </Text>
+                </View>
+            </View>
+        );
+    }
+
     return (
         <View style={styles.container}>
-            <ProfessionalBackground variant="gradient" />
+            <ProfessionalBackground variant="subtle" />
 
             <ScrollView
                 style={styles.scroll}
@@ -142,7 +169,7 @@ export default function ReferEarnScreen({ navigation }: any) {
                         </View>
                         <TouchableOpacity style={styles.shareButton} onPress={handleShare}>
                             <LinearGradient
-                                colors={[theme.colors.accent.blue, theme.colors.accent.emerald]}
+                                colors={[theme.colors.accent.blue, theme.colors.accent.emerald] as const}
                                 style={styles.shareGradient}
                                 start={{ x: 0, y: 0 }}
                                 end={{ x: 1, y: 0 }}
@@ -283,19 +310,16 @@ export default function ReferEarnScreen({ navigation }: any) {
                                 number="1"
                                 title="Share Your Code"
                                 description="Send your unique referral code to friends"
-                                theme={theme}
                             />
                             <StepItem
                                 number="2"
                                 title="Friend Signs Up"
                                 description="They create an account using your code"
-                                theme={theme}
                             />
                             <StepItem
                                 number="3"
                                 title="Earn Rewards"
                                 description="Get $50 when they make their first purchase"
-                                theme={theme}
                             />
                         </View>
                     </View>
@@ -307,32 +331,7 @@ export default function ReferEarnScreen({ navigation }: any) {
     );
 }
 
-function StepItem({ number, title, description, theme }: any) {
-    return (
-        <View style={styles.stepItem}>
-            <View
-                style={[
-                    styles.stepNumber,
-                    { backgroundColor: theme.colors.accent.emerald + '20' },
-                ]}
-            >
-                <Text
-                    style={[styles.stepNumberText, { color: theme.colors.accent.emerald }]}
-                >
-                    {number}
-                </Text>
-            </View>
-            <View style={{ flex: 1 }}>
-                <Text style={[styles.stepTitle, { color: theme.colors.text.primary }]}>
-                    {title}
-                </Text>
-                <Text style={[styles.stepDescription, { color: theme.colors.text.secondary }]}>
-                    {description}
-                </Text>
-            </View>
-        </View>
-    );
-}
+ 
 
 const createStyles = (theme: any, isDark: boolean) =>
     StyleSheet.create({
@@ -384,4 +383,4 @@ const createStyles = (theme: any, isDark: boolean) =>
         stepDescription: { fontSize: theme.typography.sizes.sm, lineHeight: 18 },
     });
 
-const styles = StyleSheet.create({});
+ 

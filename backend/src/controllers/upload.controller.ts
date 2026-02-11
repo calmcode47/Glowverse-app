@@ -10,6 +10,8 @@ export async function uploadImage(req: Request, res: Response) {
   await ImageService.validateImage(file.buffer);
   const compressed = await ImageService.compressImage(file.buffer, 80);
   (file as any).buffer = compressed;
+  void StorageService.saveBufferToLocal(compressed, "uploads", `upload-${Date.now()}.jpg`);
   const result = await StorageService.uploadImage(file, "perfect-corp");
+  void StorageService.saveJsonToLocal({ image: result }, "uploads");
   return res.status(200).json({ image: result });
 }

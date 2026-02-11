@@ -1,4 +1,4 @@
-import React from "react";
+import * as React from "react";
 import { View, StyleSheet, Image } from "react-native";
 import { useTheme, IconButton, Button, Text } from "react-native-paper";
 import { CameraView } from "expo-camera";
@@ -8,7 +8,7 @@ import MakeupDrawer from "@components/ar/MakeupDrawer";
 import ColorPicker from "@components/ar/ColorPicker";
 import IntensitySlider from "@components/ar/IntensitySlider";
 import SaveLookModal from "@components/ar/SaveLookModal";
-import { uploadImage, applyMakeup } from "@services/api/perfectcorp";
+import * as TryOnAPI from "@services/api/tryon.api";
 import * as FaceDetector from "expo-face-detector";
 import Toast, { ToastRef } from "@components/common/Toast";
 import { useCameraContext } from "@context/CameraContext";
@@ -28,6 +28,8 @@ export default function VirtualTryOnScreen() {
   const [saveOpen, setSaveOpen] = React.useState(false);
   const toastRef = React.useRef<ToastRef>(null);
   const cameraRef = React.useRef<any>(null);
+  const [processing, setProcessing] = React.useState(false);
+  const pollRef = React.useRef<number | null>(null);
 
   const categories = ["Lipstick", "Eyeshadow", "Blush", "Foundation"];
   const products = [
@@ -35,6 +37,43 @@ export default function VirtualTryOnScreen() {
     { id: "lip-ruby", image: "https://images.unsplash.com/photo-1542382257-80dedb725818?w=640&q=80", name: "Ruby", brand: "Glowverse", price: "$21", colors: ["#C62828", "#AD1457", "#FF5252"] },
     { id: "eye-sky", image: "https://images.unsplash.com/photo-1541643600914-78b0843f6b42?w=640&q=80", name: "Sky", brand: "Glowverse", price: "$17", colors: ["#3F51B5", "#2196F3", "#00BCD4"] }
   ];
+
+  const pollForResults = (tryOnId: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+    let attempts = 0;
+    const maxAttempts = 30;
+    pollRef.current = setInterval(async () => {
+      try {
+        attempts++;
+        const res = await TryOnAPI.getTryOn(tryOnId);
+        const t = res.tryOn;
+        if (t.status === "COMPLETED") {
+          clearInterval(pollRef.current as any);
+          pollRef.current = null;
+          setOverlayUri(t.resultImageUrl || null);
+          setProcessing(false);
+          toastRef.current?.show({ title: "Applied", variant: "success" });
+        } else if (t.status === "FAILED") {
+          clearInterval(pollRef.current as any);
+          pollRef.current = null;
+          setProcessing(false);
+          setOverlayUri(null);
+          toastRef.current?.show({ title: "Try-on failed", variant: "error" });
+        }
+        if (attempts >= maxAttempts) {
+          clearInterval(pollRef.current as any);
+          pollRef.current = null;
+          setProcessing(false);
+          toastRef.current?.show({ title: "Try-on timeout", variant: "error" });
+        }
+      } catch (err) {
+        clearInterval(pollRef.current as any);
+        pollRef.current = null;
+        setProcessing(false);
+        toastRef.current?.show({ title: "Failed to get results", variant: "error" });
+      }
+    }, 2000);
+  };
 
   const tryOnProduct = async (prod: { id: string }) => {
     const result = await capturePhoto(cameraRef.current as any);
@@ -44,12 +83,20 @@ export default function VirtualTryOnScreen() {
       toastRef.current?.show({ title: "No face detected", variant: "warning" });
       return;
     }
-    const up = await uploadImage({ uri: result.uri, filename: "tryon.jpg", mimeType: "image/jpeg" });
-    const applied = await applyMakeup(up.imageId, prod.id);
-    if (applied.previewUri) {
-      setOverlayUri(applied.previewUri);
+    try {
+      setProcessing(true);
+      const created = await TryOnAPI.createTryOn(
+        { uri: result.uri, name: "tryon.jpg", type: "image/jpeg" },
+        { type: "FULL_MAKEUP", productId: prod.id, intensity: Math.min(Math.max(intensity / 100, 0), 1) }
+      );
+      const tryOnId = created.tryOn.id;
       addImage({ uri: result.uri, timestamp: Date.now(), mode: "makeup" } as any);
-      toastRef.current?.show({ title: "Applied", variant: "success" });
+      toastRef.current?.show({ title: "Processing started", variant: "info" });
+      pollForResults(tryOnId);
+    } catch (error) {
+      console.error("Try-on error:", error);
+      setProcessing(false);
+      toastRef.current?.show({ title: "Failed to apply makeup", variant: "error" });
     }
   };
 
@@ -63,22 +110,25 @@ export default function VirtualTryOnScreen() {
 
   return (
     <View style={styles.container}>
-      <CameraView ref={(r: any) => (cameraRef.current = r)} style={styles.camera} facing={cameraType as any} />
+      {(() => {
+        const CameraViewAny = CameraView as any;
+        return <CameraViewAny ref={(r: any) => (cameraRef.current = r)} style={styles.camera} facing={cameraType as any} />;
+      })()}
       {overlayUri && !compare ? <Image source={{ uri: overlayUri }} style={styles.overlay} /> : null}
       <View style={styles.topBar}>
         <IconButton icon="arrow-left" onPress={() => navigation.goBack()} />
-        <IconButton icon={compare ? "eye-off-outline" : "eye-outline"} onPress={() => setCompare((v) => !v)} />
+        <IconButton icon={compare ? "eye-off-outline" : "eye-outline"} onPress={() => setCompare((v: boolean) => !v)} />
         <IconButton icon="camera-switch" onPress={toggleCameraType} />
       </View>
       <View style={styles.bottomBar}>
-        <IconButton icon="backup-restore" onPress={() => setOverlayUri(null)} />
-        <IconButton icon="camera" onPress={onCapture} />
-        <IconButton icon="content-save" onPress={() => setSaveOpen(true)} />
+        <IconButton icon="backup-restore" onPress={() => setOverlayUri(null)} disabled={processing} />
+        <IconButton icon="camera" onPress={onCapture} disabled={processing} />
+        <IconButton icon="content-save" onPress={() => setSaveOpen(true)} disabled={processing} />
       </View>
       <View style={styles.controls}>
         <ColorPicker value={selectedColor} onChange={setSelectedColor} />
         <IntensitySlider value={intensity} onChange={setIntensity} onReset={() => setIntensity(70)} />
-        <Button mode="contained" onPress={() => setDrawerOpen(true)}>Choose Product</Button>
+        <Button mode="contained" onPress={() => setDrawerOpen(true)} disabled={processing}>Choose Product</Button>
       </View>
       <MakeupDrawer
         visible={drawerOpen}

@@ -24,7 +24,7 @@ const offers = [
         code: 'SUMMER50',
         validUntil: '2024-03-31',
         icon: 'sunglasses',
-        gradient: ['#F59E0B', '#EF4444'],
+      gradient: ['#F59E0B', '#EF4444'] as const,
     },
     {
         id: '2',
@@ -34,7 +34,7 @@ const offers = [
         code: 'FIRST25',
         validUntil: '2024-12-31',
         icon: 'gift',
-        gradient: ['#10B981', '#059669'],
+      gradient: ['#10B981', '#059669'] as const,
     },
     {
         id: '3',
@@ -44,7 +44,7 @@ const offers = [
         code: 'WEEKEND',
         validUntil: '2024-02-15',
         icon: 'tag-multiple',
-        gradient: ['#3B82F6', '#2563EB'],
+      gradient: ['#3B82F6', '#2563EB'] as const,
     },
     {
         id: '4',
@@ -54,7 +54,7 @@ const offers = [
         code: 'FREESHIP50',
         validUntil: '2024-04-30',
         icon: 'truck-delivery',
-        gradient: ['#8B5CF6', '#7C3AED'],
+      gradient: ['#8B5CF6', '#7C3AED'] as const,
     },
 ];
 
@@ -70,6 +70,21 @@ export default function OffersScreen({ navigation }: any) {
     const [selectedCategory, setSelectedCategory] = useState('all');
 
     const styles = createStyles(theme, isDark);
+
+    function InfoItem({ icon, text }: { icon: string; text: string }) {
+        return (
+            <View style={styles.infoItem}>
+                <MaterialCommunityIcons
+                    name={icon as any}
+                    size={24}
+                    color={theme.colors.accent.emerald}
+                />
+                <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>
+                    {text}
+                </Text>
+            </View>
+        );
+    }
 
     return (
         <View style={styles.container}>
@@ -232,17 +247,14 @@ export default function OffersScreen({ navigation }: any) {
                             <InfoItem
                                 icon="numeric-1-circle"
                                 text="Select an offer that suits your purchase"
-                                theme={theme}
                             />
                             <InfoItem
                                 icon="numeric-2-circle"
                                 text="Copy the promo code from the offer card"
-                                theme={theme}
                             />
                             <InfoItem
                                 icon="numeric-3-circle"
                                 text="Apply the code at checkout to get discount"
-                                theme={theme}
                             />
                         </View>
                     </View>
@@ -254,20 +266,7 @@ export default function OffersScreen({ navigation }: any) {
     );
 }
 
-function InfoItem({ icon, text, theme }: any) {
-    return (
-        <View style={styles.infoItem}>
-            <MaterialCommunityIcons
-                name={icon}
-                size={24}
-                color={theme.colors.accent.emerald}
-            />
-            <Text style={[styles.infoText, { color: theme.colors.text.secondary }]}>
-                {text}
-            </Text>
-        </View>
-    );
-}
+// moved inside component to access local styles
 
 const createStyles = (theme: any, isDark: boolean) =>
     StyleSheet.create({
@@ -311,4 +310,4 @@ const createStyles = (theme: any, isDark: boolean) =>
         infoText: { flex: 1, fontSize: theme.typography.sizes.sm, lineHeight: 20 },
     });
 
-const styles = StyleSheet.create({});
+ 

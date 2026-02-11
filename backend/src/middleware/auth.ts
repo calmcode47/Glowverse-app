@@ -1,7 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { AuthService } from "@services/auth.service";
 import { AppError } from "@utils/errors";
-import { UserRole } from "@prisma/client";
+ 
 
 export const authenticate = async (req: Request, res: Response, next: NextFunction) => {
   void res;
@@ -34,7 +34,7 @@ export const optionalAuthenticate = async (req: Request, res: Response, next: Ne
   }
 };
 
-export const authorize = (...roles: UserRole[]) => {
+export const authorize = (...roles: string[]) => {
   return (req: Request, res: Response, next: NextFunction) => {
     void res;
     if (!req.user) {
@@ -53,7 +53,7 @@ export const checkOwnership = (resourceUserIdField: string = "userId") => {
     if (!req.user) {
       return next(new AppError("Authentication required", 401));
     }
-    if (req.user.role === UserRole.ADMIN) {
+    if (req.user.role === "ADMIN") {
       return next();
     }
     const resourceUserId = (req.params as any)[resourceUserIdField] || (req.body as any)[resourceUserIdField];
