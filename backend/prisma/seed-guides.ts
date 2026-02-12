@@ -1,324 +1,300 @@
-/// <reference types="node" />
-import { PrismaClient } from '@prisma/client';
+import { PrismaClient, GuideCategory, DifficultyLevel, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-/**
- * Seed sample grooming guides
- */
-async function seedGuides() {
-    console.log('🌱 Seeding grooming guides...');
-
-    // Create sample guides
-    const guides = [
-        {
-            title: "Morning Skincare Routine for Glowing Skin",
-            slug: "morning-skincare-routine",
-            description: "A complete morning skincare routine to achieve radiant, glowing skin every day.",
-            excerpt: "Start your day with this simple yet effective 5-step morning routine.",
-            content: `# Morning Skincare Routine
-
-Achieve glowing skin with this comprehensive morning routine. Follow these steps daily for best results.
-
-## Why Morning Skincare Matters
-
-Your skin works hard at night to repair itself. A morning routine protects and prepares your skin for the day ahead.
-
-## The Routine
-
-Follow these steps in order for maximum effectiveness. Each step builds on the previous one to create a protective barrier and healthy glow.`,
-            category: 'SKINCARE_ROUTINE',
-            tags: JSON.stringify(['skincare', 'morning', 'routine', 'glowing-skin', 'beginner-friendly']),
-            difficulty: 'BEGINNER',
-            readTime: 8,
-            duration: 10,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1556228578-0d85b1a4d571',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-01-15'),
-            steps: {
-                create: [
-                    {
-                        order: 1,
-                        title: "Cleanse",
-                        content: "Start with a gentle, pH-balanced cleanser. Wet your face with lukewarm water and massage the cleanser in circular motions for 30-60 seconds.",
-                        tips: JSON.stringify(["Use lukewarm water, not hot", "Don't scrub too hard", "Choose a cleanser for your skin type"])
-                    },
-                    {
-                        order: 2,
-                        title: "Tone",
-                        content: "Apply toner to balance your skin's pH and prepare it for better absorption of subsequent products. Pat gently with fingertips or use a cotton pad.",
-                        tips: JSON.stringify(["Avoid alcohol-based toners", "Pat, don't rub", "Choose hydrating toners for dry skin"])
-                    },
-                    {
-                        order: 3,
-                        title: "Serum",
-                        content: "Apply vitamin C serum for brightening and antioxidant protection. Use 2-3 drops and gently press into skin.",
-                        tips: JSON.stringify(["Vitamin C is great for morning", "Wait 30 seconds before next step", "Store serum away from light"])
-                    },
-                    {
-                        order: 4,
-                        title: "Moisturize",
-                        content: "Lock in hydration with a lightweight moisturizer. Apply while skin is still slightly damp for better absorption.",
-                        tips: JSON.stringify(["Use upward motions", "Don't forget your neck", "Choose gel moisturizers for oily skin"])
-                    },
-                    {
-                        order: 5,
-                        title: "SPF",
-                        content: "The most important step! Apply broad-spectrum SPF 30+ sunscreen. Use about a nickel-sized amount for face and neck.",
-                        tips: JSON.stringify(["Never skip sunscreen", "Reapply every 2 hours", "SPF goes last, always"])
-                    }
-                ]
-            }
+const guides: any[] = [
+    {
+        title: "Complete Morning Skincare Routine for Glowing Skin",
+        slug: "morning-skincare-routine-glowing-skin",
+        description: "Master the perfect morning skincare routine to start your day with radiance and protection.",
+        content: "# Morning Skincare Routine\n\nA consistent morning routine is key to maintaining healthy, glowing skin...",
+        excerpt: "A comprehensive guide to morning skincare steps for all skin types.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1556228552-cab036ca6d5d?auto=format&fit=crop&q=80&w=1600",
+        coverImage: "https://images.unsplash.com/photo-1556228552-cab036ca6d5d?auto=format&fit=crop&q=80&w=1600",
+        images: JSON.stringify([
+            "https://images.unsplash.com/photo-1570172619644-dfd03ed5d881?auto=format&fit=crop&q=80&w=1600",
+            "https://images.unsplash.com/photo-1512290923902-8a9f81dc236c?auto=format&fit=crop&q=80&w=1600",
+        ]),
+        category: GuideCategory.SKINCARE_ROUTINE,
+        tags: JSON.stringify(["morning routine", "glowing skin", "hydration", "SPF", "beginner-friendly"]),
+        difficulty: DifficultyLevel.BEGINNER,
+        readTime: 8,
+        duration: 15,
+        isPublished: true,
+        isFeatured: true,
+        publishedAt: new Date('2025-10-15T08:00:00Z'),
+        steps: {
+            create: [
+                {
+                    order: 1,
+                    title: "Cleanse Your Face",
+                    content: "Start with a gentle cleanser to remove any oils produced overnight. Use lukewarm water.",
+                    imageUrl: "https://images.unsplash.com/photo-1556228720-198322c36643?auto=format&fit=crop&q=80&w=800",
+                    tips: JSON.stringify(["Use lukewarm water", "Massage in circular motions", "Rinse thoroughly"]),
+                },
+                {
+                    order: 2,
+                    title: "Apply Vitamin C Serum",
+                    content: "Vitamin C protects against environmental damage and brightens skin tone.",
+                    imageUrl: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?auto=format&fit=crop&q=80&w=800",
+                    tips: JSON.stringify(["Apply to dry skin", "Pat gently until absorbed"]),
+                },
+                {
+                    order: 3,
+                    title: "Moisturize",
+                    content: "Lock in hydration with a lightweight moisturizer suitable for your skin type.",
+                    imageUrl: "https://images.unsplash.com/photo-1608248597279-f99d160bfbc8?auto=format&fit=crop&q=80&w=800",
+                    tips: JSON.stringify(["Don't forget your neck", "Apply while skin is slightly damp"]),
+                },
+                {
+                    order: 4,
+                    title: "Apply Sunscreen",
+                    content: "The most important step! Apply broad-spectrum SPF 30 or higher.",
+                    imageUrl: "https://images.unsplash.com/photo-1526947425960-945c6e72858f?auto=format&fit=crop&q=80&w=800",
+                    tips: JSON.stringify(["Use two finger lengths of product", "Reapply throughout the day if outside"]),
+                }
+            ],
         },
-        {
-            title: "Evening Skincare Routine for Deep Repair",
-            slug: "evening-skincare-routine",
-            description: "A restorative evening routine to help your skin repair and regenerate overnight.",
-            excerpt: "Wind down with this 6-step evening routine for maximum skin repair.",
-            content: `# Evening Skincare Routine
-
-Your skin repairs itself at night, making your evening routine crucial for healthy, youthful skin.
-
-## The Science of Night Repair
-
-During sleep, skin cell regeneration increases and the skin is more receptive to active ingredients. Maximize this natural repair process with the right products.`,
-            category: 'SKINCARE_ROUTINE',
-            tags: JSON.stringify(['skincare', 'evening', 'routine', 'anti-aging', 'repair']),
-            difficulty: 'BEGINNER',
-            readTime: 10,
-            duration: 15,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1552693673-1bf958298935',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-01-18'),
-            steps: {
-                create: [
-                    {
-                        order: 1,
-                        title: "Remove Makeup",
-                        content: "Use a gentle makeup remover or cleansing oil to dissolve makeup, sunscreen, and sebum. Massage for 1-2 minutes.",
-                        tips: JSON.stringify(["Don't tug on skin", "Pay attention to eye area", "Oil cleansers work for all skin types"])
-                    },
-                    {
-                        order: 2,
-                        title: "Double Cleanse",
-                        content: "Follow up with a water-based cleanser to remove any remaining residue. This ensures completely clean skin.",
-                        tips: JSON.stringify(["Essential after wearing makeup/sunscreen", "Use gentle circular motions", "Rinse thoroughly"])
-                    },
-                    {
-                        order: 3,
-                        title: "Exfoliate (2-3x per week)",
-                        content: "Use a chemical exfoliant (AHA/BHA) to remove dead skin cells and unclog pores. Start slowly if you're new to exfoliation.",
-                        tips: JSON.stringify(["Don't over-exfoliate", "Start 1x per week", "Avoid mixing with retinol on same night"])
-                    },
-                    {
-                        order: 4,
-                        title: "Toner",
-                        content: "Apply hydrating toner to replenish moisture and prep skin for treatment products.",
-                        tips: JSON.stringify(["Can use multiple layers (7 skin method)", "Pat in gently", "Choose calming ingredients for nighttime"])
-                    },
-                    {
-                        order: 5,
-                        title: "Treatment Serum",
-                        content: "Apply targeted treatment like retinol, niacinamide, or peptides. These work best overnight when skin is in repair mode.",
-                        tips: JSON.stringify(["Introduce retinol slowly", "Use pea-sized amount", "Always start with lower concentrations"])
-                    },
-                    {
-                        order: 6,
-                        title: "Night Cream & Eye Cream",
-                        content: "Seal everything in with a rich night cream. Don't forget eye cream for the delicate eye area.",
-                        tips: JSON.stringify(["Night creams can be richer than day creams", "Tap eye cream gently", "Consider sleeping masks for extra hydration"])
-                    }
-                ]
-            }
-        },
-        {
-            title: "Hair Care Tips for Healthy, Shiny Hair",
-            slug: "hair-care-tips",
-            description: "Essential hair care tips and techniques for maintaining healthy, beautiful hair.",
-            excerpt: "Transform your hair with these expert-recommended care tips.",
-            content: `# Hair Care Tips
-
-Achieve salon-worthy hair at home with these essential care tips and techniques.
-
-## Understanding Your Hair
-
-Different hair types need different care. Learn what works for your unique hair texture and needs.`,
-            category: 'HAIRCARE',
-            tags: JSON.stringify(['haircare', 'tips', 'healthy-hair', 'shine']),
-            difficulty: 'BEGINNER',
-            readTime: 6,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1522338242992-e1a54906a8da',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-01-20')
-        },
-        {
-            title: "Beginner's Guide to Natural Makeup",
-            slug: "natural-makeup-guide",
-            description: "Learn how to create a beautiful, natural makeup look perfect for everyday wear.",
-            excerpt: "Master the no-makeup makeup look with this beginner-friendly guide.",
-            content: `# Natural Makeup Guide
-
-Create a fresh, natural makeup look that enhances your features without looking overdone.
-
-## The Natural Look Philosophy
-
-Natural makeup is about enhancing, not masking. The goal is to look like the best version of yourself.`,
-            category: 'MAKEUP_TUTORIAL',
-            tags: JSON.stringify(['makeup', 'natural', 'beginner', 'everyday']),
-            difficulty: 'BEGINNER',
-            readTime: 12,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1487412912498-0447578fcca8',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-01-22')
-        },
-        {
-            title: "How to Use Retinol: A Complete Guide",
-            slug: "retinol-usage-guide",
-            description: "Everything you need to know about using retinol safely and effectively.",
-            excerpt: "Navigate retinol with confidence using this comprehensive guide.",
-            content: `# Retinol Usage Guide
-
-Retinol is one of the most effective anti-aging ingredients available. Learn how to use it properly for maximum benefits and minimal irritation.
-
-## What is Retinol?
-
-Retinol is a vitamin A derivative that speeds up cell turnover, boosts collagen production, and helps treat acne and signs of aging.`,
-            category: 'PRODUCT_USAGE',
-            tags: JSON.stringify(['retinol', 'anti-aging', 'skincare', 'advanced']),
-            difficulty: 'INTERMEDIATE',
-            readTime: 15,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1556228852-80f3c6b3ca4b',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-01-25')
-        },
-        {
-            title: "5 Daily Wellness Habits for Glowing Skin",
-            slug: "daily-wellness-habits",
-            description: "Simple lifestyle habits that contribute to healthier, more radiant skin.",
-            excerpt: "Beauty starts from within - adopt these daily wellness habits.",
-            content: `# Daily Wellness Habits
-
-True beauty radiates from within. These daily wellness habits will transform your skin from the inside out.
-
-## The Skin-Health Connection
-
-Your skin is your body's largest organ and reflects your overall health. What you eat, drink, and how you live directly impacts your skin's appearance.`,
-            category: 'WELLNESS',
-            tags: JSON.stringify(['wellness', 'lifestyle', 'holistic', 'healthy-habits']),
-            difficulty: 'BEGINNER',
-            readTime: 7,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1506126613408-eca07ce68773',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-01-28')
-        },
-        {
-            title: "Nutrition for Healthy Skin and Hair",
-            slug: "nutrition-for-beauty",
-            description: "The best foods and nutrients for maintaining beautiful skin and hair from within.",
-            excerpt: "Feed your beauty with these nutrition essentials.",
-            content: `# Nutrition for Beauty
-
-What you eat directly impacts the health and appearance of your skin and hair. Discover the nutrients your body needs for natural beauty.
-
-## Beauty Foods
-
-Certain foods are packed with vitamins, minerals, and antioxidants that support skin and hair health.`,
-            category: 'NUTRITION',
-            tags: JSON.stringify(['nutrition', 'diet', 'healthy-skin', 'healthy-hair', 'vitamins']),
-            difficulty: 'BEGINNER',
-            readTime: 10,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1490645935967-10de6ba17061',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-02-01')
-        },
-        {
-            title: "10-Step Korean Skincare Routine",
-            slug: "korean-skincare-routine",
-            description: "Discover the famous 10-step Korean skincare routine for flawless, glowing skin.",
-            excerpt: "Unlock the secrets of Korean beauty with this detailed routine.",
-            content: `# Korean Skincare Routine
-
-The 10-step Korean skincare routine has taken the world by storm. Here's how to implement it for maximum results.
-
-## The K-Beauty Philosophy
-
-Korean skincare emphasizes prevention, hydration, and gentle care. It's about maintaining healthy skin,not just treating problems.`,
-            category: 'SKINCARE_ROUTINE',
-            tags: JSON.stringify(['korean-beauty', 'skincare', 'advanced', 'k-beauty']),
-            difficulty: 'ADVANCED',
-            readTime: 18,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1515377905703-c4788e51af15',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-02-03')
-        },
-        {
-            title: "Men's Grooming Essentials",
-            slug: "mens-grooming-essentials",
-            description: "A simple, effective grooming routine tailored for men's specific skincare needs.",
-            excerpt: "Level up your grooming game with this essential routine.",
-            content: `# Men's Grooming Essentials
-
-Men's skin has unique needs - it's thicker, oilier, and faces daily shaving. This routine addresses all of those concerns.
-
-## Men's Skin 101
-
-Men's skin is about 25% thicker than women's and produces more oil. It requires specific care approaches.`,
-            category: 'GROOMING_TIPS',
-            tags: JSON.stringify(['mens-grooming', 'skincare', 'beginner', 'essentials']),
-            difficulty: 'BEGINNER',
-            readTime: 8,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1621607512214-68297480165e',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-02-05')
-        },
-        {
-            title: "Building Your Minimalist Skincare Routine",
-            slug: "minimalist-skincare",
-            description: "Simplify your skincare with this effective minimalist routine - less is more.",
-            excerpt: "Achieve great skin with fewer products and a simpler routine.",
-            content: `# Minimalist Skincare
-
-You don't need 20 products for great skin. This minimalist routine focuses on the essentials for maximum impact.
-
-## Less is More
-
-A simplified routine is easier to maintain, costs less, and reduces the risk of product interactions and irritation.`,
-            category: 'SKINCARE_ROUTINE',
-            tags: JSON.stringify(['minimalist', 'simple', 'beginner-friendly', 'essentials']),
-            difficulty: 'BEGINNER',
-            readTime: 6,
-            thumbnailUrl: 'https://images.unsplash.com/photo-1556228994-30e95582e8ae',
-            images: JSON.stringify([]),
-            isPublished: true,
-            publishedAt: new Date('2026-02-08')
+    },
+    {
+        title: "Double Cleansing Method: The Korean Secret",
+        slug: "double-cleansing-method-korean-secret",
+        description: "Deep dive into the double cleansing method that changed the skincare game forever.",
+        content: "# Double Cleansing Guide\n\nDouble cleansing involves using an oil-based cleanser followed by a water-based one...",
+        excerpt: "Learn how to properly double cleanse for clear, congestion-free skin.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1552693673-1bf958298935?auto=format&fit=crop&q=80&w=1600",
+        images: JSON.stringify([]),
+        category: GuideCategory.SKINCARE_ROUTINE,
+        tags: JSON.stringify(["double cleansing", "k-beauty", "deep clean", "acne-prone"]),
+        difficulty: DifficultyLevel.INTERMEDIATE,
+        readTime: 6,
+        duration: 5,
+        isPublished: true,
+        isFeatured: true,
+        publishedAt: new Date('2025-10-20T18:00:00Z'),
+        steps: {
+            create: [
+                {
+                    order: 1,
+                    title: "Oil Cleansing",
+                    content: "Massage cleansing oil or balm onto DRY skin to dissolve makeup and sebum.",
+                    tips: JSON.stringify(["Must apply to dry skin", "Massage for at least 60 seconds"]),
+                },
+                {
+                    order: 2,
+                    title: "Emulsify",
+                    content: "Add a little water to turn the oil milky, then rinse.",
+                    tips: JSON.stringify(["Water should be lukewarm"]),
+                },
+                {
+                    order: 3,
+                    title: "Water-Based Cleanse",
+                    content: "Follow with a gel or foam cleanser to remove any residue.",
+                    tips: JSON.stringify(["Choose a gentle, low pH cleanser"]),
+                }
+            ]
         }
-    ];
+    },
+    {
+        title: "Natural Everyday Makeup Look in 10 Minutes",
+        slug: "natural-everyday-makeup-10-minutes",
+        description: "Quick and easy makeup routine for a fresh, polished look suitable for work or school.",
+        content: "# 10-Minute Makeup\n\nYou don't need an hour to look put together. Here is a quick routine...",
+        excerpt: "Look polished in just 10 minutes with this simple routine.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1516975080664-ed2fc6a32937?auto=format&fit=crop&q=80&w=1600",
+        category: GuideCategory.MAKEUP_TUTORIAL,
+        tags: JSON.stringify(["makeup", "natural look", "quick routine", "beginner"]),
+        difficulty: DifficultyLevel.BEGINNER,
+        readTime: 5,
+        duration: 10,
+        isPublished: true,
+        isFeatured: false,
+        publishedAt: new Date('2025-11-01T09:00:00Z'),
+        steps: {
+            create: [
+                {
+                    order: 1,
+                    title: "Even Out Skin Tone",
+                    content: "Apply tinted moisturizer or light foundation.",
+                    tips: JSON.stringify(["Use fingers for natural finish"]),
+                },
+                {
+                    order: 2,
+                    title: "Conceal",
+                    content: "Dab concealer only where needed (under eyes, blemishes).",
+                    tips: JSON.stringify(["Blend well margins"]),
+                },
+                {
+                    order: 3,
+                    title: "Brows and Mascara",
+                    content: "Fill in brows lightly and apply mascara to open up eyes.",
+                    tips: JSON.stringify(["Brush brows up for lifting effect"]),
+                },
+                {
+                    order: 4,
+                    title: "Cheeks and Lips",
+                    content: "Apply cream blush and a tinted lip balm.",
+                    tips: JSON.stringify(["Cream products look more natural"]),
+                }
+            ]
+        }
+    },
+    {
+        title: "Retinol Guide: How to Use and When",
+        slug: "retinol-guide-beginners",
+        description: "Everything you need to know about the gold standard anti-aging ingredient.",
+        content: "# Retinol 101\n\nRetinol is a Vitamin A derivative that speeds up cell turnover...",
+        excerpt: "Demystifying retinol: usage, benefits, and how to avoid irritation.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1617897903246-719242758050?auto=format&fit=crop&q=80&w=1600",
+        category: GuideCategory.PRODUCT_USAGE,
+        tags: JSON.stringify(["retinol", "anti-aging", "active ingredients", "night routine"]),
+        difficulty: DifficultyLevel.INTERMEDIATE,
+        readTime: 12,
+        duration: 0,
+        isPublished: true,
+        isFeatured: true,
+        publishedAt: new Date('2025-09-10T20:00:00Z'),
+        steps: {
+            create: [
+                {
+                    order: 1,
+                    title: "Start Slow",
+                    content: "Begin using retinol 2-3 times a week at night.",
+                    tips: JSON.stringify(["Consistency over intensity", "Pea-sized amount is enough"]),
+                },
+                {
+                    order: 2,
+                    title: "The Sandwich Method",
+                    content: "Apply moisturizer, then retinol, then moisturizer again to reduce irritation.",
+                    tips: JSON.stringify(["Great for sensitive skin"]),
+                },
+                {
+                    order: 3,
+                    title: "Always Use SPF",
+                    content: "Retinol makes skin more sensitive to sun. SPF is non-negotiable.",
+                    tips: JSON.stringify(["SPF 30 minimum", "Reapply every 2 hours"]),
+                }
+            ]
+        }
+    },
+    {
+        title: "How to Style Curly Hair: Complete Guide",
+        slug: "curly-hair-styling-guide",
+        description: "Embrace your natural texture with these styling tips for curly hair.",
+        content: "# Curly Hair Care\n\nCurly hair requires moisture and specific styling techniques...",
+        excerpt: "Define your curls and banish frizz with this routine.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1534120247760-c44c3e4a62f1?auto=format&fit=crop&q=80&w=1600",
+        category: GuideCategory.HAIRCARE,
+        tags: JSON.stringify(["curly hair", "styling", "frizz control", "hydration"]),
+        difficulty: DifficultyLevel.INTERMEDIATE,
+        readTime: 10,
+        duration: 30,
+        isPublished: true,
+        isFeatured: false,
+        publishedAt: new Date('2025-11-05T12:00:00Z'),
+        steps: {
+            create: [
+                {
+                    order: 1,
+                    title: "Apply Product to Wet Hair",
+                    content: "Apply leave-in conditioner and gel while hair is soaking wet.",
+                    tips: JSON.stringify(["Listen for the 'squish' sound"]),
+                },
+                {
+                    order: 2,
+                    title: "Scrunch",
+                    content: "Scrunch hair upwards towards scalp to encourage curl formation.",
+                    tips: JSON.stringify(["Don't rake fingers through after this"]),
+                },
+                {
+                    order: 3,
+                    title: "Diffuse or Air Dry",
+                    content: "Use a diffuser on low heat/speed or let air dry completely.",
+                    tips: JSON.stringify(["Don't touch hair while drying to avoid frizz"]),
+                }
+            ]
+        }
+    },
+    {
+        title: "Men's Grooming: Essential Daily Routine",
+        slug: "mens-grooming-essential-routine",
+        description: "Simple, effective daily grooming habits every man should adopt.",
+        content: "# Men's Grooming\n\nLooking good doesn't have to be complicated...",
+        excerpt: "The basics of men's skincare and grooming.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1549476464-37392a713ee4?auto=format&fit=crop&q=80&w=1600",
+        category: GuideCategory.GROOMING_TIPS,
+        tags: JSON.stringify(["men's grooming", "skincare", "basics", "daily routine"]),
+        difficulty: DifficultyLevel.BEGINNER,
+        readTime: 6,
+        duration: 10,
+        isPublished: true,
+        isFeatured: false,
+        publishedAt: new Date('2025-10-25T14:00:00Z'),
+        steps: {
+            create: [
+                {
+                    order: 1,
+                    title: "Cleanse",
+                    content: "Wash face morning and night to remove dirt and oil.",
+                    tips: JSON.stringify(["Don't use body wash on face"]),
+                },
+                {
+                    order: 2,
+                    title: "Moisturize with SPF",
+                    content: "Hydrate and protect in one step for the day.",
+                    tips: JSON.stringify(["SPF prevents premature aging"]),
+                },
+                {
+                    order: 3,
+                    title: "Beard Care",
+                    content: "Apply beard oil if you have facial hair to keep it soft.",
+                    tips: JSON.stringify(["Brush to distribute oil"]),
+                }
+            ]
+        }
+    },
+    {
+        title: "Smokey Eye Tutorial for Beginners",
+        slug: "smokey-eye-tutorial-beginners",
+        description: "Master the classic smokey eye look without looking like a panda.",
+        content: "...",
+        excerpt: "Step-by-step guide to a sultry smokey eye.",
+        thumbnailUrl: "https://images.unsplash.com/photo-1526045612212-70caf35c14df?auto=format&fit=crop&q=80&w=1600",
+        category: GuideCategory.MAKEUP_TUTORIAL,
+        tags: JSON.stringify(["makeup", "smokey eye", "evening look", "eye makeup"]),
+        difficulty: DifficultyLevel.INTERMEDIATE,
+        readTime: 8,
+        duration: 20,
+        isPublished: true,
+        isFeatured: true,
+        publishedAt: new Date('2025-12-01T17:00:00Z'),
+        steps: {
+            create: [
+                { order: 1, title: "Prime Lids", content: "Apply eye primer.", tips: "[]" },
+                { order: 2, title: "Base Shadow", content: "Apply medium shade all over lid.", tips: "[]" },
+                { order: 3, title: "Darken Outer V", content: "Apply darker shade to outer corner.", tips: "[]" }
+            ]
+        }
+    }
+];
+
+export async function seedGuides() {
+    console.log('🌱 Seeding guides...');
+
+    // Clean up existing guides (optional, be careful in prod)
+    // await prisma.guide.deleteMany({}); 
 
     for (const guide of guides) {
-        await prisma.guide.create({
-            data: guide as any
-        });
-        console.log(`✅ Created guide: ${guide.title}`);
+        const exists = await prisma.guide.findUnique({ where: { slug: guide.slug } });
+        if (!exists) {
+            await prisma.guide.create({
+                data: guide,
+            });
+            // console.log(`Created guide: ${guide.title}`);
+        } else {
+            // console.log(`Guide already exists: ${guide.title}`);
+        }
     }
 
-    console.log('✨ Guides seeded successfully!');
+    console.log('✅ Guides seeded');
 }
-
-// Run seed
-seedGuides()
-    .catch((e) => {
-        console.error('❌ Error seeding guides:', e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });

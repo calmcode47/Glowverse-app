@@ -1,11 +1,15 @@
-// Jest setup file for initializing test environment
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 beforeAll(async () => {
-    console.log('🧪 Setting up test environment...');
-    // Additional global setup if needed
+    // Setup test database
+    console.log('Setting up test database...');
 });
 
 afterAll(async () => {
-    console.log('🧹 Cleaning up test environment...');
-    // Additional global cleanup if needed
+    // Disconnect from database
+    await prisma.$disconnect();
 });
+
+export { prisma };

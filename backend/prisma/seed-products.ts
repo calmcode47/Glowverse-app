@@ -1,344 +1,308 @@
-/// <reference types="node" />
-import { PrismaClient, ProductCategory } from "@prisma/client";
+
+import { PrismaClient, ProductCategory, Prisma } from '@prisma/client';
 
 const prisma = new PrismaClient();
 
-/**
- * Sample product data for e-commerce catalog
- */
-const sampleProducts = [
-    {
-        name: "Hydrating Facial Serum",
-        description: "A lightweight, fast-absorbing serum that delivers intense hydration and helps restore skin's moisture barrier. Perfect for all skin types.",
-        brand: "GlowEssence",
-        category: ProductCategory.SKINCARE,
-        subCategory: "Serum",
-        price: 45.99,
-        compareAtPrice: 59.99,
-        stock: 150,
-        lowStockThreshold: 20,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800",
-            "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1620916566398-39f1143ab7be?w=400",
-        tags: JSON.stringify(["hydrating", "serum", "anti-aging", "hyaluronic acid"]),
-        ingredients: "Water, Hyaluronic Acid, Glycerin, Niacinamide, Vitamin B5, Allantoin",
-        benefits: JSON.stringify([
-            "Deep hydration for up to 24 hours",
-            "Reduces fine lines and wrinkles",
-            "Improves skin texture",
-            "Suitable for sensitive skin"
-        ]),
-        howToUse: "Apply 2-3 drops to clean, dry face morning and evening. Gently massage until fully absorbed. Follow with moisturizer.",
-        isActive: true,
-        isFeatured: true,
-        rating: 4.7,
-        reviewCount: 342,
-        perfectCorpProductId: "PC-SER-001"
-    },
-    {
-        name: "Matte Finish Foundation",
-        description: "Long-lasting, full coverage foundation with a natural matte finish. Controls shine and minimizes pores for a flawless look.",
-        brand: "BeautyPro",
-        category: ProductCategory.MAKEUP,
-        subCategory: "Foundation",
-        price: 38.50,
-        compareAtPrice: null,
-        stock: 200,
-        lowStockThreshold: 30,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800",
-            "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=400",
-        tags: JSON.stringify(["foundation", "matte", "full coverage", "long-lasting", "pore minimizing"]),
-        ingredients: "Dimethicone, Water, Titanium Dioxide, Iron Oxides, Talc, SPF 15",
-        benefits: JSON.stringify([
-            "Full coverage that lasts 16+ hours",
-            "Oil-free and non-comedogenic",
-            "SPF 15 sun protection",
-            "Available in 20 shades"
-        ]),
-        howToUse: "Shake well. Apply with brush, sponge, or fingers. Blend outward from center of face. Build coverage as desired.",
-        isActive: true,
-        isFeatured: true,
-        rating: 4.5,
-        reviewCount: 589,
-        perfectCorpProductId: "PC-FND-002"
-    },
-    {
-        name: "Velvet Matte Lipstick",
-        description: "Rich, highly pigmented lipstick with a luxurious velvet matte finish. Comfortable wear without drying lips.",
-        brand: "VividColor",
-        category: ProductCategory.MAKEUP,
-        subCategory: "Lipstick",
-        price: 24.00,
-        compareAtPrice: 32.00,
-        stock: 300,
-        lowStockThreshold: 50,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800",
-            "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1586495777744-4413f21062fa?w=400",
-        tags: JSON.stringify(["lipstick", "matte", "long-lasting", "vivid color", "vegan"]),
-        ingredients: "Ricinus Communis Seed Oil, Candelilla Wax, Vitamin E, Natural Pigments",
-        benefits: JSON.stringify([
-            "Intense color payoff in one swipe",
-            "Comfortable matte finish",
-            "Infused with vitamin E",
-            "Vegan and cruelty-free"
-        ]),
-        howToUse: "Apply directly to lips starting from the center and working outward. For precise application, use a lip liner first.",
-        isActive: true,
-        isFeatured: false,
-        rating: 4.8,
-        reviewCount: 1203,
-        perfectCorpProductId: "PC-LIP-003"
-    },
-    {
-        name: "Revitalizing Hair Oil",
-        description: "Nourishing hair oil blend that repairs damage, adds shine, and tames frizz. Suitable for all hair types.",
-        brand: "NatureLocks",
-        category: ProductCategory.HAIRCARE,
-        subCategory: "Hair Oil",
-        price: 29.99,
-        compareAtPrice: null,
-        stock: 120,
-        lowStockThreshold: 15,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=800",
-            "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1608248597279-f99d160bfcbc?w=400",
-        tags: JSON.stringify(["hair oil", "argan oil", "frizz control", "shine", "repair"]),
-        ingredients: "Argan Oil, Coconut Oil, Jojoba Oil, Vitamin E, Rosemary Extract",
-        benefits: JSON.stringify([
-            "Deeply nourishes and repairs hair",
-            "Adds natural shine without greasiness",
-            "Controls frizz for up to 48 hours",
-            "Heat protection up to 450°F"
-        ]),
-        howToUse: "Apply 2-4 drops to damp or dry hair, focusing on mid-lengths to ends. Style as usual. Can be used daily.",
-        isActive: true,
-        isFeatured: false,
-        rating: 4.6,
-        reviewCount: 427,
-        perfectCorpProductId: null
-    },
-    {
-        name: "Luxury Parfum - Midnight Rose",
-        description: "An intoxicating blend of rose, vanilla, and musk. Long-lasting eau de parfum with sophisticated fragrance profile.",
-        brand: "Essence Royale",
-        category: ProductCategory.FRAGRANCE,
-        subCategory: "Eau de Parfum",
-        price: 89.00,
-        compareAtPrice: 120.00,
-        stock: 75,
-        lowStockThreshold: 10,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800",
-            "https://images.unsplash.com/photo-1541643600914-78b084683601?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1541643600914-78b084683601?w=400",
-        tags: JSON.stringify(["perfume", "fragrance", "rose", "luxury", "long-lasting"]),
-        ingredients: "Alcohol Denat., Fragrance, Water, Essential Oils",
-        benefits: JSON.stringify([
-            "8-10 hour lasting power",
-            "Elegant and sophisticated scent",
-            "Perfect for evening wear",
-            "Beautifully packaged gift-ready bottle"
-        ]),
-        howToUse: "Spray on pulse points: wrists, neck, behind ears. For best results, apply to moisturized skin.",
-        isActive: true,
-        isFeatured: true,
-        rating: 4.9,
-        reviewCount: 156,
-        perfectCorpProductId: null
-    },
-    {
-        name: "Professional Makeup Brush Set",
-        description: "Complete 12-piece professional makeup brush set with ultra-soft synthetic bristles. Includes storage case.",
-        brand: "BeautyPro",
-        category: ProductCategory.TOOLS,
-        subCategory: "Brush Set",
-        price: 64.99,
-        compareAtPrice: 89.99,
-        stock: 95,
-        lowStockThreshold: 15,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800",
-            "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1512496015851-a90fb38ba796?w=400",
-        tags: JSON.stringify(["makeup brushes", "professional", "brush set", "vegan", "tools"]),
-        ingredients: "Synthetic Fibers, Wood Handles, Aluminum Ferrules",
-        benefits: JSON.stringify([
-            "12 essential brushes for complete looks",
-            "Ultra-soft vegan bristles",
-            "Durable and easy to clean",
-            "Includes travel-friendly storage case"
-        ]),
-        howToUse: "Use each brush for its designated purpose. Clean regularly with brush cleanser. Store in case when traveling.",
-        isActive: true,
-        isFeatured: false,
-        rating: 4.7,
-        reviewCount: 284,
-        perfectCorpProductId: null
-    },
-    {
-        name: "Collagen Boost Supplements",
-        description: "Premium marine collagen peptides for healthy skin, hair, and nails. Flavorless powder easily mixes in beverages.",
-        brand: "VitalGlow",
-        category: ProductCategory.SUPPLEMENTS,
-        subCategory: "Collagen",
-        price: 52.00,
-        compareAtPrice: null,
-        stock: 180,
-        lowStockThreshold: 25,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800",
-            "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1556228720-195a672e8a03?w=400",
-        tags: JSON.stringify(["supplements", "collagen", "skin health", "hair growth", "beauty from within"]),
-        ingredients: "Marine Collagen Peptides (Type I), Vitamin C, Hyaluronic Acid, Biotin",
-        benefits: JSON.stringify([
-            "Supports skin elasticity and hydration",
-            "Promotes healthy hair and nail growth",
-            "Reduces fine lines and wrinkles",
-            "Highly bioavailable marine collagen"
-        ]),
-        howToUse: "Mix one scoop (10g) in water, coffee, smoothie, or juice daily. Best taken consistently for 8-12 weeks for visible results.",
-        isActive: true,
-        isFeatured: false,
-        rating: 4.4,
-        reviewCount: 512,
-        perfectCorpProductId: null
-    },
-    {
-        name: "Vitamin C Brightening Cream",
-        description: "Powerful brightening moisturizer with 15% Vitamin C and niacinamide. Evens skin tone and boosts radiance.",
-        brand: "GlowEssence",
-        category: ProductCategory.SKINCARE,
-        subCategory: "Moisturizer",
-        price: 54.99,
-        compareAtPrice: 68.00,
-        stock: 110,
-        lowStockThreshold: 20,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800",
-            "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1556228578-8c89e6adf883?w=400",
-        tags: JSON.stringify(["vitamin c", "brightening", "moisturizer", "anti-aging", "radiance"]),
-        ingredients: "15% L-Ascorbic Acid, Niacinamide, Hyaluronic Acid, Ferulic Acid, Vitamin E",
-        benefits: JSON.stringify([
-            "Visibly brightens and evens skin tone",
-            "Reduces dark spots and hyperpigmentation",
-            "Boosts collagen production",
-            "Provides antioxidant protection"
-        ]),
-        howToUse: "Apply to clean face morning and evening. Allow to absorb before applying sunscreen (AM) or night cream (PM).",
-        isActive: true,
-        isFeatured: true,
-        rating: 4.6,
-        reviewCount: 678,
-        perfectCorpProductId: "PC-CRM-004"
-    },
-    {
-        name: "Waterproof Gel Eyeliner",
-        description: "Long-wearing gel eyeliner with intense black pigment. Waterproof and smudge-proof formula lasts all day.",
-        brand: "VividColor",
-        category: ProductCategory.MAKEUP,
-        subCategory: "Eyeliner",
-        price: 18.50,
-        compareAtPrice: null,
-        stock: 250,
-        lowStockThreshold: 40,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1631214540787-40daa2336ea5?w=800",
-            "https://images.unsplash.com/photo-1631214540787-40daa2336ea5?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1631214540787-40daa2336ea5?w=400",
-        tags: JSON.stringify(["eyeliner", "gel", "waterproof", "long-lasting", "black"]),
-        ingredients: "Cyclopentasiloxane, Trimethylsiloxysilicate, Iron Oxides, Carnauba Wax",
-        benefits: JSON.stringify([
-            "24-hour waterproof wear",
-            "Glides on smoothly without tugging",
-            "Intense black color payoff",
-            "Comes with precision brush"
-        ]),
-        howToUse: "Use included brush to apply along lash line. Can create both thin and dramatic looks. Remove with oil-based makeup remover.",
-        isActive: true,
-        isFeatured: false,
-        rating: 4.5,
-        reviewCount: 391,
-        perfectCorpProductId: "PC-EYE-005"
-    },
-    {
-        name: "Repairing Hair Mask",
-        description: "Intensive deep conditioning treatment for damaged hair. Restores moisture, strength, and shine in just 5 minutes.",
-        brand: "NatureLocks",
-        category: ProductCategory.HAIRCARE,
-        subCategory: "Hair Mask",
-        price: 34.00,
-        compareAtPrice: 42.00,
-        stock: 140,
-        lowStockThreshold: 20,
-        images: JSON.stringify([
-            "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=800",
-            "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=800&q=alt"
-        ]),
-        thumbnailUrl: "https://images.unsplash.com/photo-1571875257727-256c39da42af?w=400",
-        tags: JSON.stringify(["hair mask", "deep conditioning", "repair", "damaged hair", "keratin"]),
-        ingredients: "Keratin, Argan Oil, Shea Butter, Coconut Oil, Pro-Vitamin B5",
-        benefits: JSON.stringify([
-            "Repairs damage from heat and color",
-            "Restores moisture and elasticity",
-            "Works in just 5 minutes",
-            "Leaves hair soft and manageable"
-        ]),
-        howToUse: "After shampooing, apply generously to damp hair. Leave for 5-10 minutes. Rinse thoroughly. Use 1-2 times per week.",
-        isActive: true,
-        isFeatured: false,
-        rating: 4.8,
-        reviewCount: 724,
-        perfectCorpProductId: null
-    }
+const brands = [
+    "GlowLab", "PureBeauty", "LuxeSkin", "RadiantLife", "BeautyEssence",
+    "NaturalGlow", "VitalityBeauty", "PerfectSkin", "EssenceBeauty", "LuminousLife"
 ];
 
-async function main() {
-    console.log("🌱 Starting seed...");
+const getRandomBrand = () => brands[Math.floor(Math.random() * brands.length)];
+const getRandomPrice = (min: number, max: number) => Number((Math.random() * (max - min) + min).toFixed(2));
+const getRandomInt = (min: number, max: number) => Math.floor(Math.random() * (max - min + 1)) + min;
+const getRandomDate = (start: Date, end: Date) => new Date(start.getTime() + Math.random() * (end.getTime() - start.getTime()));
 
-    // Clear existing product data (optional - comment out if you want to keep existing data)
-    console.log("🗑️  Clearing existing product data...");
-    await prisma.orderItem.deleteMany({});
-    await prisma.order.deleteMany({});
-    await prisma.cartItem.deleteMany({});
-    await prisma.cart.deleteMany({});
-    await prisma.product.deleteMany({});
+const sixMonthsAgo = new Date();
+sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
 
-    // Seed products
-    console.log("📦 Seeding products...");
-    for (const productData of sampleProducts) {
-        const slug = productData.name.toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
-        const product = await prisma.product.create({
-            data: { ...productData, slug } as any
-        });
-        console.log(`✅ Created product: ${product.name} (${product.category})`);
+// Helper to create product data
+const createProduct = (
+    name: string,
+    category: ProductCategory,
+    subCategory: string,
+    priceMin: number,
+    priceMax: number,
+    description: string,
+    shortDesc: string,
+    index: number,
+    tags: string[],
+    benefits: string[],
+    howToUse: string,
+    ingredients: string = "Water, Glycerin, Natural Extracts"
+): Prisma.ProductCreateInput => {
+    const brand = getRandomBrand();
+    const slug = name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
+    const price = getRandomPrice(priceMin, priceMax);
+    const compareAtPrice = Math.random() > 0.6 ? Number((price * 1.2).toFixed(2)) : null; // 40% chance of discount
+    const sku = `SKU-${category.substring(0, 4)}-${index.toString().padStart(3, '0')}`;
+
+    // Image placeholders
+    const images = [
+        `https://picsum.photos/seed/${slug}-1/800/800`,
+        `https://picsum.photos/seed/${slug}-2/800/800`,
+        `https://picsum.photos/seed/${slug}-3/800/800`,
+        `https://picsum.photos/seed/${slug}-4/800/800`
+    ];
+
+    return {
+        name,
+        slug,
+        description,
+        shortDescription: shortDesc,
+        brand,
+        category,
+        subCategory,
+        price,
+        compareAtPrice,
+        currency: "USD",
+        stock: getRandomInt(0, 200),
+        lowStockThreshold: 10,
+        sku,
+        weight: new Prisma.Decimal(getRandomInt(50, 500) / 1000), // kg
+        dimensions: JSON.stringify({ length: getRandomInt(5, 15), width: getRandomInt(5, 15), height: getRandomInt(10, 20), unit: "cm" }),
+        images: JSON.stringify(images),
+        thumbnailUrl: `https://picsum.photos/seed/${slug}-1/400/400`,
+        tags: JSON.stringify(tags),
+        ingredients,
+        benefits: JSON.stringify(benefits),
+        howToUse,
+        isActive: true,
+        isFeatured: Math.random() > 0.8, // ~20% featured
+        isNewArrival: Math.random() > 0.7, // ~30% new arrival
+        isBestseller: Math.random() > 0.8, // ~20% bestseller
+        rating: new Prisma.Decimal((Math.random() * 1.5 + 3.5).toFixed(1)), // 3.5 - 5.0
+        reviewCount: getRandomInt(0, 500),
+        viewCount: getRandomInt(100, 5000),
+        purchaseCount: getRandomInt(0, 1000),
+        publishedAt: getRandomDate(sixMonthsAgo, new Date()),
+        perfectCorpProductId: category === 'MAKEUP' ? `PC-${subCategory.toUpperCase()}-${index}` : null,
+        metadata: JSON.stringify({
+            awards: Math.random() > 0.9 ? ["Best of Beauty 2025"] : [],
+            certifications: ["Cruelty-Free", "Vegan"]
+        })
+    };
+};
+
+export async function seedProducts() {
+    console.log('🌱 Seeding products...');
+
+    const products: Prisma.ProductCreateInput[] = [];
+
+    // ==========================================
+    // 1. SKINCARE (15 products)
+    // ==========================================
+    const skincareItems = [
+        { name: "Hydrating Hyaluronic Serum", sub: "Serums", desc: "Deep hydration for thirsty skin.", short: "Plumping serum." },
+        { name: "Brightening Vitamin C Cream", sub: "Moisturizers", desc: "Radiance boosting daily moisturizer.", short: "Glow moisturizer." },
+        { name: "Gentle Foaming Cleanser", sub: "Cleansers", desc: "Removes impurities without stripping.", short: "Daily cleanser." },
+        { name: "Retinol Night Repair Oil", sub: "Treatments", desc: "Target fine lines while you sleep.", short: "Anti-aging oil." },
+        { name: "Soothing Aloe Vera Gel", sub: "Treatments", desc: "Calms irritated skin instantly.", short: "Soothing gel." },
+        { name: "Exfoliating AHA Toner", sub: "Toners", desc: "Refines texture and minimizes pores.", short: "Resurfacing toner." },
+        { name: "Niacinamide Pore Serum", sub: "Serums", desc: "Controls oil and reduces pore size.", short: "Pore minimizing." },
+        { name: "Rich Peptide Eye Cream", sub: "Eye Care", desc: "Firms and brightens delicate eye area.", short: "Firming eye cream." },
+        { name: "Daily SPF 50 Sunscreen", sub: "Sun Care", desc: "Broad spectrum protection with no cast.", short: "Invisible SPF." },
+        { name: "Clay Detox Mask", sub: "Masks", desc: "Purifies pores and absorbs excess oil.", short: "Detox mask." },
+        { name: "Hydrating Sheet Mask Pack", sub: "Masks", desc: "Instant moisture boost for glowing skin.", short: "Sheet masks." },
+        { name: "Rose Water Mist", sub: "Toners", desc: "Refreshing hydration on the go.", short: "Facial mist." },
+        { name: "Balancing Jojoba Oil", sub: "Oils", desc: "Regulates sebum production naturally.", short: "Balancing oil." },
+        { name: "Anti-Aging Neck Cream", sub: "Treatments", desc: "Targets sagging and wrinkles on neck.", short: "Neck firming." },
+        { name: "Blemish Spot Treatment", sub: "Treatments", desc: "Fast acting gel for breakouts.", short: "Acne spot treatment." },
+    ];
+
+    skincareItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.SKINCARE,
+            item.sub,
+            15.99, 79.99,
+            `${item.desc} Formulated with clinically proven ingredients to deliver visible results.`,
+            item.short,
+            i + 100,
+            ["skincare", "hydrating", "anti-aging"],
+            ["Hydrates skin", "Improves texture", "Radiant finish"],
+            "Apply to clean face morning and night."
+        ));
+    });
+
+    // ==========================================
+    // 2. MAKEUP (15 products)
+    // ==========================================
+    const makeupItems = [
+        { name: "Velvet Matte Lipstick in Ruby Red", sub: "Lips", desc: "Long-lasting matte color." },
+        { name: "HD Foundation in Natural Beige", sub: "Face", desc: "Full coverage with typical finish." },
+        { name: "Volumizing Mascara Black", sub: "Eyes", desc: "Dramatic volume without clumps." },
+        { name: "Liquid Eyeliner Pen", sub: "Eyes", desc: "Precise cat eyes made easy." },
+        { name: "Cream Blush in Peachy Glow", sub: "Cheeks", desc: "Dewy flush of color." },
+        { name: "Setting Powder Translucent", sub: "Face", desc: "Locks makeup for 12 hours." },
+        { name: "Eyeshadow Palette Nude", sub: "Eyes", desc: "Daily neutrals for every eye color." },
+        { name: "Highlighter Stick Champagne", sub: "Face", desc: "Instant glow on high points." },
+        { name: "Tinted Lip Balm Rose", sub: "Lips", desc: "Hydration with a hint of tint." },
+        { name: "Brow Gel Clear", sub: "Brows", desc: "Tames unruly brows all day." },
+        { name: "Bronzer Powder Sunkissed", sub: "Cheeks", desc: "Warmth for a healthy glow." },
+        { name: "Concealer Wand Light", sub: "Face", desc: "Hides dark circles and blemishes." },
+        { name: "Lip Gloss Sparkling Clear", sub: "Lips", desc: "High shine without stickiness." },
+        { name: "Primer Pore Blurring", sub: "Face", desc: "Smooth canvas for makeup application." },
+        { name: "Setting Spray Dewy Finish", sub: "Face", desc: "Hydrating mist to set makeup." },
+    ];
+
+    makeupItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.MAKEUP,
+            item.sub,
+            89.99, 49.99,
+            `${item.desc} High performance formula for professional results.`,
+            item.desc,
+            i + 200,
+            ["makeup", "long-wearing", "cruelty-free"],
+            ["High pigment", "Long lasting", "Comfortable wear"],
+            "Apply as desired."
+        ));
+    });
+
+    // ==========================================
+    // 3. HAIRCARE (10 products)
+    // ==========================================
+    const haircareItems = [
+        { name: "Strengthening Shampoo", sub: "Shampoo", desc: "Fortifies weak strands." },
+        { name: "Hydrating Conditioner", sub: "Conditioner", desc: "Detangles and moisturizes." },
+        { name: "Repair Hair Mask", sub: "Treatment", desc: "Intensive repair for damaged hair." },
+        { name: "Argan Hair Oil", sub: "Treatment", desc: "Frizz control and shine." },
+        { name: "Volumizing Mousse", sub: "Styling", desc: "Lift and body for fine hair." },
+        { name: "Heat Protectant Spray", sub: "Styling", desc: "Shields hair up to 450°F." },
+        { name: "Dry Shampoo Fresh", sub: "Styling", desc: "Refreshes hair between washes." },
+        { name: "Curl Defining Cream", sub: "Styling", desc: "Bouncy curls without crunch." },
+        { name: "Scalp Scrub Detox", sub: "Treatment", desc: "Removes buildup promoting growth." },
+        { name: "Leave-In Conditioner Spray", sub: "Conditioner", desc: "Weightless moisture and protection." },
+    ];
+
+    haircareItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.HAIRCARE,
+            item.sub,
+            12.99, 39.99,
+            `${item.desc} Salon quality results at home.`,
+            item.desc,
+            i + 300,
+            ["haircare", "strengthening", "shine"],
+            ["Strengthens hair", "Adds shine", "Protects color"],
+            "Massage into wet hair or apply to damp hair."
+        ));
+    });
+
+    // ==========================================
+    // 4. BODYCARE (5 products)
+    // ==========================================
+    const bodycareItems = [
+        { name: "Shea Butter Body Lotion", sub: "Moisturizers" },
+        { name: "Coffee Body Scrub", sub: "Exfoliators" },
+        { name: "Lavender Body Oil", sub: "Oils" },
+        { name: "Hand Cream Intensive", sub: "Hands" },
+        { name: "Foot Repair Balm", sub: "Feet" },
+    ];
+
+    bodycareItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.BODYCARE,
+            item.sub,
+            14.99, 34.99,
+            "Nourishing body care for soft, smooth skin.",
+            "Daily body care.",
+            i + 400,
+            ["bodycare", "moisturizing", "softening"],
+            ["Deep hydration", "Smooths skin", "Absorbs quickly"],
+            "Apply liberally to body."
+        ));
+    });
+
+    // ==========================================
+    // 5. FRAGRANCE (3 products)
+    // ==========================================
+    const fragranceItems = [
+        { name: "Eau de Parfum Floral Dream", sub: "Perfume" },
+        { name: "Eau de Toilette Ocean Breeze", sub: "Cologne" },
+        { name: "Solid Perfume Vanilla", sub: "Perfume" },
+    ];
+
+    fragranceItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.FRAGRANCE,
+            item.sub,
+            49.99, 89.99,
+            "Captivating distinctive scent.",
+            "Signature fragrance.",
+            i + 500,
+            ["fragrance", "long-lasting", "luxury"],
+            ["Long lasting scent", "Unique blend", "Travel friendly"],
+            "Spray on pulse points."
+        ));
+    });
+
+    // ==========================================
+    // 6. TOOLS (5 products)
+    // ==========================================
+    const toolItems = [
+        { name: "Rose Quartz Roller", sub: "Face Tools" },
+        { name: "Makeup Brush Set", sub: "Brushes" },
+        { name: "Konjac Sponge", sub: "Sponges" },
+        { name: "Eyelash Curler", sub: "Tools" },
+        { name: "Silk Sleep Mask", sub: "Accessories" },
+    ];
+
+    toolItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.TOOLS,
+            item.sub,
+            9.99, 69.99,
+            "Essential beauty tool for your routine.",
+            "Beauty essential.",
+            i + 600,
+            ["tools", "beauty", "accessory"],
+            ["Improves application", "Enhances routine", "Durable quality"],
+            "Use as directed."
+        ));
+    });
+
+    // ==========================================
+    // 7. SUPPLEMENTS (3 products)
+    // ==========================================
+    const supplementItems = [
+        { name: "Collagen Peptides Powder", sub: "Collagen" },
+        { name: "Hair & Nail Vitamins", sub: "Vitamins" },
+        { name: "Glow Skin Gummies", sub: "Vitamins" },
+    ];
+
+    supplementItems.forEach((item, i) => {
+        products.push(createProduct(
+            item.name,
+            ProductCategory.SUPPLEMENTS,
+            item.sub,
+            24.99, 54.99,
+            "Beauty from within.",
+            "Daily supplement.",
+            i + 700,
+            ["wellness", "supplements", "beauty-from-within"],
+            ["Supports skin health", "Strengthens hair/nails", "Tasty & easy"],
+            "Take daily with water." // simplistic
+        ));
+    });
+
+    // Insert into DB
+    console.log(`Creating ${products.length} products...`);
+
+    for (const product of products) {
+        const exists = await prisma.product.findUnique({ where: { slug: product.slug } });
+        if (!exists) {
+            await prisma.product.create({ data: product });
+        }
     }
 
-    console.log("✨ Seed completed successfully!");
-    console.log(`📊 Total products created: ${sampleProducts.length}`);
+    console.log(`✅ Created ${products.length} products`);
+    return products.length;
 }
 
-main()
-    .catch((e) => {
-        console.error("❌ Error seeding database:", e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });

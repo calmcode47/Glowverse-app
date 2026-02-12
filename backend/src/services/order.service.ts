@@ -1,408 +1,286 @@
-import prisma from "@config/database";
-import { NotFoundError, AppError } from "@utils/errors";
-import NotificationService from "./notification.service";
-import PromotionService from "./promotion.service";
-import ReferralService from "./referral.service";
-import {
-    CreateOrderDto,
-    OrderStatus,
-    UpdateOrderStatusDto,
-    OrderFilters,
-    OrderStatistics,
-    PaginatedResponse
-} from "../types/ecommerce.types";
+import { PrismaClient, Order, OrderItem, OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
+import { AppError } from '../utils/errors';
+import { CartService } from './cart.service';
+import { NotificationService } from './notification.service';
 
-/**
- * Order Service
- * Handles order creation, management, and status updates
- */
-class OrderService {
+const prisma = new PrismaClient();
+
+export interface Address {
+    fullName: string;
+    email?: string;
+    phone: string;
+    addressLine1: string;
+    addressLine2?: string;
+    city: string;
+    state: string;
+    postalCode: string;
+    country: string;
+}
+
+export interface CreateOrderDto {
+    shippingAddress: Address;
+    billingAddress?: Address;
+    paymentMethod: string;
+    notes?: string;
+    promotionCode?: string;
+}
+
+export interface OrderWithItems extends Order {
+    items: OrderItem[];
+}
+
+export class OrderService {
     /**
-     * Generate a unique order number
-     * Format: ORD-YYYYMMDD-XXXX
+     * Create a new order from user's cart
      */
-    private generateOrderNumber(): string {
-        const date = new Date();
-        const year = date.getFullYear();
-        const month = String(date.getMonth() + 1).padStart(2, '0');
-        const day = String(date.getDate()).padStart(2, '0');
-        const random = Math.random().toString(36).substring(2, 6).toUpperCase();
-
-        return `ORD-${year}${month}${day}-${random}`;
-    }
-
-    /**
-     * Create an order from user's cart
-     */
-    async createOrder(userId: string, orderData: CreateOrderDto): Promise<any> {
-        const { shippingAddress, billingAddress, paymentMethod, notes, promotionCode } = orderData;
-
-        // Get user's cart with items
-        const cart = await prisma.cart.findUnique({
-            where: { userId },
-            include: {
-                items: {
-                    include: {
-                        product: true
-                    }
-                }
-            }
-        });
-
-        if (!cart || cart.items.length === 0) {
-            throw new AppError("Cart is empty", 400);
+    static async createOrder(userId: string, orderData: CreateOrderDto): Promise<Order> {
+        // 1. Validate cart and stock
+        const cartValidation = await CartService.validateCart(userId);
+        if (!cartValidation.valid) {
+            throw new AppError('Cart contains invalid items. Please review your cart.', 400, { issues: cartValidation.issues });
         }
 
-        // Verify all items have sufficient stock
-        for (const item of cart.items) {
-            if (!item.product.isActive) {
-                throw new AppError(`Product "${item.product.name}" is no longer available`, 400);
-            }
-            if (item.product.stock < item.quantity) {
-                throw new AppError(
-                    `Insufficient stock for "${item.product.name}". Only ${item.product.stock} available`,
-                    400
-                );
-            }
+        const cart = await CartService.getOrCreateCart(userId);
+        if (cart.items.length === 0) {
+            throw new AppError('Cart is empty', 400);
         }
 
-        // Calculate totals
-        const subtotal = cart.items.reduce(
-            (sum: number, item: any) => sum + (item.price * item.quantity),
-            0
-        );
-        const tax = subtotal * 0.08; // 8% tax
-        const shipping = subtotal > 50 ? 0 : 9.99; // Free shipping over $50
-        let discount = 0;
-        let promotionId: string | undefined;
+        // 2. Calculate Totals
+        const subtotal = Number(cart.subtotal);
+        const tax = subtotal * 0.08; // 8% tax rule
+        const shippingCost = subtotal >= 50 ? 0 : 5.99;
+        const discount = 0; // TODO: Implement promotion logic
+        const total = subtotal + tax + shippingCost - discount;
 
-        // Validate and apply promotion code if provided
-        if (promotionCode) {
-            const validation = await PromotionService.validatePromotion(
-                promotionCode,
-                userId,
-                {
-                    subtotal,
-                    items: cart.items.map(item => ({
-                        productId: item.productId,
-                        category: item.product.category
-                    }))
-                }
-            );
-
-            if (validation.isValid && validation.discount) {
-                discount = validation.discount;
-                promotionId = validation.promotion.id;
-            }
-        }
-
-        const total = subtotal + tax + shipping - discount;
-
-        // Generate unique order number
+        // 3. Generate Order Number
         const orderNumber = this.generateOrderNumber();
 
-        // Create order with items in a transaction-like operation
-        const order = await prisma.order.create({
-            data: {
-                orderNumber,
-                userId,
-                status: OrderStatus.PENDING,
-                subtotal,
-                tax,
-                shippingCost: shipping,
-                discount,
-                total,
-                shippingAddress: JSON.stringify(shippingAddress),
-                billingAddress: JSON.stringify(billingAddress || shippingAddress),
-                paymentMethod,
-                notes,
-                items: {
-                    create: cart.items.map((item: any) => ({
-                        product: { connect: { id: item.productId } },
-                        productName: item.product.name,
-                        productImage: item.product.thumbnailUrl || '',
-                        quantity: item.quantity,
-                        price: item.price,
-                        total: item.price * item.quantity
-                    }))
-                }
-            },
-            include: {
-                items: {
-                    include: {
-                        product: true
-                    }
-                }
-            }
-        });
-
-        // Reduce product stock
-        for (const item of cart.items) {
-            await prisma.product.update({
-                where: { id: item.productId },
+        // 4. Create Transaction
+        const order = await prisma.$transaction(async (tx) => {
+            // Create Order
+            const order = await tx.order.create({
                 data: {
-                    stock: {
-                        decrement: item.quantity
+                    userId,
+                    orderNumber,
+                    status: OrderStatus.PENDING,
+                    paymentStatus: PaymentStatus.PENDING, // Assume standard flow
+                    subtotal: new Prisma.Decimal(subtotal),
+                    tax: new Prisma.Decimal(tax),
+                    shippingCost: new Prisma.Decimal(shippingCost),
+                    discount: new Prisma.Decimal(discount),
+                    total: new Prisma.Decimal(total),
+                    shippingAddress: JSON.stringify(orderData.shippingAddress),
+                    billingAddress: orderData.billingAddress ? JSON.stringify(orderData.billingAddress) : null,
+                    paymentMethod: orderData.paymentMethod,
+                    notes: orderData.notes,
+                    items: {
+                        create: cart.items.map(item => ({
+                            productId: item.productId,
+                            productName: item.product.name,
+                            productImage: item.product.thumbnailUrl || '', // Fallback
+                            productSku: item.product.sku,
+                            quantity: item.quantity,
+                            price: item.price,
+                            subtotal: new Prisma.Decimal(Number(item.price) * item.quantity),
+                            total: new Prisma.Decimal(Number(item.price) * item.quantity) // Item total checks (taxes/discounts per item can happen here)
+                        }))
                     }
-                }
+                },
+                include: { items: true }
             });
-        }
 
-        // Clear user's cart
-        await prisma.cartItem.deleteMany({
-            where: { cartId: cart.id }
+            // Update Stock
+            for (const item of cart.items) {
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: { stock: { decrement: item.quantity }, purchaseCount: { increment: item.quantity } }
+                });
+            }
+
+            // Clear Cart
+            await tx.cartItem.deleteMany({
+                where: { cartId: cart.id }
+            });
+            await tx.cart.update({
+                where: { id: cart.id },
+                data: { subtotal: new Prisma.Decimal(0) }
+            });
+
+            return order;
         });
 
-        // Apply promotion if validated
-        if (promotionId) {
-            await PromotionService.applyPromotion(
-                promotionId,
-                userId,
-                order.id,
-                discount
-            );
-        }
+        // Send Notification
+        await NotificationService.notifyOrderStatus(userId, order.id, OrderStatus.PENDING).catch(err => {
+            console.error('Failed to send order notification:', err);
+        });
 
-        // Check if this is user's first order (for referral completion)
-        const orderCount = await prisma.order.count({ where: { userId } });
-        if (orderCount === 1) {
-            await ReferralService.completeReferral(userId, order.id);
-        }
-
-        // Send order placement notification
-        await NotificationService.notifyOrderStatus(
-            userId,
-            order.id,
-            order.orderNumber,
-            OrderStatus.PENDING
-        );
-
-        return this.formatOrder(order);
+        return order;
     }
 
     /**
-     * Get user's orders with optional filters
+     * Get filtered user orders
      */
-    async getUserOrders(userId: string, filters: OrderFilters = {}): Promise<PaginatedResponse<any>> {
+    static async getUserOrders(
+        userId: string,
+        filters: { status?: OrderStatus; page?: number; limit?: number } = {}
+    ): Promise<{ orders: OrderWithItems[]; total: number; page: number; limit: number; totalPages: number }> {
         const { status, page = 1, limit = 20 } = filters;
 
-        const where: any = { userId };
-        if (status) {
-            where.status = status;
-        }
-
-        const skip = (page - 1) * limit;
+        const where: Prisma.OrderWhereInput = { userId };
+        if (status) where.status = status;
 
         const [orders, total] = await Promise.all([
             prisma.order.findMany({
                 where,
-                include: {
-                    items: true
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                },
-                skip,
+                include: { items: true },
+                orderBy: { createdAt: 'desc' },
+                skip: (page - 1) * limit,
                 take: limit
             }),
             prisma.order.count({ where })
         ]);
 
-        const formattedOrders = orders.map((order: any) => this.formatOrder(order));
-
         return {
-            items: formattedOrders,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages: Math.ceil(total / limit),
-                hasNextPage: page < Math.ceil(total / limit),
-                hasPreviousPage: page > 1
-            }
+            orders: orders as OrderWithItems[],
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
         };
     }
 
     /**
-     * Get a single order by ID
+     * Get single order by ID
      */
-    async getOrderById(userId: string, orderId: string): Promise<any> {
+    static async getOrderById(userId: string, orderId: string): Promise<OrderWithItems> {
         const order = await prisma.order.findUnique({
             where: { id: orderId },
-            include: {
-                items: {
-                    include: {
-                        product: true
-                    }
-                }
-            }
+            include: { items: true }
         });
 
-        if (!order) {
-            throw new NotFoundError("Order not found");
+        if (!order || order.userId !== userId) {
+            throw new AppError('Order not found', 404);
         }
 
-        // Verify ownership
-        if (order.userId !== userId) {
-            throw new AppError("Unauthorized access to order", 403);
-        }
-
-        return this.formatOrder(order);
+        return order as OrderWithItems;
     }
 
     /**
-     * Update order status (admin only)
+     * Update order status
      */
-    async updateOrderStatus(orderId: string, data: UpdateOrderStatusDto): Promise<any> {
-        const { status, trackingNumber } = data;
+    static async updateOrderStatus(
+        orderId: string,
+        status: OrderStatus,
+        trackingNumber?: string,
+        trackingUrl?: string
+    ): Promise<Order> {
+        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        if (!order) throw new AppError('Order not found', 404);
 
-        const order = await prisma.order.findUnique({
-            where: { id: orderId }
-        });
-
-        if (!order) {
-            throw new NotFoundError("Order not found");
+        // Validation logic for transitions... (simplified)
+        if (order.status === OrderStatus.DELIVERED || order.status === OrderStatus.CANCELLED) {
+            throw new AppError(`Cannot update status from ${order.status}`, 400);
         }
 
-        const updateData: any = { status };
-        if (trackingNumber) {
+        const updateData: Prisma.OrderUpdateInput = { status };
+        if (status === OrderStatus.SHIPPED) {
             updateData.trackingNumber = trackingNumber;
+            updateData.trackingUrl = trackingUrl;
+            // Estimate delivery 3 days from now
+            const estDate = new Date();
+            estDate.setDate(estDate.getDate() + 3);
+            updateData.estimatedDelivery = estDate;
+        } else if (status === OrderStatus.DELIVERED) {
+            updateData.deliveredAt = new Date();
+        } else if (status === OrderStatus.CANCELLED) {
+            updateData.cancelledAt = new Date();
+            // TODO: Restore stock if cancelled
         }
 
         const updatedOrder = await prisma.order.update({
             where: { id: orderId },
-            data: updateData,
-            include: {
-                items: true
-            }
+            data: updateData
         });
 
-        // Send status update notification
-        await NotificationService.notifyOrderStatus(
-            updatedOrder.userId,
-            updatedOrder.id,
-            updatedOrder.orderNumber,
-            status
-        );
-
-        return this.formatOrder(updatedOrder);
+        return updatedOrder;
     }
 
     /**
-     * Cancel an order
+     * Cancel order (User initiated)
      */
-    async cancelOrder(userId: string, orderId: string): Promise<any> {
-        const order = await prisma.order.findUnique({
-            where: { id: orderId },
-            include: {
-                items: true
-            }
-        });
+    static async cancelOrder(userId: string, orderId: string, reason?: string): Promise<Order> {
+        const order = await this.getOrderById(userId, orderId);
 
-        if (!order) {
-            throw new NotFoundError("Order not found");
-        }
-
-        // Verify ownership
-        if (order.userId !== userId) {
-            throw new AppError("Unauthorized access to order", 403);
-        }
-
-        // Check if order can be cancelled
         if (order.status !== OrderStatus.PENDING && order.status !== OrderStatus.PROCESSING) {
-            throw new AppError("Order cannot be cancelled at this stage", 400);
+            throw new AppError('Order cannot be cancelled in current status', 400);
         }
 
-        // Update order status
-        const updatedOrder = await prisma.order.update({
-            where: { id: orderId },
-            data: {
-                status: OrderStatus.CANCELLED
-            },
-            include: {
-                items: true
-            }
-        });
-
-        // Restore product stock
-        for (const item of order.items) {
-            await prisma.product.update({
-                where: { id: item.productId },
+        return await prisma.$transaction(async (tx) => {
+            const updatedOrder = await tx.order.update({
+                where: { id: orderId },
                 data: {
-                    stock: {
-                        increment: item.quantity
-                    }
+                    status: OrderStatus.CANCELLED,
+                    cancelledAt: new Date(),
+                    internalNotes: reason ? `User Cancelled: ${reason}` : 'User Cancelled'
                 }
             });
-        }
 
-        return this.formatOrder(updatedOrder);
-    }
-
-    /**
-     * Get order statistics for a user
-     */
-    async getOrderStatistics(userId: string): Promise<OrderStatistics> {
-        const orders = await prisma.order.findMany({
-            where: { userId },
-            include: {
-                items: true
-            },
-            orderBy: {
-                createdAt: 'desc'
+            // Restore Stock
+            for (const item of order.items) {
+                await tx.product.update({
+                    where: { id: item.productId },
+                    data: { stock: { increment: item.quantity } }
+                });
             }
+
+            return updatedOrder;
+        });
+    }
+
+    /**
+     * Get order statistics for dashboard
+     */
+    static async getOrderStatistics(userId: string): Promise<{
+        totalOrders: number;
+        totalSpent: number;
+        ordersByStatus: Record<OrderStatus, number>;
+        recentOrders: Order[];
+        averageOrderValue: number;
+    }> {
+
+        const orders = await prisma.order.findMany({
+            where: { userId }
         });
 
-        // Count by status
-        const ordersByStatus: any = {};
-        orders.forEach(order => {
-            ordersByStatus[order.status] = (ordersByStatus[order.status] || 0) + 1;
-        });
+        const totalOrders = orders.length;
+        const activeOrders = orders.filter(o => o.status !== OrderStatus.CANCELLED && o.status !== OrderStatus.REFUNDED);
+        const totalSpent = activeOrders.reduce((sum, o) => sum + Number(o.total), 0);
 
-        // Calculate total spent
-        const totalSpent = orders
-            .filter((order: any) => order.status !== OrderStatus.CANCELLED && order.status !== OrderStatus.REFUNDED)
-            .reduce((sum: number, order: any) => sum + order.total, 0);
+        // Group by status
+        const ordersByStatus = orders.reduce((acc, order) => {
+            acc[order.status] = (acc[order.status] || 0) + 1;
+            return acc;
+        }, {} as Record<OrderStatus, number>);
 
-        // Recent orders (last 5)
-        const recentOrders = orders.slice(0, 5).map((order: any) => ({
-            id: order.id,
-            orderNumber: order.orderNumber,
-            total: order.total,
-            status: order.status as OrderStatus,
-            createdAt: order.createdAt
-        }));
+        // Recent
+        const recentOrders = orders
+            .sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
+            .slice(0, 5);
 
         return {
-            totalOrders: orders.length,
+            totalOrders,
+            totalSpent,
             ordersByStatus,
-            totalSpent: parseFloat(totalSpent.toFixed(2)),
-            averageOrderValue: orders.length > 0 ? parseFloat((totalSpent / orders.length).toFixed(2)) : 0,
-            recentOrders
+            recentOrders,
+            averageOrderValue: totalOrders > 0 ? totalSpent / totalOrders : 0
         };
     }
 
-    /**
-     * Format order response
-     */
-    private formatOrder(order: any) {
-        return {
-            ...order,
-            shippingAddress: this.safeJsonParse(order.shippingAddress, {}),
-            billingAddress: this.safeJsonParse(order.billingAddress, {})
-        };
-    }
+    // --- Private Helpers ---
 
-    /**
-     * Safely parse JSON string
-     */
-    private safeJsonParse<T>(jsonString: string, defaultValue: T): T {
-        try {
-            return JSON.parse(jsonString) as T;
-        } catch {
-            return defaultValue;
-        }
+    private static generateOrderNumber(): string {
+        const date = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD
+        const random = Math.floor(10000 + Math.random() * 90000); // 5 digits
+        return `ORD-${date}-${random}`;
     }
 }
-
-export default new OrderService();

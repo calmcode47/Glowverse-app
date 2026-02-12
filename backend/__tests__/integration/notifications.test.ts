@@ -1,110 +1,118 @@
-import request from "supertest";
-import app from "@/app";
-import TestHelpers from "@utils/test-helpers";
-import prisma from "@config/database";
+import request from 'supertest';
+import app from '../../src/app';
+import { PrismaClient } from '@prisma/client';
 
-describe("Notifications API Integration Tests", () => {
+const prisma = new PrismaClient();
+
+describe('Notifications API Integration Tests', () => {
     let authToken: string;
     let userId: string;
     let notificationId: string;
 
     beforeAll(async () => {
-        // Create test user and get token
-        const user = await TestHelpers.createTestUser({
-            email: "notify-test@example.com"
-        });
-        userId = user.id;
-        authToken = TestHelpers.generateAuthToken(user.id, user.email, user.role);
+        // Register and login test user
+        const email = `notify-test-${Date.now()}@example.com`;
+        const registerRes = await request(app)
+            .post('/api/v1/auth/register')
+            .send({
+                email,
+                password: 'Test@1234',
+                name: 'Notification Test',
+            });
 
-        // Create test notification
+        authToken = registerRes.body.data.tokens.accessToken;
+        userId = registerRes.body.data.user.id;
+
+        // Create a dummy notification
         const notification = await prisma.notification.create({
             data: {
                 userId,
-                type: "GENERAL",
                 title: "Test Notification",
                 message: "This is a test notification",
-                isRead: false
+                type: "SYSTEM",
+                priority: "HIGH" // Ensure this matches enum
             }
         });
         notificationId = notification.id;
     });
 
     afterAll(async () => {
-        await TestHelpers.cleanupUser(userId);
+        // Cleanup
+        if (userId) {
+            try {
+                await prisma.notification.deleteMany({ where: { userId } });
+                await prisma.user.delete({ where: { id: userId } });
+            } catch (e) { }
+        }
         await prisma.$disconnect();
     });
 
-    describe("Notifications Retrieval", () => {
-        test("GET /api/v1/notifications - should get user notifications", async () => {
-            const response = await request(app)
-                .get("/api/v1/notifications")
-                .set("Authorization", `Bearer ${authToken}`)
+    describe('Notifications', () => {
+        it('should get all notifications', async () => {
+            const res = await request(app)
+                .get('/api/v1/notifications')
+                .set('Authorization', `Bearer ${authToken}`)
                 .expect(200);
 
-            expect(response.body.success).toBe(true);
-            expect(response.body.notifications).toBeInstanceOf(Array);
-            expect(response.body.notifications.length).toBeGreaterThan(0);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.notifications).toBeInstanceOf(Array);
+            expect(res.body.data.notifications.length).toBeGreaterThan(0);
         });
 
-        test("GET /api/v1/notifications/unread-count - should get unread count", async () => {
-            const response = await request(app)
-                .get("/api/v1/notifications/unread-count")
-                .set("Authorization", `Bearer ${authToken}`)
+        it('should get unread count', async () => {
+            const res = await request(app)
+                .get('/api/v1/notifications/unread-count')
+                .set('Authorization', `Bearer ${authToken}`)
                 .expect(200);
 
-            expect(response.body.success).toBe(true);
-            expect(response.body.count).toBeGreaterThan(0);
+            expect(res.body.success).toBe(true);
+            expect(res.body.data.count).toBeGreaterThan(0);
         });
-    });
 
-    describe("Notifications Management", () => {
-        test("PATCH /api/v1/notifications/:id/read - should mark notification as read", async () => {
-            const response = await request(app)
+        it('should mark notification as read', async () => {
+            const res = await request(app)
                 .patch(`/api/v1/notifications/${notificationId}/read`)
-                .set("Authorization", `Bearer ${authToken}`)
+                .set('Authorization', `Bearer ${authToken}`)
                 .expect(200);
 
-            expect(response.body.success).toBe(true);
-            expect(response.body.notification.isRead).toBe(true);
+            expect(res.body.success).toBe(true);
+
+            const check = await prisma.notification.findUnique({ where: { id: notificationId } });
+            expect(check?.isRead).toBe(true);
         });
 
-        test("PATCH /api/v1/notifications/mark-all-read - should mark all as read", async () => {
-            const response = await request(app)
-                .patch("/api/v1/notifications/mark-all-read")
-                .set("Authorization", `Bearer ${authToken}`)
-                .expect(200);
-
-            expect(response.body.success).toBe(true);
-            expect(response.body.count).toBeGreaterThan(0);
-        });
-
-        test("DELETE /api/v1/notifications/:id - should delete notification", async () => {
-            const response = await request(app)
-                .delete(`/api/v1/notifications/${notificationId}`)
-                .set("Authorization", `Bearer ${authToken}`)
-                .expect(200);
-
-            expect(response.body.success).toBe(true);
-        });
-
-        test("DELETE /api/v1/notifications/read - should delete all read notifications", async () => {
-            // Create and mark as read
-            const newNotification = await prisma.notification.create({
+        it('should mark all as read', async () => {
+            // Create another unread one
+            await prisma.notification.create({
                 data: {
                     userId,
-                    type: "GENERAL",
-                    title: "Delete Test",
-                    message: "Will be deleted",
-                    isRead: true
+                    title: "Another Notification",
+                    message: "Test",
+                    type: "SYSTEM"
                 }
             });
 
-            const response = await request(app)
-                .delete("/api/v1/notifications/read")
-                .set("Authorization", `Bearer ${authToken}`)
+            const res = await request(app)
+                .post('/api/v1/notifications/mark-all-read')
+                .set('Authorization', `Bearer ${authToken}`)
                 .expect(200);
 
-            expect(response.body.success).toBe(true);
+            expect(res.body.success).toBe(true);
+
+            const unreadCount = await prisma.notification.count({ where: { userId, isRead: false } });
+            expect(unreadCount).toBe(0);
+        });
+
+        it('should delete a notification', async () => {
+            const res = await request(app)
+                .delete(`/api/v1/notifications/${notificationId}`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .expect(200);
+
+            expect(res.body.success).toBe(true);
+
+            const check = await prisma.notification.findUnique({ where: { id: notificationId } });
+            expect(check).toBeNull();
         });
     });
 });

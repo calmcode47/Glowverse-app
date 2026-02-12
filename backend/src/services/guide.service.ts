@@ -1,657 +1,347 @@
-import prisma from "@config/database";
-import { NotFoundError, ConflictError } from "@utils/errors";
+import { PrismaClient, Guide, GuideCategory, DifficultyLevel, Prisma } from '@prisma/client';
+import { AppError } from '../utils/errors';
 
-/**
- * Guide Category Enum
- */
-export enum GuideCategory {
-    SKINCARE_ROUTINE = 'SKINCARE_ROUTINE',
-    HAIRCARE = 'HAIRCARE',
-    GROOMING_TIPS = 'GROOMING_TIPS',
-    MAKEUP_TUTORIAL = 'MAKEUP_TUTORIAL',
-    PRODUCT_USAGE = 'PRODUCT_USAGE',
-    WELLNESS = 'WELLNESS',
-    NUTRITION = 'NUTRITION',
-    LIFESTYLE = 'LIFESTYLE',
-    GENERAL = 'GENERAL'
-}
+const prisma = new PrismaClient();
 
-/**
- * Difficulty Level Enum
- */
-export enum DifficultyLevel {
-    BEGINNER = 'BEGINNER',
-    INTERMEDIATE = 'INTERMEDIATE',
-    ADVANCED = 'ADVANCED'
-}
-
-/**
- * Guide Service
- * Handles grooming guides and educational content
- */
-class GuideService {
+export class GuideService {
     /**
-     * Get all published guides with filters
+     * Get all guides with pagination and filtering
      */
-    async getGuides(filters: {
+    static async getGuides(filters: {
         category?: GuideCategory;
-        tags?: string[];
-        difficulty?: DifficultyLevel;
-        search?: string;
+        isFeatured?: boolean;
         page?: number;
         limit?: number;
-    } = {}): Promise<{
-        guides: any[];
-        total: number;
-        pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-            hasNextPage: boolean;
-            hasPreviousPage: boolean;
-        };
-    }> {
-        const { category, tags, difficulty, search, page = 1, limit = 20 } = filters;
+        search?: string;
+    }) {
+        const page = filters.page || 1;
+        const limit = filters.limit || 20;
         const skip = (page - 1) * limit;
 
-        const where: any = { isPublished: true };
+        const where: Prisma.GuideWhereInput = {
+            isPublished: true,
+        };
 
-        if (category) {
-            where.category = category;
-        }
-
-        if (difficulty) {
-            where.difficulty = difficulty;
-        }
-
-        if (tags && tags.length > 0) {
-            // tags is stored as JSON string, use contains to search
-            const tagConditions = tags.map((tag: string) => ({ tags: { contains: tag, mode: 'insensitive' as const } }));
-            where.AND = [...(where.AND || []), { OR: tagConditions }];
-        }
-
-        if (search) {
-            where.AND = [
-                ...(where.AND || []),
-                {
-                    OR: [
-                        { title: { contains: search, mode: 'insensitive' } },
-                        { description: { contains: search, mode: 'insensitive' } },
-                        { content: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
+        if (filters.category) where.category = filters.category;
+        if (filters.isFeatured !== undefined) where.isFeatured = filters.isFeatured;
+        if (filters.search) {
+            where.OR = [
+                { title: { contains: filters.search, mode: 'insensitive' } },
+                { description: { contains: filters.search, mode: 'insensitive' } },
+                { tags: { contains: filters.search, mode: 'insensitive' } },
             ];
         }
 
         const [guides, total] = await Promise.all([
             prisma.guide.findMany({
                 where,
-                select: {
-                    id: true,
-                    title: true,
-                    slug: true,
-                    description: true,
-                    excerpt: true,
-                    thumbnailUrl: true,
-                    category: true,
-                    tags: true,
-                    difficulty: true,
-                    readTime: true,
-                    duration: true,
-                    viewCount: true,
-                    likeCount: true,
-                    isPublished: true,
-                    publishedAt: true,
-                    createdAt: true,
-                    updatedAt: true,
-                    author: {
-                        select: {
-                            id: true,
-                            name: true,
-                            avatar: true
-                        }
-                    }
-                },
-                orderBy: {
-                    publishedAt: 'desc'
-                },
+                orderBy: { publishedAt: 'desc' },
                 skip,
-                take: limit
+                take: limit,
+                include: {
+                    author: {
+                        select: { id: true, name: true, avatar: true },
+                    },
+                },
             }),
-            prisma.guide.count({ where })
+            prisma.guide.count({ where }),
         ]);
 
-        const totalPages = Math.ceil(total / limit);
-
-        return {
-            guides,
-            total,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1
-            }
-        };
+        return { guides, total, page, limit, pages: Math.ceil(total / limit) };
     }
 
     /**
-     * Get guide by ID or slug
+     * Get a single guide by ID or Slug
      */
-    async getGuide(
-        identifier: string,
-        userId?: string
-    ): Promise<any> {
+    static async getGuide(idOrSlug: string, userId?: string) {
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idOrSlug);
+
+        const where: Prisma.GuideWhereInput = isUuid
+            ? { id: idOrSlug }
+            : { slug: idOrSlug };
+
         const guide = await prisma.guide.findFirst({
             where: {
-                OR: [
-                    { id: identifier },
-                    { slug: identifier }
-                ],
-                isPublished: true
+                ...where,
+                isPublished: true,
             },
             include: {
-                steps: {
-                    orderBy: {
-                        order: 'asc'
-                    }
-                },
                 author: {
-                    select: {
-                        id: true,
-                        name: true,
-                        avatar: true
-                    }
-                }
-            }
+                    select: { id: true, name: true, avatar: true },
+                },
+                steps: {
+                    orderBy: { order: 'asc' },
+                },
+                comments: {
+                    include: {
+                        user: { select: { id: true, name: true, avatar: true } },
+                    },
+                    orderBy: { createdAt: 'desc' },
+                    take: 5,
+                },
+            },
         });
 
         if (!guide) {
-            throw new NotFoundError("Guide not found");
+            throw new AppError('Guide not found', 404);
         }
 
-        // Increment view count
-        await prisma.guide.update({
-            where: { id: guide.id },
-            data: {
-                viewCount: { increment: 1 }
-            }
-        });
-
-        // Check if user liked/bookmarked
+        // Check engagement if user is logged in
         let isLiked = false;
         let isBookmarked = false;
 
         if (userId) {
             const [like, bookmark] = await Promise.all([
                 prisma.guideLike.findUnique({
-                    where: {
-                        guideId_userId: {
-                            guideId: guide.id,
-                            userId
-                        }
-                    }
+                    where: { guideId_userId: { guideId: guide.id, userId } },
                 }),
                 prisma.guideBookmark.findUnique({
-                    where: {
-                        guideId_userId: {
-                            guideId: guide.id,
-                            userId
-                        }
-                    }
-                })
+                    where: { guideId_userId: { guideId: guide.id, userId } },
+                }),
             ]);
-
             isLiked = !!like;
             isBookmarked = !!bookmark;
         }
 
-        return {
-            ...guide,
-            isLiked,
-            isBookmarked
-        };
-    }
+        // Async increment view count
+        this.incrementViewCount(guide.id);
 
-    /**
-     * Get guides by category
-     */
-    async getGuidesByCategory(
-        category: GuideCategory,
-        limit: number = 20
-    ): Promise<any[]> {
-        const guides = await prisma.guide.findMany({
-            where: {
-                category,
-                isPublished: true
-            },
-            select: {
-                id: true,
-                title: true,
-                slug: true,
-                description: true,
-                excerpt: true,
-                thumbnailUrl: true,
-                category: true,
-                tags: true,
-                difficulty: true,
-                readTime: true,
-                viewCount: true,
-                likeCount: true,
-                publishedAt: true
-            },
-            orderBy: {
-                publishedAt: 'desc'
-            },
-            take: limit
-        });
-
-        return guides;
+        return { ...guide, isLiked, isBookmarked };
     }
 
     /**
      * Search guides
      */
-    async searchGuides(
-        query: string,
-        limit: number = 20
-    ): Promise<any[]> {
-        const guides = await prisma.guide.findMany({
+    static async searchGuides(query: string, limit: number = 20): Promise<Guide[]> {
+        if (!query) return [];
+
+        return prisma.guide.findMany({
             where: {
                 isPublished: true,
                 OR: [
                     { title: { contains: query, mode: 'insensitive' } },
                     { description: { contains: query, mode: 'insensitive' } },
                     { content: { contains: query, mode: 'insensitive' } },
-                    { tags: { contains: query, mode: 'insensitive' } }
-                ]
+                    { tags: { contains: query, mode: 'insensitive' } },
+                ],
             },
-            select: {
-                id: true,
-                title: true,
-                slug: true,
-                description: true,
-                excerpt: true,
-                thumbnailUrl: true,
-                category: true,
-                tags: true,
-                difficulty: true,
-                readTime: true,
-                viewCount: true,
-                likeCount: true,
-                publishedAt: true
-            },
-            orderBy: {
-                viewCount: 'desc'
-            },
-            take: limit
-        });
-
-        return guides;
-    }
-
-    /**
-     * Get trending guides
-     */
-    async getTrendingGuides(limit: number = 10): Promise<any[]> {
-        // Get guides from last 30 days
-        const thirtyDaysAgo = new Date();
-        thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-
-        const guides = await prisma.guide.findMany({
-            where: {
-                isPublished: true,
-                publishedAt: {
-                    gte: thirtyDaysAgo
-                }
-            },
-            select: {
-                id: true,
-                title: true,
-                slug: true,
-                description: true,
-                excerpt: true,
-                thumbnailUrl: true,
-                category: true,
-                tags: true,
-                difficulty: true,
-                readTime: true,
-                viewCount: true,
-                likeCount: true,
-                publishedAt: true
-            },
-            orderBy: [
-                { viewCount: 'desc' },
-                { likeCount: 'desc' }
-            ],
-            take: limit
-        });
-
-        return guides;
-    }
-
-    /**
-     * Get featured guides
-     */
-    async getFeaturedGuides(limit: number = 5): Promise<any[]> {
-        // Get guides with highest engagement
-        const guides = await prisma.guide.findMany({
-            where: {
-                isPublished: true
-            },
-            select: {
-                id: true,
-                title: true,
-                slug: true,
-                description: true,
-                excerpt: true,
-                thumbnailUrl: true,
-                category: true,
-                tags: true,
-                difficulty: true,
-                readTime: true,
-                viewCount: true,
-                likeCount: true,
-                publishedAt: true
-            },
+            take: limit,
             orderBy: [
                 { likeCount: 'desc' },
-                { viewCount: 'desc' }
+                { viewCount: 'desc' },
             ],
-            take: limit
+            include: {
+                author: { select: { name: true } },
+            },
         });
-
-        return guides;
-    }
-
-    /**
-     * Like guide
-     */
-    async likeGuide(userId: string, guideId: string): Promise<void> {
-        // Check if already liked
-        const existingLike = await prisma.guideLike.findUnique({
-            where: {
-                guideId_userId: {
-                    guideId,
-                    userId
-                }
-            }
-        });
-
-        if (existingLike) {
-            throw new ConflictError("Guide already liked");
-        }
-
-        // Create like and increment count
-        await prisma.$transaction([
-            prisma.guideLike.create({
-                data: {
-                    guideId,
-                    userId
-                }
-            }),
-            prisma.guide.update({
-                where: { id: guideId },
-                data: {
-                    likeCount: { increment: 1 }
-                }
-            })
-        ]);
-    }
-
-    /**
-     * Unlike guide
-     */
-    async unlikeGuide(userId: string, guideId: string): Promise<void> {
-        const like = await prisma.guideLike.findUnique({
-            where: {
-                guideId_userId: {
-                    guideId,
-                    userId
-                }
-            }
-        });
-
-        if (!like) {
-            throw new NotFoundError("Like not found");
-        }
-
-        // Delete like and decrement count
-        await prisma.$transaction([
-            prisma.guideLike.delete({
-                where: {
-                    guideId_userId: {
-                        guideId,
-                        userId
-                    }
-                }
-            }),
-            prisma.guide.update({
-                where: { id: guideId },
-                data: {
-                    likeCount: { decrement: 1 }
-                }
-            })
-        ]);
-    }
-
-    /**
-     * Bookmark guide
-     */
-    async bookmarkGuide(userId: string, guideId: string): Promise<void> {
-        // Check if already bookmarked
-        const existingBookmark = await prisma.guideBookmark.findUnique({
-            where: {
-                guideId_userId: {
-                    guideId,
-                    userId
-                }
-            }
-        });
-
-        if (existingBookmark) {
-            throw new ConflictError("Guide already bookmarked");
-        }
-
-        await prisma.guideBookmark.create({
-            data: {
-                guideId,
-                userId
-            }
-        });
-    }
-
-    /**
-     * Remove bookmark
-     */
-    async removeBookmark(userId: string, guideId: string): Promise<void> {
-        const bookmark = await prisma.guideBookmark.findUnique({
-            where: {
-                guideId_userId: {
-                    guideId,
-                    userId
-                }
-            }
-        });
-
-        if (!bookmark) {
-            throw new NotFoundError("Bookmark not found");
-        }
-
-        await prisma.guideBookmark.delete({
-            where: {
-                guideId_userId: {
-                    guideId,
-                    userId
-                }
-            }
-        });
-    }
-
-    /**
-     * Get user's bookmarked guides
-     */
-    async getUserBookmarks(
-        userId: string,
-        page: number = 1,
-        limit: number = 20
-    ): Promise<{
-        guides: any[];
-        total: number;
-        pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-            hasNextPage: boolean;
-            hasPreviousPage: boolean;
-        };
-    }> {
-        const skip = (page - 1) * limit;
-
-        const [bookmarks, total] = await Promise.all([
-            prisma.guideBookmark.findMany({
-                where: { userId },
-                include: {
-                    guide: {
-                        select: {
-                            id: true,
-                            title: true,
-                            slug: true,
-                            description: true,
-                            excerpt: true,
-                            thumbnailUrl: true,
-                            category: true,
-                            tags: true,
-                            difficulty: true,
-                            readTime: true,
-                            viewCount: true,
-                            likeCount: true,
-                            publishedAt: true,
-                            author: {
-                                select: {
-                                    id: true,
-                                    name: true,
-                                    avatar: true
-                                }
-                            }
-                        }
-                    }
-                },
-                orderBy: {
-                    createdAt: 'desc'
-                },
-                skip,
-                take: limit
-            }),
-            prisma.guideBookmark.count({ where: { userId } })
-        ]);
-
-        const guides = bookmarks.map(b => b.guide);
-        const totalPages = Math.ceil(total / limit);
-
-        return {
-            guides,
-            total,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1
-            }
-        };
     }
 
     /**
      * Get related guides
      */
-    async getRelatedGuides(
-        guideId: string,
-        limit: number = 6
-    ): Promise<any[]> {
-        // Get current guide
-        const currentGuide = await prisma.guide.findUnique({
+    static async getRelatedGuides(guideId: string, limit: number = 6): Promise<Guide[]> {
+        const guide = await prisma.guide.findUnique({
             where: { id: guideId },
-            select: {
-                category: true,
-                tags: true
-            }
         });
 
-        if (!currentGuide) {
-            return [];
-        }
+        if (!guide) return [];
 
-        // Find guides with same category or overlapping tags
-        const guides = await prisma.guide.findMany({
+        // Simple implementation: same category, excluding current
+        // Could accept tags parsing if they were actually JSON arrays in DB, but simple string contains is safer for now if stored as stringified JSON
+        return prisma.guide.findMany({
             where: {
                 id: { not: guideId },
                 isPublished: true,
-                OR: [
-                    // tags is a JSON string; find guides with same category
-                    { category: currentGuide.category }
-                ]
+                category: guide.category,
             },
-            select: {
-                id: true,
-                title: true,
-                slug: true,
-                description: true,
-                excerpt: true,
-                thumbnailUrl: true,
-                category: true,
-                tags: true,
-                difficulty: true,
-                readTime: true,
-                viewCount: true,
-                likeCount: true,
-                publishedAt: true
-            },
-            orderBy: {
-                viewCount: 'desc'
-            },
-            take: limit
+            take: limit,
+            orderBy: { publishedAt: 'desc' },
         });
-
-        return guides;
     }
 
     /**
-     * Get guide statistics
+     * Get featured guides
      */
-    async getGuideStatistics(guideId: string): Promise<{
-        viewCount: number;
-        likeCount: number;
-        bookmarkCount: number;
-    }> {
-        const [guide, bookmarkCount] = await Promise.all([
-            prisma.guide.findUnique({
-                where: { id: guideId },
-                select: {
-                    viewCount: true,
-                    likeCount: true
-                }
+    static async getFeaturedGuides(): Promise<Guide[]> {
+        return prisma.guide.findMany({
+            where: { isPublished: true, isFeatured: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 5,
+        });
+    }
+
+    /**
+     * Get trending guides (most likes/views in last 30 days - simplified to all time high engagement for now)
+     */
+    static async getTrendingGuides(): Promise<Guide[]> {
+        return prisma.guide.findMany({
+            where: { isPublished: true },
+            orderBy: [
+                { likeCount: 'desc' },
+                { viewCount: 'desc' },
+            ],
+            take: 10,
+        });
+    }
+
+    /**
+     * Get new guides
+     */
+    static async getNewGuides(): Promise<Guide[]> {
+        return prisma.guide.findMany({
+            where: { isPublished: true },
+            orderBy: { publishedAt: 'desc' },
+            take: 10,
+        });
+    }
+
+    /**
+     * Like a guide
+     */
+    static async likeGuide(userId: string, guideId: string) {
+        const existing = await prisma.guideLike.findUnique({
+            where: { guideId_userId: { guideId, userId } },
+        });
+
+        if (existing) return;
+
+        await prisma.$transaction([
+            prisma.guideLike.create({
+                data: { guideId, userId },
             }),
-            prisma.guideBookmark.count({
-                where: { guideId }
-            })
+            prisma.guide.update({
+                where: { id: guideId },
+                data: { likeCount: { increment: 1 } },
+            }),
         ]);
+    }
 
-        if (!guide) {
-            throw new NotFoundError("Guide not found");
+    /**
+     * Unlike a guide
+     */
+    static async unlikeGuide(userId: string, guideId: string) {
+        const existing = await prisma.guideLike.findUnique({
+            where: { guideId_userId: { guideId, userId } },
+        });
+
+        if (!existing) return;
+
+        await prisma.$transaction([
+            prisma.guideLike.delete({
+                where: { guideId_userId: { guideId, userId } },
+            }),
+            prisma.guide.update({
+                where: { id: guideId },
+                data: { likeCount: { decrement: 1 } },
+            }),
+        ]);
+    }
+
+    /**
+     * Bookmark a guide
+     */
+    static async bookmarkGuide(userId: string, guideId: string) {
+        const existing = await prisma.guideBookmark.findUnique({
+            where: { guideId_userId: { guideId, userId } },
+        });
+
+        if (existing) return;
+
+        await prisma.$transaction([
+            prisma.guideBookmark.create({
+                data: { guideId, userId },
+            }),
+            prisma.guide.update({
+                where: { id: guideId },
+                data: { bookmarkCount: { increment: 1 } },
+            }),
+        ]);
+    }
+
+    /**
+     * Remove bookmark
+     */
+    static async removeBookmark(userId: string, guideId: string) {
+        const existing = await prisma.guideBookmark.findUnique({
+            where: { guideId_userId: { guideId, userId } },
+        });
+
+        if (!existing) return;
+
+        await prisma.$transaction([
+            prisma.guideBookmark.delete({
+                where: { guideId_userId: { guideId, userId } },
+            }),
+            prisma.guide.update({
+                where: { id: guideId },
+                data: { bookmarkCount: { decrement: 1 } },
+            }),
+        ]);
+    }
+
+    /**
+     * Get user bookmarks
+     */
+    static async getUserBookmarks(userId: string) {
+        const bookmarks = await prisma.guideBookmark.findMany({
+            where: { userId },
+            include: {
+                guide: true,
+            },
+            orderBy: { createdAt: 'desc' },
+        });
+
+        return bookmarks.map(b => b.guide);
+    }
+
+    /**
+     * Comment on guide
+     */
+    static async commentOnGuide(userId: string, guideId: string, content: string, rating?: number) {
+        return prisma.guideComment.create({
+            data: {
+                userId,
+                guideId,
+                content,
+                rating,
+                isApproved: true, // Auto-approve for now
+            },
+            include: {
+                user: { select: { id: true, name: true, avatar: true } },
+            },
+        });
+    }
+
+    /**
+     * Track share
+     */
+    static async trackShare(guideId: string) {
+        return prisma.guide.update({
+            where: { id: guideId },
+            data: { shareCount: { increment: 1 } },
+        });
+    }
+
+    /**
+     * Increment view count
+     */
+    static async incrementViewCount(guideId: string) {
+        try {
+            await prisma.guide.update({
+                where: { id: guideId },
+                data: { viewCount: { increment: 1 } },
+            });
+        } catch (e) {
+            // Ignore errors for analytics
         }
+    }
 
-        return {
-            viewCount: guide.viewCount,
-            likeCount: guide.likeCount,
-            bookmarkCount
-        };
+    /**
+     * Get guides by category helper
+     */
+    static async getGuidesByCategory(category: GuideCategory) {
+        return this.getGuides({ category });
     }
 }
 
-export default new GuideService();
+export default GuideService;

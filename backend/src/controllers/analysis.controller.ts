@@ -6,7 +6,8 @@ import StorageService from "@services/storage.service";
 import perfectCorpService from "@services/perfectcorp.service";
 import PerfectCorpMock from "@utils/perfectcorp-mock";
 import env from "@config/env";
- 
+import { NotificationService } from "@services/notification.service";
+
 
 const AnalysisController = {
   async createSkinAnalysis(req: Request, res: Response, next: NextFunction) {
@@ -63,6 +64,14 @@ const AnalysisController = {
         where: { userId: (await prisma.analysis.findUnique({ where: { id: analysisId } }))!.userId },
         data: { totalAnalyses: { increment: 1 } }
       });
+
+      // Send Notification
+      const analysis = await prisma.analysis.findUnique({ where: { id: analysisId } });
+      if (analysis) {
+        await NotificationService.notifyAnalysisComplete(analysis.userId, analysisId).catch(err => {
+          console.error('Failed to send analysis notification:', err);
+        });
+      }
     } catch (error: any) {
       await prisma.analysis.update({
         where: { id: analysisId },

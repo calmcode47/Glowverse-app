@@ -1,6 +1,6 @@
 import prisma from "@config/database";
 import { NotFoundError, AppError } from "@utils/errors";
-import NotificationService from "./notification.service";
+import { NotificationService } from "./notification.service";
 
 /**
  * Referral Status Enum
@@ -235,7 +235,7 @@ class ReferralService {
     /**
      * Complete referral after first purchase
      */
-    async completeReferral(userId: string, orderId: string): Promise<void> {
+    async completeReferral(userId: string): Promise<void> {
         // Find REGISTERED referral where referee is the user
         const referral = await prisma.referral.findFirst({
             where: {

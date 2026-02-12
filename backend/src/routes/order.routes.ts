@@ -1,95 +1,34 @@
-import { Router } from "express";
-import { body, param, query } from "express-validator";
-import OrderController from "@controllers/order.controller";
-import { authenticate } from "@middleware/auth";
-import { validate } from "@middleware/validation";
+import { Router } from 'express';
+import { OrderController } from '../controllers/order.controller';
+import { authenticate, authorize } from '../middleware/auth';
+import { body } from 'express-validator';
+import { validate } from '../middleware/validation';
 
 const router = Router();
+
+// Validation middleware
+const validateCreateOrder = [
+    body('shippingAddress.fullName').notEmpty().withMessage('Full name is required'),
+    body('shippingAddress.phone').notEmpty().withMessage('Phone is required'),
+    body('shippingAddress.addressLine1').notEmpty().withMessage('Address line 1 is required'),
+    body('shippingAddress.city').notEmpty().withMessage('City is required'),
+    body('shippingAddress.state').notEmpty().withMessage('State is required'),
+    body('shippingAddress.postalCode').notEmpty().withMessage('Postal code is required'),
+    body('shippingAddress.country').notEmpty().withMessage('Country is required'),
+    body('paymentMethod').notEmpty().withMessage('Payment method is required'),
+    validate
+];
 
 // All order routes require authentication
 router.use(authenticate);
 
-/**
- * @route   POST /api/v1/orders
- * @desc    Create new order from cart
- * @access  Private
- */
-router.post(
-    "/",
-    validate([
-        body("shippingAddress").isObject(),
-        body("shippingAddress.fullName").isString().trim().isLength({ min: 2, max: 100 }),
-        body("shippingAddress.addressLine1").isString().trim().isLength({ min: 5, max: 200 }),
-        body("shippingAddress.addressLine2").optional().isString(),
-        body("shippingAddress.city").isString().trim().isLength({ min: 2, max: 100 }),
-        body("shippingAddress.state").isString().trim().isLength({ min: 2, max: 100 }),
-        body("shippingAddress.postalCode").isString().trim().isLength({ min: 3, max: 20 }),
-        body("shippingAddress.country").isString().trim().isLength({ min: 2, max: 100 }),
-        body("shippingAddress.phone").isString().trim().matches(/^[\d\s\-\+\(\)]+$/),
-        body("billingAddress").optional().isObject(),
-        body("paymentMethod").isString().trim().isLength({ min: 2, max: 50 }),
-        body("notes").optional().isString().trim().isLength({ max: 500 })
-    ]),
-    OrderController.createOrder
-);
+router.post('/', validateCreateOrder, OrderController.createOrder);
+router.get('/', OrderController.getUserOrders);
+router.get('/stats', OrderController.getOrderStatistics);
+router.get('/:id', OrderController.getOrderById);
+router.patch('/:id/cancel', OrderController.cancelOrder);
 
-/**
- * @route   GET /api/v1/orders
- * @desc    Get user's orders
- * @access  Private
- */
-router.get(
-    "/",
-    validate([
-        query("status").optional().isIn(["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
-        query("page").optional().isInt({ min: 1 }),
-        query("limit").optional().isInt({ min: 1, max: 100 })
-    ]),
-    OrderController.getUserOrders
-);
-
-/**
- * @route   GET /api/v1/orders/stats
- * @desc    Get order statistics
- * @access  Private
- */
-router.get("/stats", OrderController.getOrderStats);
-
-/**
- * @route   GET /api/v1/orders/:id
- * @desc    Get single order details
- * @access  Private
- */
-router.get(
-    "/:id",
-    validate([param("id").isString().isLength({ min: 1 })]),
-    OrderController.getOrder
-);
-
-/**
- * @route   PATCH /api/v1/orders/:id/cancel
- * @desc    Cancel an order
- * @access  Private
- */
-router.patch(
-    "/:id/cancel",
-    validate([param("id").isString().isLength({ min: 1 })]),
-    OrderController.cancelOrder
-);
-
-/**
- * @route   PATCH /api/v1/orders/:id/status
- * @desc    Update order status (admin only)
- * @access  Private (Admin)
- */
-router.patch(
-    "/:id/status",
-    validate([
-        param("id").isString().isLength({ min: 1 }),
-        body("status").isIn(["PENDING", "PROCESSING", "SHIPPED", "DELIVERED", "CANCELLED", "REFUNDED"]),
-        body("trackingNumber").optional().isString().trim().isLength({ min: 1, max: 100 })
-    ]),
-    OrderController.updateOrderStatus
-);
+// Admin only routes would go here (e.g. update status)
+router.patch('/:id/status', authorize('ADMIN'), OrderController.updateOrderStatus);
 
 export default router;

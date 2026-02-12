@@ -51,6 +51,9 @@ export class TestHelpers {
                 brand: "Test Brand",
                 stock: data?.stock || 100,
                 images: JSON.stringify(["https://via.placeholder.com/300"]),
+                thumbnailUrl: "https://via.placeholder.com/150",
+                tags: JSON.stringify(["test"]),
+                benefits: JSON.stringify(["Great for testing"]),
                 isActive: true,
                 isFeatured: false
             }
@@ -88,7 +91,8 @@ export class TestHelpers {
                         },
                         product: { connect: { id: product.id } },
                         quantity: 2,
-                        price: product.price
+                        price: product.price,
+                        subtotal: Number(product.price) * 2
                     }
                 })
             )
@@ -110,10 +114,11 @@ export class TestHelpers {
                 orderNumber: `ORD-${Date.now()}`,
                 status: "PENDING",
                 paymentStatus: "PENDING",
-                subtotal: products.reduce((sum, p) => sum + p.price * 2, 0),
+                paymentMethod: "CREDIT_CARD",
+                subtotal: products.reduce((sum, p) => sum + Number(p.price) * 2, 0),
                 tax: 10.0,
                 shippingCost: 5.0,
-                total: products.reduce((sum, p) => sum + p.price * 2, 0) + 15.0,
+                total: products.reduce((sum, p) => sum + Number(p.price) * 2, 0) + 15.0,
                 shippingAddress: JSON.stringify({
                     street: "123 Test St",
                     city: "Test City",
@@ -123,12 +128,13 @@ export class TestHelpers {
                 }),
                 items: {
                     create: products.map((product) => ({
-                        productId: product.id,
+                        product: { connect: { id: product.id } },
                         productName: product.name,
                         productImage: "https://via.placeholder.com/300",
                         price: product.price,
                         quantity: 2,
-                        total: product.price * 2
+                        subtotal: Number(product.price) * 2,
+                        total: Number(product.price) * 2
                     }))
                 }
             },

@@ -15,36 +15,56 @@ enum ProductCategory {
   SKINCARE
   MAKEUP
   HAIRCARE
+  BODYCARE
   FRAGRANCE
   TOOLS
   SUPPLEMENTS
+  WELLNESS
+  MENS_GROOMING
+  GIFT_SETS
 }
 
 enum OrderStatus {
   PENDING
   PROCESSING
   SHIPPED
+  OUT_FOR_DELIVERY
   DELIVERED
   CANCELLED
   REFUNDED
+  FAILED
 }
 
 enum PaymentStatus {
   PENDING
+  PROCESSING
   PAID
   FAILED
   REFUNDED
+  PARTIALLY_REFUNDED
 }
 
 enum NotificationType {
   ORDER_PLACED
+  ORDER_PROCESSING
   ORDER_SHIPPED
   ORDER_DELIVERED
+  ORDER_CANCELLED
   ANALYSIS_COMPLETE
   TRYON_COMPLETE
   PROMOTION
   SYSTEM
+  ACCOUNT
+  PRODUCT_RESTOCKED
+  PRICE_DROP
   GENERAL
+}
+
+enum NotificationPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
 }
 
 enum PromotionType {
@@ -93,6 +113,7 @@ enum GoalType {
   WEEKLY_SESSIONS
   MONTHLY_CALORIES
   DAILY_STEPS
+  WEEKLY_DISTANCE
   CUSTOM
 }
 
@@ -100,6 +121,7 @@ enum GoalPeriod {
   DAILY
   WEEKLY
   MONTHLY
+  YEARLY
 }
 
 enum GuideCategory {
@@ -136,6 +158,8 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
+  
+  // Relations
   profile       UserProfile?
   analyses      Analysis[]
   favorites     Favorite[]
@@ -151,9 +175,10 @@ model User {
   referralEarnings Float     @default(0)
   fitnessActivities FitnessActivity[]
   fitnessGoals      FitnessGoal[]
-  guides            Guide[]
+  authoredGuides    Guide[]
   guideLikes        GuideLike[]
   guideBookmarks    GuideBookmark[]
+  guideComments     GuideComment[]
 
   @@map("users")
 }
@@ -245,6 +270,8 @@ model Favorite {
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   productId   String
+  product     Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  // Snapshot fields kept for backward compatibility or quick access, but defined relation is better
   productName String
   productBrand String?
   productCategory String?
@@ -306,40 +333,67 @@ model Product {
   id                    String          @id @default(uuid())
   name                  String
   slug                  String          @unique
-  description           String?
+  description           String // Detailed product description
+  shortDescription      String? // Brief summary
   brand                 String
   category              ProductCategory
   subCategory           String?
-  price                 Float
-  compareAtPrice        Float?          // For showing discounts
+  
+  // Pricing (using Decimal for precision)
+  price                 Decimal         @db.Decimal(10, 2)
+  compareAtPrice        Decimal?        @db.Decimal(10, 2)
   currency              String          @default("USD")
+  
+  // Inventory
   stock                 Int             @default(0)
   lowStockThreshold     Int             @default(10)
-  images                String          @default("[]") // JSON array of image URLs
-  thumbnailUrl          String?
-  tags                  String          @default("[]") // JSON array for search
-  ingredients           String?         // Text field for ingredients list
-  benefits              String          @default("[]") // JSON array of benefits
-  howToUse              String?         // Instructions for use
+  sku                   String?         @unique
+  barcode               String?
+  
+  // Physical specs
+  weight                Decimal?        @db.Decimal(10, 2)
+  dimensions            String?         // JSON: {length, width, height}
+  
+  // Content & Metadata (JSON strings)
+  images                String          // JSON array of image URLs
+  thumbnailUrl          String
+  tags                  String          // JSON array of search tags
+  ingredients           String?
+  benefits              String          // JSON array of benefits
+  howToUse              String?
+  
+  // Status
   isActive              Boolean         @default(true)
   isFeatured            Boolean         @default(false)
-  rating                Float?
+  isNewArrival          Boolean         @default(false)
+  isBestseller          Boolean         @default(false)
+  
+  // Analytics & Stats
+  rating                Decimal?        @db.Decimal(3, 2)
   reviewCount           Int             @default(0)
+  viewCount             Int             @default(0)
+  purchaseCount         Int             @default(0)
+  
+  // Integrations
   perfectCorpProductId  String?         // For AR try-on integration
   metadata              String?         // JSON for flexible additional data
+  
   createdAt             DateTime        @default(now())
   updatedAt             DateTime        @updatedAt
+  publishedAt           DateTime?
   
   // Relations
   cartItems             CartItem[]
   orderItems            OrderItem[]
+  favorites             Favorite[]
 
   @@map("products")
-  @@index([category])
-  @@index([brand])
-  @@index([isActive, isFeatured])
-  @@index([createdAt])
+  @@index([category, isActive])
+  @@index([isFeatured, isActive])
   @@index([slug])
+  @@index([sku])
+  @@index([brand])
+  @@index([createdAt])
 }
 
 /// Cart model - one cart per user
@@ -348,6 +402,9 @@ model Cart {
   userId    String     @unique
   user      User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   items     CartItem[]
+  
+  subtotal  Decimal    @default(0) @db.Decimal(10, 2) // Calculated subtotal
+  
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -362,9 +419,12 @@ model CartItem {
   cart      Cart     @relation(fields: [cartId], references: [id], onDelete: Cascade)
   productId String
   product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
-  quantity  Int      @default(1)
-  price     Float    // Price snapshot at add time
-  createdAt DateTime @default(now())
+  
+  quantity  Int      // 1-99
+  price     Decimal  @db.Decimal(10, 2) // Snapshot price
+  subtotal  Decimal  @db.Decimal(10, 2) // price * quantity
+  
+  addedAt   DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   @@unique([cartId, productId])
@@ -377,29 +437,50 @@ model CartItem {
 /// Includes full address and payment information
 model Order {
   id              String        @id @default(uuid())
-  orderNumber     String        @unique  // Auto-generated unique order number
+  orderNumber     String        @unique  // ORD-YYYYMMDD-XXXXX
   userId          String
   user            User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
   status          OrderStatus   @default(PENDING)
-  items           OrderItem[]
-  subtotal        Float
-  tax             Float         @default(0)
-  shippingCost    Float         @default(0)
-  discount        Float         @default(0)
-  total           Float
-  currency        String        @default("USD")
-  shippingAddress String        // JSON: { name, address, city, state, zip, country, phone }
-  billingAddress  String?       // JSON: { name, address, city, state, zip, country }
-  paymentMethod   String        @default("PENDING")
   paymentStatus   PaymentStatus @default(PENDING)
+  
+  // Financials
+  subtotal        Decimal       @db.Decimal(10, 2)
+  tax             Decimal       @default(0) @db.Decimal(10, 2)
+  shippingCost    Decimal       @default(0) @db.Decimal(10, 2)
+  discount        Decimal       @default(0) @db.Decimal(10, 2)
+  total           Decimal       @db.Decimal(10, 2)
+  currency        String        @default("USD")
+  
+  // Details (JSON strings)
+  shippingAddress String        // JSON
+  billingAddress  String?       // JSON
+  paymentMethod   String
+  paymentIntentId String?
+  
+  // Fulfillment
   trackingNumber  String?
+  trackingUrl     String?
+  estimatedDelivery DateTime?
+  deliveredAt     DateTime?
+  
+  // Lifecycle
+  cancelledAt     DateTime?
+  refundedAt      DateTime?
+  
+  // Notes
   notes           String?
+  internalNotes   String?
+  metadata        String?
+  
+  items           OrderItem[]
   promotionUsage  PromotionUsage?
+  
   createdAt       DateTime      @default(now())
   updatedAt       DateTime      @updatedAt
 
   @@map("orders")
-  @@index([userId])
+  @@index([userId, createdAt])
   @@index([orderNumber])
   @@index([status])
   @@index([createdAt])
@@ -413,11 +494,19 @@ model OrderItem {
   order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
   productId    String
   product      Product  @relation(fields: [productId], references: [id])
-  productName  String   // Snapshot: product name at purchase time
-  productImage String   // Snapshot: product image at purchase time
+  
+  // Snapshots
+  productName  String
+  productImage String
+  productSku   String?
+  
   quantity     Int
-  price        Float    // Snapshot: unit price at purchase time
-  total        Float    // quantity * price
+  price        Decimal  @db.Decimal(10, 2)
+  subtotal     Decimal  @db.Decimal(10, 2)
+  tax          Decimal  @default(0) @db.Decimal(10, 2)
+  discount     Decimal  @default(0) @db.Decimal(10, 2)
+  total        Decimal  @db.Decimal(10, 2)
+  
   createdAt    DateTime @default(now())
 
   @@map("order_items")
@@ -443,12 +532,15 @@ model Notification {
   isRead    Boolean          @default(false)
   readAt    DateTime?
   
+  priority  NotificationPriority @default(NORMAL)
+  
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   
   @@map("notifications")
   @@index([userId, isRead])
   @@index([userId, createdAt])
+  @@index([type])
 }
 
 // ============================================
@@ -547,6 +639,7 @@ model Referral {
 // ============================================
 
 /// FitnessActivity model - track user workout and wellness activities
+/// FitnessActivity model - track user workout and wellness activities
 model FitnessActivity {
   id          String   @id @default(uuid())
   userId      String
@@ -561,13 +654,19 @@ model FitnessActivity {
   intensity       IntensityLevel
   caloriesBurned  Int?
   
-  // Additional metrics (optional)
-  distance        Float? // in km
+  // Additional metrics
+  distance        Decimal? @db.Decimal(10, 2) // in km
   steps           Int?
-  heartRate       Int?   // average BPM
+  heartRate       Int?     // average BPM
   
   // Timing
   activityDate    DateTime
+  startTime       DateTime?
+  endTime         DateTime?
+  
+  // Notes
+  notes           String?
+  mood            String?   // How user felt
   
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
@@ -578,17 +677,21 @@ model FitnessActivity {
 }
 
 /// FitnessGoal model - user fitness and wellness goals
+/// FitnessGoal model - user fitness and wellness goals
 model FitnessGoal {
   id          String   @id @default(uuid())
   userId      String
   user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
   type        GoalType
-  target      Float
-  current     Float    @default(0)
-  unit        String   // e.g., "minutes", "calories", "sessions"
+  title       String
+  description String?
   
-  period      GoalPeriod // DAILY, WEEKLY, MONTHLY
+  target      Decimal  @db.Decimal(10, 2)
+  current     Decimal  @default(0) @db.Decimal(10, 2)
+  unit        String   // "minutes", "calories", "sessions", "steps"
+  
+  period      GoalPeriod
   
   startDate   DateTime
   endDate     DateTime
@@ -602,6 +705,7 @@ model FitnessGoal {
   
   @@map("fitness_goals")
   @@index([userId, isActive])
+  @@index([userId, period])
 }
 
 // ============================================
@@ -638,15 +742,19 @@ model Guide {
   author      User?    @relation(fields: [authorId], references: [id], onDelete: SetNull)
   viewCount   Int      @default(0)
   likeCount   Int      @default(0)
+  bookmarkCount Int    @default(0)
+  shareCount  Int      @default(0)
   
   // Publishing
   isPublished Boolean  @default(false)
+  isFeatured  Boolean  @default(false)
   publishedAt DateTime?
   
   // Relations
   steps       GuideStep[]
   likes       GuideLike[]
   bookmarks   GuideBookmark[]
+  comments    GuideComment[]
   
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
@@ -704,5 +812,26 @@ model GuideBookmark {
   
   @@unique([guideId, userId])
   @@map("guide_bookmarks")
+  @@index([userId])
+}
+
+/// GuideComment model - user comments on guides
+model GuideComment {
+  id        String   @id @default(uuid())
+  guideId   String
+  guide     Guide    @relation(fields: [guideId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  content   String   @db.Text
+  rating    Int?     // 1-5 stars
+  
+  isApproved Boolean @default(false)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("guide_comments")
+  @@index([guideId])
   @@index([userId])
 }

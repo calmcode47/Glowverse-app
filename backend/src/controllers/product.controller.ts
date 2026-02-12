@@ -1,177 +1,182 @@
-import { Request, Response } from "express";
-import ProductService from "@services/product.service";
-import { ProductCategory, ProductFilters } from "@app-types/ecommerce.types";
-import { AppError } from "@utils/errors";
+import { Request, Response, NextFunction } from 'express';
+import { ProductService } from '../services/product.service';
+import { ProductCategory } from '@prisma/client';
 
-/**
- * Product Controller
- * Handles HTTP requests for product catalog operations
- */
-const ProductController = {
+export class ProductController {
     /**
      * GET /api/v1/products
-     * Get all products with optional filters
+     * Get all products with filters
      */
-    async getAllProducts(req: Request, res: Response) {
-        const {
-            category,
-            search,
-            tags,
-            minPrice,
-            maxPrice,
-            page,
-            limit,
-            sortBy
-        } = req.query;
+    static async getAllProducts(req: Request, res: Response, next: NextFunction) {
+        try {
+            const filters = {
+                category: req.query.category as ProductCategory,
+                search: req.query.search as string,
+                tags: req.query.tags ? (req.query.tags as string).split(',') : undefined,
+                minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+                maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+                isFeatured: req.query.isFeatured === 'true' ? true : undefined,
+                isNewArrival: req.query.isNewArrival === 'true' ? true : undefined,
+                isBestseller: req.query.isBestseller === 'true' ? true : undefined,
+                inStock: req.query.inStock === 'true' ? true : undefined,
+                brand: req.query.brand as string,
+                page: req.query.page ? Number(req.query.page) : 1,
+                limit: req.query.limit ? Number(req.query.limit) : 20,
+                sortBy: req.query.sortBy as any
+            };
 
-        const filters: ProductFilters = {};
+            const result = await ProductService.getAllProducts(filters);
 
-        if (category && typeof category === 'string') {
-            filters.category = category as ProductCategory;
+            res.status(200).json({
+                success: true,
+                data: result
+            });
+        } catch (error) {
+            next(error);
         }
-        if (search && typeof search === 'string') {
-            filters.search = search;
-        }
-        if (tags && typeof tags === 'string') {
-            filters.tags = tags.split(',');
-        }
-        if (minPrice) {
-            filters.minPrice = parseFloat(minPrice as string);
-        }
-        if (maxPrice) {
-            filters.maxPrice = parseFloat(maxPrice as string);
-        }
-        if (page) {
-            filters.page = parseInt(page as string, 10);
-        }
-        if (limit) {
-            filters.limit = parseInt(limit as string, 10);
-        }
-        if (sortBy && typeof sortBy === 'string') {
-            filters.sortBy = sortBy as any;
-        }
+    }
 
-        const result = await ProductService.getAllProducts(filters);
+    /**
+     * GET /api/v1/products/:id
+     * Get single product by ID
+     */
+    static async getProductById(req: Request, res: Response, next: NextFunction) {
+        try {
+            const product = await ProductService.getProductById(req.params.id);
+            res.status(200).json({
+                success: true,
+                data: product
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 
-        return res.status(200).json({
-            success: true,
-            products: result.items,
-            pagination: result.pagination
-        });
-    },
+    /**
+     * GET /api/v1/products/slug/:slug
+     * Get product by slug
+     */
+    static async getProductBySlug(req: Request, res: Response, next: NextFunction) {
+        try {
+            const product = await ProductService.getProductBySlug(req.params.slug);
+            res.status(200).json({
+                success: true,
+                data: product
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 
     /**
      * GET /api/v1/products/featured
      * Get featured products
      */
-    async getFeaturedProducts(req: Request, res: Response) {
-        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 10;
-
-        if (limit > 50) {
-            throw new AppError("Limit cannot exceed 50", 400);
+    static async getFeaturedProducts(req: Request, res: Response, next: NextFunction) {
+        try {
+            const limit = req.query.limit ? Number(req.query.limit) : 10;
+            const products = await ProductService.getFeaturedProducts(limit);
+            res.status(200).json({
+                success: true,
+                data: products
+            });
+        } catch (error) {
+            next(error);
         }
+    }
 
-        const products = await ProductService.getFeaturedProducts(limit);
+    /**
+     * GET /api/v1/products/new-arrivals
+     * Get new arrival products
+     */
+    static async getNewArrivals(req: Request, res: Response, next: NextFunction) {
+        try {
+            const limit = req.query.limit ? Number(req.query.limit) : 10;
+            const products = await ProductService.getNewArrivals(limit);
+            res.status(200).json({
+                success: true,
+                data: products
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 
-        return res.status(200).json({
-            success: true,
-            products
-        });
-    },
+    /**
+     * GET /api/v1/products/bestsellers
+     * Get bestseller products
+     */
+    static async getBestsellers(req: Request, res: Response, next: NextFunction) {
+        try {
+            const limit = req.query.limit ? Number(req.query.limit) : 10;
+            const products = await ProductService.getBestsellers(limit);
+            res.status(200).json({
+                success: true,
+                data: products
+            });
+        } catch (error) {
+            next(error);
+        }
+    }
 
     /**
      * GET /api/v1/products/search
-     * Search products by query
+     * Search products
      */
-    async searchProducts(req: Request, res: Response) {
-        const { q, limit } = req.query;
-
-        if (!q || typeof q !== 'string') {
-            throw new AppError("Search query is required", 400);
+    static async searchProducts(req: Request, res: Response, next: NextFunction) {
+        try {
+            const query = req.query.q as string || '';
+            const limit = req.query.limit ? Number(req.query.limit) : 20;
+            const products = await ProductService.searchProducts(query, limit);
+            res.status(200).json({
+                success: true,
+                data: products
+            });
+        } catch (error) {
+            next(error);
         }
-
-        const searchLimit = limit ? parseInt(limit as string, 10) : 20;
-
-        if (searchLimit > 100) {
-            throw new AppError("Limit cannot exceed 100", 400);
-        }
-
-        const products = await ProductService.searchProducts(q, searchLimit);
-
-        return res.status(200).json({
-            success: true,
-            query: q,
-            count: products.length,
-            products
-        });
-    },
+    }
 
     /**
      * GET /api/v1/products/category/:category
      * Get products by category
      */
-    async getProductsByCategory(req: Request, res: Response) {
-        const { category } = req.params;
+    static async getProductsByCategory(req: Request, res: Response, next: NextFunction) {
+        try {
+            const category = req.params.category as ProductCategory;
+            // Reuse basic filters handling
+            const filters = {
+                page: req.query.page ? Number(req.query.page) : 1,
+                limit: req.query.limit ? Number(req.query.limit) : 20,
+                minPrice: req.query.minPrice ? Number(req.query.minPrice) : undefined,
+                maxPrice: req.query.maxPrice ? Number(req.query.maxPrice) : undefined,
+                sortBy: req.query.sortBy as any
+            };
 
-        if (!Object.values(ProductCategory).includes(category as ProductCategory)) {
-            throw new AppError("Invalid category", 400);
+            const result = await ProductService.getProductsByCategory(category, filters);
+            res.status(200).json({
+                success: true,
+                data: result
+            });
+        } catch (error) {
+            next(error);
         }
-
-        const { page, limit, sortBy } = req.query;
-
-        const filters: Omit<ProductFilters, 'category'> = {};
-        if (page) filters.page = parseInt(page as string, 10);
-        if (limit) filters.limit = parseInt(limit as string, 10);
-        if (sortBy && typeof sortBy === 'string') filters.sortBy = sortBy as any;
-
-        const result = await ProductService.getProductsByCategory(
-            category as ProductCategory,
-            filters
-        );
-
-        return res.status(200).json({
-            success: true,
-            category,
-            products: result.items,
-            pagination: result.pagination
-        });
-    },
-
-    /**
-     * GET /api/v1/products/:id
-     * Get single product details
-     */
-    async getProduct(req: Request, res: Response) {
-        const { id } = req.params;
-
-        const product = await ProductService.getProductById(id);
-
-        return res.status(200).json({
-            success: true,
-            product
-        });
-    },
+    }
 
     /**
      * GET /api/v1/products/:id/related
      * Get related products
      */
-    async getRelatedProducts(req: Request, res: Response) {
-        const { id } = req.params;
-        const limit = req.query.limit ? parseInt(req.query.limit as string, 10) : 6;
-
-        if (limit > 20) {
-            throw new AppError("Limit cannot exceed 20", 400);
+    static async getRelatedProducts(req: Request, res: Response, next: NextFunction) {
+        try {
+            const limit = req.query.limit ? Number(req.query.limit) : 6;
+            const products = await ProductService.getRelatedProducts(req.params.id, limit);
+            res.status(200).json({
+                success: true,
+                data: products
+            });
+        } catch (error) {
+            next(error);
         }
-
-        const products = await ProductService.getRelatedProducts(id, limit);
-
-        return res.status(200).json({
-            success: true,
-            count: products.length,
-            products
-        });
     }
-};
-
-export default ProductController;
+}

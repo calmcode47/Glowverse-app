@@ -7,7 +7,8 @@ import ImageService from "@services/image.service";
 import perfectCorpService from "@services/perfectcorp.service";
 import PerfectCorpMock from "@utils/perfectcorp-mock";
 import env from "@config/env";
- 
+import { NotificationService } from "@services/notification.service";
+
 
 export class TryOnController {
   static async createTryOn(req: Request, res: Response, next: NextFunction) {
@@ -127,6 +128,11 @@ export class TryOnController {
           data: {
             totalTryOns: { increment: 1 }
           }
+        });
+
+        // Send Notification
+        await NotificationService.notifyTryOnComplete(tryOn.userId, tryOnId).catch(err => {
+          console.error('Failed to send try-on notification:', err);
         });
       }
     } catch (error: any) {

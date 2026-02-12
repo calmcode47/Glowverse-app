@@ -1,92 +1,66 @@
-import prisma from "@config/database";
-import { NotFoundError } from "@utils/errors";
-import { ProductCategory, ProductFilters, PaginatedResponse, PaginationMetadata } from "@app-types/ecommerce.types";
-import { Product } from "@prisma/client";
+import { PrismaClient, Product, Prisma, ProductCategory } from '@prisma/client';
+import { AppError } from '../utils/errors';
 
-/**
- * Product Service
- * Handles all product-related business logic including search, filtering, and catalog management
- */
-class ProductService {
-    /**
-     * Parse JSON fields from product
-     */
-    private parseProductJson(product: Product) {
-        return {
-            ...product,
-            images: this.safeJsonParse(product.images, []),
-            tags: this.safeJsonParse(product.tags, []),
-            benefits: this.safeJsonParse(product.benefits, [])
-        };
-    }
+const prisma = new PrismaClient();
 
-    /**
-     * Safely parse JSON string
-     */
-    private safeJsonParse<T>(jsonString: string, defaultValue: T): T {
-        try {
-            return JSON.parse(jsonString) as T;
-        } catch {
-            return defaultValue;
-        }
-    }
+export interface ProductFilters {
+    category?: ProductCategory;
+    search?: string;
+    tags?: string[];
+    minPrice?: number;
+    maxPrice?: number;
+    isFeatured?: boolean;
+    isNewArrival?: boolean;
+    isBestseller?: boolean;
+    inStock?: boolean;
+    brand?: string;
+    page?: number;
+    limit?: number;
+    sortBy?: 'newest' | 'price-asc' | 'price-desc' | 'rating' | 'popular' | 'name';
+}
 
-    /**
-     * Calculate pagination metadata
-     */
-    private calculatePagination(page: number, limit: number, total: number): PaginationMetadata {
-        const totalPages = Math.ceil(total / limit);
-        return {
-            page,
-            limit,
-            total,
-            totalPages,
-            hasNextPage: page < totalPages,
-            hasPreviousPage: page > 1
-        };
-    }
+export interface PaginatedProducts {
+    products: Product[];
+    total: number;
+    page: number;
+    limit: number;
+    totalPages: number;
+}
 
+export class ProductService {
     /**
-     * Get all products with filtering, search, and pagination
+     * Get all products with advanced filtering, sorting and pagination
      */
-    async getAllProducts(filters: ProductFilters = {}): Promise<PaginatedResponse<Product>> {
+    static async getAllProducts(filters: ProductFilters): Promise<PaginatedProducts> {
         const {
             category,
             search,
             tags,
             minPrice,
             maxPrice,
+            isFeatured,
+            isNewArrival,
+            isBestseller,
+            inStock,
+            brand,
             page = 1,
             limit = 20,
             sortBy = 'newest'
         } = filters;
 
-        // Build where clause
-        const where: any = {
+        const where: Prisma.ProductWhereInput = {
             isActive: true
         };
 
-        if (category) {
-            where.category = category;
-        }
+        // Apply filters
+        if (category) where.category = category;
+        if (brand) where.brand = brand;
+        if (isFeatured !== undefined) where.isFeatured = isFeatured;
+        if (isNewArrival !== undefined) where.isNewArrival = isNewArrival;
+        if (isBestseller !== undefined) where.isBestseller = isBestseller;
 
-        if (search) {
-            where.AND = [
-                ...(where.AND || []),
-                {
-                    OR: [
-                        { name: { contains: search, mode: 'insensitive' } },
-                        { description: { contains: search, mode: 'insensitive' } },
-                        { brand: { contains: search, mode: 'insensitive' } }
-                    ]
-                }
-            ];
-        }
-
-        if (tags && tags.length > 0) {
-            // tags is stored as a JSON string, use contains to search
-            const tagConditions = tags.map((tag: string) => ({ tags: { contains: tag, mode: 'insensitive' as const } }));
-            where.AND = [...(where.AND || []), { OR: tagConditions }];
+        if (inStock) {
+            where.stock = { gt: 0 };
         }
 
         if (minPrice !== undefined || maxPrice !== undefined) {
@@ -95,12 +69,26 @@ class ProductService {
             if (maxPrice !== undefined) where.price.lte = maxPrice;
         }
 
-        // Build orderBy clause
-        let orderBy: any = {};
+        if (search) {
+            where.OR = [
+                { name: { contains: search, mode: 'insensitive' } },
+                { description: { contains: search, mode: 'insensitive' } },
+                { brand: { contains: search, mode: 'insensitive' } },
+                { tags: { contains: search, mode: 'insensitive' } }
+            ];
+        }
+
+        if (tags && tags.length > 0) {
+            // For JSON string tags, we search if the string contains the tag
+            // This is a simplified approach. Ideally use specific JSON operators or full text search
+            where.AND = tags.map(tag => ({
+                tags: { contains: tag, mode: 'insensitive' }
+            }));
+        }
+
+        // Determine sorting
+        let orderBy: Prisma.ProductOrderByWithRelationInput | Prisma.ProductOrderByWithRelationInput[] = {};
         switch (sortBy) {
-            case 'newest':
-                orderBy = { createdAt: 'desc' };
-                break;
             case 'price-asc':
                 orderBy = { price: 'asc' };
                 break;
@@ -111,151 +99,306 @@ class ProductService {
                 orderBy = { rating: 'desc' };
                 break;
             case 'popular':
-                orderBy = { reviewCount: 'desc' };
+                orderBy = [{ purchaseCount: 'desc' }, { viewCount: 'desc' }];
                 break;
+            case 'name':
+                orderBy = { name: 'asc' };
+                break;
+            case 'newest':
             default:
-                orderBy = { createdAt: 'desc' };
+                orderBy = { publishedAt: 'desc' }; // Fallback to createdAt if publishedAt is null via coalesce in raw query, but here simple
+                break;
         }
 
-        const skip = (page - 1) * limit;
+        // fallback for newest if publishedAt is null is handled by prisma automatically placing nulls last/first depending on DB
+        // To be safe, we can default to createdAt
+        if (sortBy === 'newest') {
+            orderBy = { createdAt: 'desc' };
+        }
 
+        // Execute query
         const [products, total] = await Promise.all([
             prisma.product.findMany({
                 where,
                 orderBy,
-                skip,
-                take: limit
+                skip: (page - 1) * limit,
+                take: limit,
             }),
             prisma.product.count({ where })
         ]);
 
-        const parsedProducts = products.map(p => this.parseProductJson(p));
-
         return {
-            items: parsedProducts as any,
-            pagination: this.calculatePagination(page, limit, total)
+            products,
+            total,
+            page,
+            limit,
+            totalPages: Math.ceil(total / limit)
         };
     }
 
     /**
-     * Get a single product by ID
+     * Get filtered product by ID
      */
-    async getProductById(id: string): Promise<Product> {
+    static async getProductById(id: string): Promise<Product> {
         const product = await prisma.product.findUnique({
             where: { id }
         });
 
         if (!product || !product.isActive) {
-            throw new NotFoundError("Product not found");
+            throw new AppError('Product not found', 404);
         }
 
-        return this.parseProductJson(product) as any;
+        // Fire and forget view increment
+        this.incrementViewCount(id).catch(console.error);
+
+        return product;
+    }
+
+    /**
+     * Get product by slug
+     */
+    static async getProductBySlug(slug: string): Promise<Product> {
+        const product = await prisma.product.findUnique({
+            where: { slug }
+        });
+
+        if (!product || !product.isActive) {
+            throw new AppError('Product not found', 404);
+        }
+
+        // Fire and forget view increment
+        this.incrementViewCount(product.id).catch(console.error);
+
+        return product;
     }
 
     /**
      * Get featured products
      */
-    async getFeaturedProducts(limit: number = 10): Promise<Product[]> {
-        const products = await prisma.product.findMany({
+    static async getFeaturedProducts(limit: number = 10): Promise<Product[]> {
+        return prisma.product.findMany({
             where: {
-                isActive: true,
-                isFeatured: true
+                isFeatured: true,
+                isActive: true
             },
-            orderBy: {
-                createdAt: 'desc'
-            },
+            orderBy: { createdAt: 'desc' },
             take: limit
         });
-
-        return products.map(p => this.parseProductJson(p)) as any;
     }
 
     /**
-     * Search products by query string
+     * Get new arrivals
      */
-    async searchProducts(query: string, limit: number = 20): Promise<Product[]> {
-        if (!query || query.trim().length === 0) {
-            return [];
-        }
+    static async getNewArrivals(limit: number = 10): Promise<Product[]> {
+        return prisma.product.findMany({
+            where: {
+                isNewArrival: true,
+                isActive: true
+            },
+            orderBy: { createdAt: 'desc' },
+            take: limit
+        });
+    }
 
-        const searchTerm = query.trim();
-
-        const products = await prisma.product.findMany({
+    /**
+     * Get bestsellers
+     */
+    static async getBestsellers(limit: number = 10): Promise<Product[]> {
+        return prisma.product.findMany({
             where: {
                 isActive: true,
                 OR: [
-                    { name: { contains: searchTerm, mode: 'insensitive' } },
-                    { description: { contains: searchTerm, mode: 'insensitive' } },
-                    { brand: { contains: searchTerm, mode: 'insensitive' } },
-                    { tags: { contains: searchTerm, mode: 'insensitive' } }
+                    { isBestseller: true },
+                    { purchaseCount: { gt: 0 } }
                 ]
             },
-            take: limit,
             orderBy: [
-                { rating: 'desc' },
-                { reviewCount: 'desc' }
-            ]
+                { isBestseller: 'desc' },
+                { purchaseCount: 'desc' }
+            ],
+            take: limit
         });
+    }
 
-        return products.map(p => this.parseProductJson(p)) as any;
+    /**
+     * Search products
+     */
+    static async searchProducts(query: string, limit: number = 20): Promise<Product[]> {
+        return prisma.product.findMany({
+            where: {
+                isActive: true,
+                OR: [
+                    { name: { contains: query, mode: 'insensitive' } },
+                    { description: { contains: query, mode: 'insensitive' } },
+                    { brand: { contains: query, mode: 'insensitive' } },
+                    { tags: { contains: query, mode: 'insensitive' } }
+                ]
+            },
+            // Simple relevance sorting: matches in name could be prioritized by application logic
+            // But for simple prisma query, we rely on default or specified generic order
+            orderBy: {
+                name: 'asc'
+            },
+            take: limit
+        });
     }
 
     /**
      * Get products by category
      */
-    async getProductsByCategory(
+    static async getProductsByCategory(
         category: ProductCategory,
-        filters: Omit<ProductFilters, 'category'> = {}
-    ): Promise<PaginatedResponse<Product>> {
-        return this.getAllProducts({ ...filters, category });
+        filters: Partial<ProductFilters> = {}
+    ): Promise<PaginatedProducts> {
+
+        // Reuse getAllProducts but force the category
+        return this.getAllProducts({
+            ...filters,
+            category
+        });
     }
 
     /**
-     * Check if product has sufficient stock
+     * Get related products
      */
-    async checkStock(productId: string, quantity: number): Promise<{ available: boolean; stock: number }> {
+    static async getRelatedProducts(productId: string, limit: number = 6): Promise<Product[]> {
+        const product = await this.getProductById(productId);
+
+        // Parse tags to find overlaps
+        const tags = this.parseJsonField<string[]>(product.tags);
+
+        return prisma.product.findMany({
+            where: {
+                isActive: true,
+                id: { not: productId },
+                OR: [
+                    { category: product.category },
+                    {
+                        tags: {
+                            // Check if any of the tags string matches. 
+                            // Since this is a JSON string field, simple contains on the whole string for each tag is a basic approx
+                            contains: tags[0] || '',
+                            mode: 'insensitive'
+                        }
+                    }
+                ]
+            },
+            orderBy: {
+                category: 'asc' // Same category first effectively if we sorted results, but DB sort is limited here
+            },
+            take: limit
+        });
+        // Note: Better relevance sorting would require raw SQL or in-app sorting, keeping it simple for now.
+    }
+
+    /**
+     * Check stock availability
+     */
+    static async checkStock(productId: string, quantity: number): Promise<{
+        available: boolean;
+        currentStock: number;
+        requested: number;
+    }> {
         const product = await prisma.product.findUnique({
             where: { id: productId },
             select: { stock: true, isActive: true }
         });
 
         if (!product || !product.isActive) {
-            throw new NotFoundError("Product not found");
+            throw new AppError('Product not found', 404);
         }
 
         return {
             available: product.stock >= quantity,
-            stock: product.stock
+            currentStock: product.stock,
+            requested: quantity
         };
     }
 
     /**
-     * Get related products (same category or similar tags)
+     * Update stock
      */
-    async getRelatedProducts(productId: string, limit: number = 6): Promise<Product[]> {
-        const product = await prisma.product.findUnique({
-            where: { id: productId },
-            select: { category: true, tags: true }
-        });
+    static async updateStock(
+        productId: string,
+        quantity: number,
+        operation: 'increment' | 'decrement'
+    ): Promise<Product> {
 
-        if (!product) {
-            throw new NotFoundError("Product not found");
+        // If decrementing, check stock first to avoid negative errors or handle gracefully
+        if (operation === 'decrement') {
+            const { available } = await this.checkStock(productId, quantity);
+            if (!available) {
+                throw new AppError('Insufficient stock', 400);
+            }
+
+            const product = await prisma.product.update({
+                where: { id: productId },
+                data: { stock: { decrement: quantity } }
+            });
+
+            // Check low stock threshold
+            if (product.stock <= product.lowStockThreshold) {
+                // TODO: Trigger low stock notification
+                console.warn(`Product ${product.name} (${product.id}) is low on stock: ${product.stock}`);
+            }
+
+            return product;
+        } else {
+            return prisma.product.update({
+                where: { id: productId },
+                data: { stock: { increment: quantity } }
+            });
         }
+    }
 
-        const relatedProducts = await prisma.product.findMany({
-            where: {
-                isActive: true,
-                id: { not: productId },
-                category: product.category
-            },
-            orderBy: {
-                rating: 'desc'
-            },
-            take: limit
+    /**
+     * Get product stats
+     */
+    static async getProductStats(productId: string): Promise<{
+        viewCount: number;
+        purchaseCount: number;
+        favoriteCount: number;
+        rating: number;
+        reviewCount: number;
+        stock: number;
+        isLowStock: boolean;
+    }> {
+        const product = await this.getProductById(productId);
+
+        const favoriteCount = await prisma.favorite.count({
+            where: { productId }
         });
 
-        return relatedProducts.map(p => this.parseProductJson(p)) as any;
+        return {
+            viewCount: product.viewCount,
+            purchaseCount: product.purchaseCount,
+            favoriteCount,
+            rating: Number(product.rating) || 0,
+            reviewCount: product.reviewCount,
+            stock: product.stock,
+            isLowStock: product.stock <= product.lowStockThreshold
+        };
+    }
+
+    /**
+     * Increment view count
+     */
+    static async incrementViewCount(productId: string): Promise<void> {
+        await prisma.product.update({
+            where: { id: productId },
+            data: { viewCount: { increment: 1 } }
+        });
+    }
+
+    /**
+     * Helper to parse JSON fields safely
+     */
+    static parseJsonField<T>(field: string | null): T {
+        if (!field) return [] as unknown as T;
+        try {
+            return JSON.parse(field);
+        } catch {
+            return [] as unknown as T;
+        }
     }
 }
-
-export default new ProductService();

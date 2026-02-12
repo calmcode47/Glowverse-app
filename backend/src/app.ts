@@ -6,6 +6,11 @@ import morgan from "morgan";
 import env from "@config/env";
 import { errorHandler, notFoundHandler } from "@middleware/errorHandler";
 import { apiLimiter } from "@middleware/rateLimiter";
+import orderRoutes from '@routes/order.routes';
+import notificationRoutes from '@routes/notification.routes';
+import fitnessRoutes from '@routes/fitness.routes';
+import guideRoutes from '@routes/guide.routes';
+import searchRoutes from '@routes/search.routes';
 import { registerRoutes } from "@routes/index";
 
 const app: Application = express();
@@ -42,6 +47,11 @@ app.get("/health", (req, res) => {
 });
 
 const API_PREFIX = `/api/${env.apiVersion}`;
+app.use(`${API_PREFIX}/orders`, orderRoutes);
+app.use(`${API_PREFIX}/notifications`, notificationRoutes);
+app.use(`${API_PREFIX}/fitness`, fitnessRoutes);
+app.use(`${API_PREFIX}/guides`, guideRoutes);
+app.use(`${API_PREFIX}/search`, searchRoutes);
 app.use(API_PREFIX, apiLimiter);
 
 // Register all routes

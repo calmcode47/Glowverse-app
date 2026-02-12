@@ -1,57 +1,9 @@
-import prisma from "@config/database";
-import { NotFoundError, AppError } from "@utils/errors";
+import { PrismaClient, FitnessActivity, FitnessGoal, ActivityType, IntensityLevel, GoalType, GoalPeriod } from '@prisma/client';
+import { AppError } from '../utils/errors';
 
-/**
- * Activity Type Enum
- */
-export enum ActivityType {
-    CARDIO = 'CARDIO',
-    STRENGTH = 'STRENGTH',
-    YOGA = 'YOGA',
-    STRETCHING = 'STRETCHING',
-    SPORTS = 'SPORTS',
-    WALKING = 'WALKING',
-    RUNNING = 'RUNNING',
-    CYCLING = 'CYCLING',
-    SWIMMING = 'SWIMMING',
-    OTHER = 'OTHER'
-}
+const prisma = new PrismaClient();
 
-/**
- * Intensity Level Enum
- */
-export enum IntensityLevel {
-    LOW = 'LOW',
-    MODERATE = 'MODERATE',
-    HIGH = 'HIGH',
-    VERY_HIGH = 'VERY_HIGH'
-}
-
-/**
- * Goal Type Enum
- */
-export enum GoalType {
-    WEEKLY_MINUTES = 'WEEKLY_MINUTES',
-    WEEKLY_SESSIONS = 'WEEKLY_SESSIONS',
-    MONTHLY_CALORIES = 'MONTHLY_CALORIES',
-    DAILY_STEPS = 'DAILY_STEPS',
-    CUSTOM = 'CUSTOM'
-}
-
-/**
- * Goal Period Enum
- */
-export enum GoalPeriod {
-    DAILY = 'DAILY',
-    WEEKLY = 'WEEKLY',
-    MONTHLY = 'MONTHLY'
-}
-
-/**
- * Fitness Service
- * Handles fitness activity tracking and goal management
- */
-class FitnessService {
+export class FitnessService {
     /**
      * Log fitness activity
      */
@@ -68,114 +20,108 @@ class FitnessService {
             steps?: number;
             heartRate?: number;
             activityDate?: Date;
+            startTime?: Date;
+            endTime?: Date;
+            notes?: string;
+            mood?: string;
         }
-    ): Promise<any> {
-        // Default activity date to now if not provided
-        const activityDate = activityData.activityDate || new Date();
+    ): Promise<FitnessActivity> {
+        // Validate inputs
+        if (activityData.durationMinutes < 1 || activityData.durationMinutes > 1440) {
+            throw new AppError('Duration must be between 1 and 1440 minutes', 400);
+        }
+
+        // Auto-calculate calories if not provided (basic estimation)
+        let calories = activityData.caloriesBurned;
+        if (!calories) {
+            calories = this.estimateCalories(
+                activityData.type,
+                activityData.durationMinutes,
+                activityData.intensity
+            );
+        }
 
         // Create activity
         const activity = await prisma.fitnessActivity.create({
             data: {
                 userId,
                 type: activityData.type,
-                title: activityData.title,
+                title: activityData.title || this.getDefaultTitle(activityData.type),
                 description: activityData.description,
                 durationMinutes: activityData.durationMinutes,
                 intensity: activityData.intensity,
-                caloriesBurned: activityData.caloriesBurned,
+                caloriesBurned: calories,
                 distance: activityData.distance,
                 steps: activityData.steps,
                 heartRate: activityData.heartRate,
-                activityDate
-            }
+                activityDate: activityData.activityDate || new Date(),
+                startTime: activityData.startTime,
+                endTime: activityData.endTime,
+                notes: activityData.notes,
+                mood: activityData.mood,
+            },
         });
 
-        // Update related goals progress
+        // Update related goals
         await this.updateGoalProgress(userId, activity);
 
         return activity;
     }
 
     /**
-     * Get user's activity history
+     * Get activity history
      */
     async getActivityHistory(
         userId: string,
-        filters: {
+        filters?: {
             type?: ActivityType;
             startDate?: Date;
             endDate?: Date;
             page?: number;
             limit?: number;
-        } = {}
+        }
     ): Promise<{
-        activities: any[];
+        activities: FitnessActivity[];
         total: number;
-        pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-            hasNextPage: boolean;
-            hasPreviousPage: boolean;
-        };
     }> {
-        const { type, startDate, endDate, page = 1, limit = 20 } = filters;
+        const page = filters?.page || 1;
+        const limit = filters?.limit || 20;
         const skip = (page - 1) * limit;
 
         const where: any = { userId };
-
-        if (type) {
-            where.type = type;
-        }
-
-        if (startDate || endDate) {
+        if (filters?.type) where.type = filters.type;
+        if (filters?.startDate || filters?.endDate) {
             where.activityDate = {};
-            if (startDate) where.activityDate.gte = startDate;
-            if (endDate) where.activityDate.lte = endDate;
+            if (filters.startDate) where.activityDate.gte = filters.startDate;
+            if (filters.endDate) where.activityDate.lte = filters.endDate;
         }
 
         const [activities, total] = await Promise.all([
             prisma.fitnessActivity.findMany({
                 where,
-                orderBy: {
-                    activityDate: 'desc'
-                },
+                orderBy: { activityDate: 'desc' },
                 skip,
-                take: limit
+                take: limit,
             }),
-            prisma.fitnessActivity.count({ where })
+            prisma.fitnessActivity.count({ where }),
         ]);
 
-        const totalPages = Math.ceil(total / limit);
-
-        return {
-            activities,
-            total,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1
-            }
-        };
+        return { activities, total };
     }
 
     /**
      * Get activity by ID
      */
-    async getActivityById(userId: string, activityId: string): Promise<any> {
+    async getActivityById(
+        userId: string,
+        activityId: string
+    ): Promise<FitnessActivity> {
         const activity = await prisma.fitnessActivity.findFirst({
-            where: {
-                id: activityId,
-                userId
-            }
+            where: { id: activityId, userId },
         });
 
         if (!activity) {
-            throw new NotFoundError("Activity not found");
+            throw new AppError('Activity not found', 404);
         }
 
         return activity;
@@ -187,20 +133,22 @@ class FitnessService {
     async updateActivity(
         userId: string,
         activityId: string,
-        updateData: any
-    ): Promise<any> {
-        // Verify activity belongs to user
-        await this.getActivityById(userId, activityId);
+        updateData: Partial<FitnessActivity>
+    ): Promise<FitnessActivity> {
+        const activity = await this.getActivityById(userId, activityId);
 
-        // Update activity
         const updated = await prisma.fitnessActivity.update({
             where: { id: activityId },
-            data: updateData
+            data: updateData,
         });
 
         // Recalculate goals if metrics changed
-        if (updateData.durationMinutes || updateData.caloriesBurned || updateData.steps) {
-            await this.recalculateGoalProgress(userId);
+        if (
+            updateData.durationMinutes ||
+            updateData.caloriesBurned ||
+            updateData.distance
+        ) {
+            await this.recalculateGoals(userId);
         }
 
         return updated;
@@ -209,17 +157,18 @@ class FitnessService {
     /**
      * Delete activity
      */
-    async deleteActivity(userId: string, activityId: string): Promise<void> {
-        // Verify ownership
+    async deleteActivity(
+        userId: string,
+        activityId: string
+    ): Promise<void> {
         await this.getActivityById(userId, activityId);
 
-        // Delete activity
         await prisma.fitnessActivity.delete({
-            where: { id: activityId }
+            where: { id: activityId },
         });
 
-        // Recalculate goal progress
-        await this.recalculateGoalProgress(userId);
+        // Recalculate goals
+        await this.recalculateGoals(userId);
     }
 
     /**
@@ -227,66 +176,76 @@ class FitnessService {
      */
     async getStatistics(
         userId: string,
-        period: 'week' | 'month' | 'year'
+        period: 'week' | 'month' | 'year' = 'week'
     ): Promise<{
         totalActivities: number;
         totalMinutes: number;
         totalCalories: number;
         totalDistance: number;
-        averageIntensity: number;
+        averageIntensity: string;
         activitiesByType: Record<string, number>;
-        activitiesByWeek: Array<{ week: string; count: number; minutes: number }>;
+        activitiesByDay: Array<{
+            date: string;
+            count: number;
+            minutes: number;
+            calories: number;
+        }>;
+        currentStreak: number;
     }> {
-        // Calculate date range
         const now = new Date();
-        const startDate = new Date();
+        let startDate: Date;
 
-        if (period === 'week') {
-            startDate.setDate(now.getDate() - 7);
-        } else if (period === 'month') {
-            startDate.setDate(now.getDate() - 30);
-        } else {
-            startDate.setDate(now.getDate() - 365);
+        switch (period) {
+            case 'week':
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                break;
+            case 'month':
+                startDate = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                break;
+            case 'year':
+                startDate = new Date(now.getTime() - 365 * 24 * 60 * 60 * 1000);
+                break;
+            default:
+                startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000); // default to week
         }
 
-        // Fetch activities
         const activities = await prisma.fitnessActivity.findMany({
             where: {
                 userId,
-                activityDate: {
-                    gte: startDate,
-                    lte: now
-                }
+                activityDate: { gte: startDate },
             },
-            orderBy: {
-                activityDate: 'asc'
-            }
+            orderBy: { activityDate: 'desc' },
         });
 
-        // Calculate statistics
+        // Calculate totals
         const totalActivities = activities.length;
         const totalMinutes = activities.reduce((sum, a) => sum + a.durationMinutes, 0);
         const totalCalories = activities.reduce((sum, a) => sum + (a.caloriesBurned || 0), 0);
-        const totalDistance = activities.reduce((sum, a) => sum + (a.distance || 0), 0);
+        const totalDistance = activities.reduce((sum, a) => sum + Number(a.distance || 0), 0);
 
-        // Calculate average intensity
-        const intensityMap: Record<string, number> = {
-            LOW: 1,
-            MODERATE: 2,
-            HIGH: 3,
-            VERY_HIGH: 4
-        };
-        const totalIntensity = activities.reduce((sum, a) => sum + (intensityMap[a.intensity] || 0), 0);
-        const averageIntensity = totalActivities > 0 ? totalIntensity / totalActivities : 0;
+        // Average intensity
+        const intensityMap: Record<string, number> = { LOW: 1, MODERATE: 2, HIGH: 3, VERY_HIGH: 4 };
+        const avgIntensityNum = activities.length > 0
+            ? activities.reduce((sum, a) => sum + (intensityMap[a.intensity.toString()] || intensityMap[a.intensity] || 2), 0) / activities.length
+            : 0;
 
-        // Count by type
+        // Reverse map to find key
+        const intensityKeys = Object.keys(intensityMap);
+        const averageIntensity = intensityKeys.find(
+            key => intensityMap[key] === Math.round(avgIntensityNum)
+        ) || 'MODERATE';
+
+        // Activities by type
         const activitiesByType: Record<string, number> = {};
         activities.forEach(a => {
             activitiesByType[a.type] = (activitiesByType[a.type] || 0) + 1;
         });
 
-        // Group by week
-        const activitiesByWeek = this.groupByWeek(activities);
+        // Activities by day
+        const activitiesByDay = await this.groupByDay(activities);
+
+        // Current streak
+        const currentStreak = await this.calculateStreak(userId);
 
         return {
             totalActivities,
@@ -295,37 +254,9 @@ class FitnessService {
             totalDistance,
             averageIntensity,
             activitiesByType,
-            activitiesByWeek
+            activitiesByDay,
+            currentStreak,
         };
-    }
-
-    /**
-     * Helper: Group activities by week
-     */
-    private groupByWeek(activities: any[]): Array<{ week: string; count: number; minutes: number }> {
-        const weekMap = new Map<string, { count: number; minutes: number }>();
-
-        activities.forEach(activity => {
-            const date = new Date(activity.activityDate);
-            // Get week start (Monday)
-            const day = date.getDay();
-            const diff = date.getDate() - day + (day === 0 ? -6 : 1);
-            const weekStart = new Date(date.setDate(diff));
-            const weekKey = weekStart.toISOString().split('T')[0];
-
-            if (!weekMap.has(weekKey)) {
-                weekMap.set(weekKey, { count: 0, minutes: 0 });
-            }
-
-            const week = weekMap.get(weekKey)!;
-            week.count++;
-            week.minutes += activity.durationMinutes;
-        });
-
-        return Array.from(weekMap.entries()).map(([week, data]) => ({
-            week,
-            ...data
-        }));
     }
 
     /**
@@ -335,23 +266,16 @@ class FitnessService {
         userId: string,
         goalData: {
             type: GoalType;
+            title: string;
+            description?: string;
             target: number;
             unit: string;
             period: GoalPeriod;
             startDate?: Date;
         }
-    ): Promise<any> {
+    ): Promise<FitnessGoal> {
         const startDate = goalData.startDate || new Date();
-
-        // Calculate endDate based on period
-        const endDate = new Date(startDate);
-        if (goalData.period === GoalPeriod.DAILY) {
-            endDate.setDate(endDate.getDate() + 1);
-        } else if (goalData.period === GoalPeriod.WEEKLY) {
-            endDate.setDate(endDate.getDate() + 7);
-        } else {
-            endDate.setDate(endDate.getDate() + 30);
-        }
+        const endDate = this.calculateEndDate(startDate, goalData.period);
 
         // Deactivate existing goals of same type and period
         await prisma.fitnessGoal.updateMany({
@@ -359,11 +283,9 @@ class FitnessService {
                 userId,
                 type: goalData.type,
                 period: goalData.period,
-                isActive: true
+                isActive: true,
             },
-            data: {
-                isActive: false
-            }
+            data: { isActive: false },
         });
 
         // Create new goal
@@ -371,151 +293,69 @@ class FitnessService {
             data: {
                 userId,
                 type: goalData.type,
+                title: goalData.title,
+                description: goalData.description,
                 target: goalData.target,
                 unit: goalData.unit,
                 period: goalData.period,
                 startDate,
                 endDate,
-                current: 0
-            }
+                current: 0,
+            },
         });
 
         // Calculate initial progress
-        await this.recalculateGoalProgress(userId);
+        await this.updateGoalProgress(userId, null, goal.id);
 
-        return goal;
+        return await this.getGoalById(userId, goal.id);
     }
 
     /**
      * Get active goals
      */
-    async getActiveGoals(userId: string): Promise<any[]> {
-        const goals = await prisma.fitnessGoal.findMany({
-            where: {
-                userId,
-                isActive: true
-            },
-            orderBy: {
-                createdAt: 'desc'
-            }
-        });
-
-        return goals;
-    }
-
-    /**
-     * Update goal progress based on new activity
-     */
-    async updateGoalProgress(userId: string, activity: any): Promise<void> {
-        const activityDate = new Date(activity.activityDate);
-
-        // Find relevant active goals
+    async getActiveGoals(userId: string): Promise<FitnessGoal[]> {
         const goals = await prisma.fitnessGoal.findMany({
             where: {
                 userId,
                 isActive: true,
-                startDate: { lte: activityDate },
-                endDate: { gte: activityDate }
-            }
+                endDate: { gte: new Date() },
+            },
+            orderBy: { createdAt: 'desc' },
         });
 
-        for (const goal of goals) {
-            let increment = 0;
-
-            // Calculate increment based on goal type
-            if (goal.type === GoalType.WEEKLY_MINUTES) {
-                increment = activity.durationMinutes;
-            } else if (goal.type === GoalType.WEEKLY_SESSIONS) {
-                increment = 1;
-            } else if (goal.type === GoalType.MONTHLY_CALORIES) {
-                increment = activity.caloriesBurned || 0;
-            } else if (goal.type === GoalType.DAILY_STEPS) {
-                increment = activity.steps || 0;
-            }
-
-            if (increment > 0) {
-                const newCurrent = goal.current + increment;
-
-                // Update goal
-                await prisma.fitnessGoal.update({
-                    where: { id: goal.id },
-                    data: {
-                        current: newCurrent,
-                        isCompleted: newCurrent >= goal.target,
-                        completedAt: newCurrent >= goal.target && !goal.isCompleted ? new Date() : goal.completedAt
-                    }
-                });
-            }
-        }
+        // Check completion status and update if needed check handled in updateGoalProgress but good to double check
+        return goals;
     }
 
     /**
-     * Recalculate all goal progress (used after updates/deletes)
+     * Get goal by ID
      */
-    private async recalculateGoalProgress(userId: string): Promise<void> {
-        const goals = await prisma.fitnessGoal.findMany({
-            where: {
-                userId,
-                isActive: true
-            }
+    async getGoalById(
+        userId: string,
+        goalId: string
+    ): Promise<FitnessGoal> {
+        const goal = await prisma.fitnessGoal.findFirst({
+            where: { id: goalId, userId },
         });
 
-        for (const goal of goals) {
-            // Get activities in goal period
-            const activities = await prisma.fitnessActivity.findMany({
-                where: {
-                    userId,
-                    activityDate: {
-                        gte: goal.startDate,
-                        lte: goal.endDate
-                    }
-                }
-            });
-
-            let current = 0;
-
-            // Calculate based on goal type
-            if (goal.type === GoalType.WEEKLY_MINUTES) {
-                current = activities.reduce((sum, a) => sum + a.durationMinutes, 0);
-            } else if (goal.type === GoalType.WEEKLY_SESSIONS) {
-                current = activities.length;
-            } else if (goal.type === GoalType.MONTHLY_CALORIES) {
-                current = activities.reduce((sum, a) => sum + (a.caloriesBurned || 0), 0);
-            } else if (goal.type === GoalType.DAILY_STEPS) {
-                current = activities.reduce((sum, a) => sum + (a.steps || 0), 0);
-            }
-
-            // Update goal
-            await prisma.fitnessGoal.update({
-                where: { id: goal.id },
-                data: {
-                    current,
-                    isCompleted: current >= goal.target,
-                    completedAt: current >= goal.target && !goal.isCompleted ? new Date() : goal.completedAt
-                }
-            });
+        if (!goal) {
+            throw new AppError('Goal not found', 404);
         }
+
+        return goal;
     }
 
     /**
      * Delete goal
      */
-    async deleteGoal(userId: string, goalId: string): Promise<void> {
-        // Verify ownership
-        const goal = await prisma.fitnessGoal.findFirst({
-            where: {
-                id: goalId,
-                userId
-            }
-        });
+    async deleteGoal(
+        userId: string,
+        goalId: string
+    ): Promise<void> {
+        await this.getGoalById(userId, goalId);
 
-        if (!goal) {
-            throw new NotFoundError("Goal not found");
-        }
-
-        // Delete goal
         await prisma.fitnessGoal.delete({
-            where: { id: goalId }
+            where: { id: goalId },
         });
     }
 
@@ -527,45 +367,249 @@ class FitnessService {
         page: number = 1,
         limit: number = 20
     ): Promise<{
-        goals: any[];
+        goals: FitnessGoal[];
         total: number;
-        pagination: {
-            page: number;
-            limit: number;
-            total: number;
-            totalPages: number;
-            hasNextPage: boolean;
-            hasPreviousPage: boolean;
-        };
     }> {
         const skip = (page - 1) * limit;
 
         const [goals, total] = await Promise.all([
             prisma.fitnessGoal.findMany({
                 where: { userId },
-                orderBy: {
-                    createdAt: 'desc'
-                },
+                orderBy: { createdAt: 'desc' },
                 skip,
-                take: limit
+                take: limit,
             }),
-            prisma.fitnessGoal.count({ where: { userId } })
+            prisma.fitnessGoal.count({ where: { userId } }),
         ]);
 
-        const totalPages = Math.ceil(total / limit);
+        return { goals, total };
+    }
 
-        return {
-            goals,
-            total,
-            pagination: {
-                page,
-                limit,
-                total,
-                totalPages,
-                hasNextPage: page < totalPages,
-                hasPreviousPage: page > 1
+    // Helper methods
+
+    /**
+     * Update goal progress based on activity
+     */
+    private async updateGoalProgress(
+        userId: string,
+        _activity?: FitnessActivity | null,
+        goalId?: string
+    ): Promise<void> {
+        const goals = goalId
+            ? [await this.getGoalById(userId, goalId)]
+            : await prisma.fitnessGoal.findMany({
+                where: { userId, isActive: true },
+            });
+
+        for (const goal of goals) {
+            // Calculate progress based on goal type
+            let progress = 0;
+
+            const activities = await prisma.fitnessActivity.findMany({
+                where: {
+                    userId,
+                    activityDate: {
+                        gte: goal.startDate,
+                        lte: goal.endDate,
+                    },
+                },
+            });
+
+            switch (goal.type) {
+                case GoalType.WEEKLY_MINUTES:
+                    progress = activities.reduce((sum, a) => sum + a.durationMinutes, 0);
+                    break;
+                case GoalType.WEEKLY_SESSIONS:
+                    progress = activities.length;
+                    break;
+                case GoalType.MONTHLY_CALORIES:
+                    progress = activities.reduce((sum, a) => sum + (a.caloriesBurned || 0), 0);
+                    break;
+                case GoalType.DAILY_STEPS:
+                    progress = activities.reduce((sum, a) => sum + (a.steps || 0), 0);
+                    break;
+                case GoalType.WEEKLY_DISTANCE:
+                    progress = activities.reduce((sum, a) => sum + Number(a.distance || 0), 0);
+                    break;
             }
+
+            // Update goal
+            await prisma.fitnessGoal.update({
+                where: { id: goal.id },
+                data: {
+                    current: progress,
+                    isCompleted: progress >= Number(goal.target),
+                    completedAt: progress >= Number(goal.target) ? new Date() : null,
+                },
+            });
+        }
+    }
+
+    /**
+     * Recalculate all goals
+     */
+    private async recalculateGoals(userId: string): Promise<void> {
+        const goals = await prisma.fitnessGoal.findMany({
+            where: { userId, isActive: true },
+        });
+
+        for (const goal of goals) {
+            await this.updateGoalProgress(userId, null, goal.id);
+        }
+    }
+
+    /**
+     * Estimate calories burned
+     */
+    private estimateCalories(
+        type: ActivityType,
+        minutes: number,
+        intensity: IntensityLevel
+    ): number {
+        // Basic MET (Metabolic Equivalent) based calculation
+        // Assumes average 70kg person
+        const MET_VALUES: Record<string, Record<string, number>> = {
+            CARDIO: { LOW: 3.5, MODERATE: 7, HIGH: 10, VERY_HIGH: 12 },
+            STRENGTH: { LOW: 3, MODERATE: 5, HIGH: 6, VERY_HIGH: 8 },
+            YOGA: { LOW: 2.5, MODERATE: 4, HIGH: 5, VERY_HIGH: 6 },
+            RUNNING: { LOW: 6, MODERATE: 9, HIGH: 11, VERY_HIGH: 14 },
+            CYCLING: { LOW: 4, MODERATE: 8, HIGH: 10, VERY_HIGH: 12 },
+            SWIMMING: { LOW: 5, MODERATE: 7, HIGH: 10, VERY_HIGH: 12 },
+            WALKING: { LOW: 2.5, MODERATE: 3.5, HIGH: 4.5, VERY_HIGH: 5.5 },
+            // Add more...
         };
+
+        const met = MET_VALUES[type]?.[intensity] || 5;
+        const weight = 70; // kg
+        const calories = (met * weight * minutes) / 60;
+
+        return Math.round(calories);
+    }
+
+    /**
+     * Get default activity title
+     */
+    private getDefaultTitle(type: ActivityType): string {
+        const titles: Record<string, string> = {
+            CARDIO: 'Cardio Workout',
+            STRENGTH: 'Strength Training',
+            YOGA: 'Yoga Session',
+            RUNNING: 'Running',
+            CYCLING: 'Cycling',
+            SWIMMING: 'Swimming',
+            WALKING: 'Walk',
+            // Add more...
+        };
+        return titles[type] || 'Fitness Activity';
+    }
+
+    /**
+     * Calculate goal end date
+     */
+    private calculateEndDate(startDate: Date, period: GoalPeriod): Date {
+        const date = new Date(startDate);
+        switch (period) {
+            case GoalPeriod.DAILY:
+                date.setDate(date.getDate() + 1);
+                break;
+            case GoalPeriod.WEEKLY:
+                date.setDate(date.getDate() + 7);
+                break;
+            case GoalPeriod.MONTHLY:
+                date.setMonth(date.getMonth() + 1);
+                break;
+            case GoalPeriod.YEARLY:
+                date.setFullYear(date.getFullYear() + 1);
+                break;
+        }
+        return date;
+    }
+
+    /**
+     * Group activities by day
+     */
+    private async groupByDay(
+        activities: FitnessActivity[]
+    ): Promise<Array<{ date: string; count: number; minutes: number; calories: number }>> {
+        const grouped = new Map<string, { count: number; minutes: number; calories: number }>();
+
+        activities.forEach(activity => {
+            const dateKey = activity.activityDate.toISOString().split('T')[0];
+            const existing = grouped.get(dateKey) || { count: 0, minutes: 0, calories: 0 };
+
+            grouped.set(dateKey, {
+                count: existing.count + 1,
+                minutes: existing.minutes + activity.durationMinutes,
+                calories: existing.calories + (activity.caloriesBurned || 0),
+            });
+        });
+
+        return Array.from(grouped.entries()).map(([date, data]) => ({
+            date,
+            ...data,
+        }));
+    }
+
+    /**
+     * Calculate current activity streak
+     */
+    private async calculateStreak(userId: string): Promise<number> {
+        const activities = await prisma.fitnessActivity.findMany({
+            where: { userId },
+            orderBy: { activityDate: 'desc' },
+            select: { activityDate: true },
+        });
+
+        if (activities.length === 0) return 0;
+
+        let streak = 0;
+        let currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+
+        // If last activity was today or yesterday, streak is valid
+        const lastActivity = new Date(activities[0].activityDate);
+        lastActivity.setHours(0, 0, 0, 0);
+
+        const diffDaysFirst = Math.floor(
+            (currentDate.getTime() - lastActivity.getTime()) / (1000 * 60 * 60 * 24)
+        );
+
+        if (diffDaysFirst > 1) return 0; // Streak broken
+
+        // Iterate backwards to count consecutive days
+        // Simplified logic: assume sorted desc
+        // Need unique dates first
+        const uniqueDates = new Set<number>();
+        activities.forEach(a => {
+            const d = new Date(a.activityDate);
+            d.setHours(0, 0, 0, 0);
+            uniqueDates.add(d.getTime());
+        });
+
+        const sortedDates = Array.from(uniqueDates).sort((a, b) => b - a); // descending
+
+        for (let i = 0; i < sortedDates.length; i++) {
+            const date = new Date(sortedDates[i]);
+            // expected date for streak is currentDate - i days (if started today) or - (i) if started yesterday
+            // logic: match exact consecutive days
+
+            // Let's just count backwards from most recent
+            if (i === 0) {
+                streak = 1;
+                continue;
+            }
+
+            const prevDate = new Date(sortedDates[i - 1]);
+            const diff = Math.floor((prevDate.getTime() - date.getTime()) / (1000 * 60 * 60 * 24));
+
+            if (diff === 1) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+
+        return streak;
     }
 }
 
