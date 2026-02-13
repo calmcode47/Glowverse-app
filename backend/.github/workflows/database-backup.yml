@@ -101,41 +101,21 @@ jobs:
       
       - name: Notify Slack - Success
         if: success()
-        uses: slackapi/slack-github-action@v1
+        uses: 8398a7/action-slack@v3
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "✅ Database backup completed",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Database Backup Successful*\n\nEnvironment: `${{ github.event.inputs.environment || 'production' }}`\nType: `${{ github.event.inputs.backup_type || 'full' }}`\nWorkflow: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>"
-                  }
-                }
-              ]
-            }
+          status: ${{ job.status }}
+          text: '✅ Database backup completed - Environment: ${{ github.event.inputs.environment || ''production'' }} | Type: ${{ github.event.inputs.backup_type || ''full'' }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
       - name: Send failure notification
         if: failure()
-        uses: slackapi/slack-github-action@v1
+        uses: 8398a7/action-slack@v3
         with:
-          webhook-url: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "❌ Database backup failed",
-              "blocks": [
-                {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*Database Backup Failed* ⚠️\n\nEnvironment: `${{ github.event.inputs.environment || 'production' }}`\nType: `${{ github.event.inputs.backup_type || 'full' }}`\nWorkflow: <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Run>\n\n*ACTION REQUIRED:* Check workflow logs immediately!"
-                  }
-                }
-              ]
-            }
+          status: ${{ job.status }}
+          text: '❌ Database backup failed - Environment: ${{ github.event.inputs.environment || ''production'' }} | ACTION REQUIRED: Check logs immediately!'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
   
   verify-backup:
     name: Verify Backup Integrity

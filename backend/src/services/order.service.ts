@@ -2,8 +2,7 @@ import { PrismaClient, Order, OrderItem, OrderStatus, PaymentStatus, Prisma } fr
 import { AppError } from '../utils/errors';
 import { CartService } from './cart.service';
 import { NotificationService } from './notification.service';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export interface Address {
     fullName: string;

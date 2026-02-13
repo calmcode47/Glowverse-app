@@ -71,7 +71,7 @@ async function seedTestData() {
                         images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: i < 2
-                    }
+                    } as any
                 })
             ),
             // Makeup
@@ -83,12 +83,12 @@ async function seedTestData() {
                         description: `Long-lasting ${name}`,
                         price: 24.99 + (i * 5),
                         category: 'MAKEUP',
-                        brand: 'BeautyPro',
-                        stock: 80,
+                        brand: 'GlowLab',
+                        stock: 100,
                         images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
-                        isFeatured: i === 0
-                    }
+                        isFeatured: i < 2
+                    } as any
                 })
             ),
             // Haircare
@@ -105,7 +105,7 @@ async function seedTestData() {
                         images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: false
-                    }
+                    } as any
                 })
             ),
             // Fragrance
@@ -122,7 +122,7 @@ async function seedTestData() {
                         images: JSON.stringify([`https://via.placeholder.com/300?text=${name.replace(/\s+/g, '+')}`]),
                         isActive: true,
                         isFeatured: i === 0
-                    }
+                    } as any
                 })
             )
         ]);

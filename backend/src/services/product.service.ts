@@ -1,7 +1,7 @@
 import { PrismaClient, Product, Prisma, ProductCategory } from '@prisma/client';
 import { AppError } from '../utils/errors';
 
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 export interface ProductFilters {
     category?: ProductCategory;

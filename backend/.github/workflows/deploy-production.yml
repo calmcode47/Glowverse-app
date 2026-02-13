@@ -132,31 +132,21 @@ jobs:
       
       - name: Notify Slack - Success
         if: success()
-        uses: slackapi/slack-github-action@v1
+        uses: 8398a7/action-slack@v3
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "🚀 Production deployment successful",
-              "attachments": [{
-                "color": "good",
-                "text": "Version: ${{ github.event.inputs.version }}\\nDeployed by: ${{ github.actor }}"
-              }]
-            }
+          status: ${{ job.status }}
+          text: '🚀 Production deployment successful - Version: ${{ github.ref }} | Commit: ${{ github.sha }} | Actor: ${{ github.actor }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
       - name: Notify Slack - Failure
         if: failure()
-        uses: slackapi/slack-github-action@v1
+        uses: 8398a7/action-slack@v3
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "🚨 Production deployment failed - ROLLBACK REQUIRED",
-              "attachments": [{
-                "color": "danger",
-                "text": "Version: ${{ github.event.inputs.version }}\\nDeployed by: ${{ github.actor }}"
-              }]
-            }
+          status: ${{ job.status }}
+          text: '🚨 Production deployment failed - ROLLBACK REQUIRED - Version: ${{ github.ref }} | Commit: ${{ github.sha }} | Actor: ${{ github.actor }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
       - name: Rollback on failure
         if: failure()

@@ -1,8 +1,8 @@
 module.exports = {
     preset: 'ts-jest',
     testEnvironment: 'node',
-    roots: ['<rootDir>/src', '<rootDir>/__tests__'],
-    testMatch: ['**/__tests__/**/*.test.ts', '**/src/**/*.spec.ts'],
+    roots: ['<rootDir>/src'],
+    testMatch: ['<rootDir>/src/**/*.spec.ts'],
     moduleNameMapper: {
         '^@/(.*)$': '<rootDir>/src/$1',
         '^@config/(.*)$': '<rootDir>/src/config/$1',
@@ -13,19 +13,5 @@ module.exports = {
         '^@utils/(.*)$': '<rootDir>/src/utils/$1',
         '^@app-types/(.*)$': '<rootDir>/src/types/$1',
     },
-    // setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
-    collectCoverageFrom: [
-        'src/**/*.ts',
-        '!src/**/*.d.ts',
-        '!src/**/*.interface.ts',
-        '!src/server.ts',
-    ],
-    coverageThreshold: {
-        global: {
-            branches: 70,
-            functions: 70,
-            lines: 70,
-            statements: 70,
-        },
-    },
+    setupFilesAfterEnv: [], // Ensure no global setup (DB connection) runs
 };

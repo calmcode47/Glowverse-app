@@ -1,8 +1,7 @@
 
 import { PrismaClient, Notification, NotificationType, NotificationPriority, OrderStatus } from '@prisma/client';
-import { AppError } from '@utils/errors';
-
-const prisma = new PrismaClient();
+import { AppError } from '../utils/errors';
+import { prisma } from '../config/database';
 
 export class NotificationService {
     /**

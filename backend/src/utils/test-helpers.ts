@@ -276,12 +276,11 @@ export class TestHelpers {
             userId = user.id;
         }
 
-        const referral = await prisma.referralCode.create({
+        const referral = await prisma.referral.create({
             data: {
-                userId: userId!,
+                referrer: { connect: { id: userId! } },
                 code: data?.code || `REF${Date.now()}`,
-                usageCount: 0,
-                isActive: true
+                status: 'PENDING'
             }
         });
 

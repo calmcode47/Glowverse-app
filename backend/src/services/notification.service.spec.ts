@@ -2,20 +2,25 @@
 import { NotificationService } from "../../src/services/notification.service";
 import { AppError } from "../../src/utils/errors";
 
-const mockPrisma = {
-    notification: {
-        create: jest.fn(),
-        findMany: jest.fn(),
-        update: jest.fn(),
-        count: jest.fn(),
-        delete: jest.fn()
-    }
-};
+import { prisma } from "../../src/config/database";
+const mockPrisma = prisma as any;
 
-jest.mock("../../src/config/database", () => ({
-    __esModule: true,
-    default: mockPrisma
-}));
+jest.mock("../../src/config/database", () => {
+    const mockPrisma = {
+        notification: {
+            create: jest.fn(),
+            findMany: jest.fn(),
+            update: jest.fn(),
+            count: jest.fn(),
+            delete: jest.fn(),
+            findFirst: jest.fn()
+        }
+    };
+    return {
+        __esModule: true,
+        prisma: mockPrisma
+    };
+});
 
 describe("NotificationService", () => {
     beforeEach(() => {
@@ -24,7 +29,7 @@ describe("NotificationService", () => {
 
     describe("createNotification", () => {
         it("should create notification", async () => {
-            mockPrisma.notification.create.mockResolvedValue({
+            (prisma.notification.create as jest.Mock).mockResolvedValue({
                 id: "notif-1",
                 userId: "user-1",
                 title: "Test",
@@ -33,20 +38,22 @@ describe("NotificationService", () => {
                 isRead: false
             });
 
-            const result = await NotificationService.createNotification(
-                "user-1",
-                "Test",
-                "Message",
-                "INFO"
-            );
+            const result = await NotificationService.createNotification({
+                userId: "user-1",
+                title: "Test",
+                message: "Message",
+                type: "INFO" as any
+            });
 
             expect(result).toBeDefined();
-            expect(mockPrisma.notification.create).toHaveBeenCalledWith({
+            expect(prisma.notification.create).toHaveBeenCalledWith({
                 data: {
                     userId: "user-1",
                     title: "Test",
                     message: "Message",
-                    type: "INFO"
+                    type: "INFO",
+                    priority: "NORMAL",
+                    data: null
                 }
             });
         });
@@ -54,14 +61,15 @@ describe("NotificationService", () => {
 
     describe("markAsRead", () => {
         it("should mark notification as read", async () => {
-            mockPrisma.notification.update.mockResolvedValue({
+            (prisma.notification.findFirst as jest.Mock).mockResolvedValue({ id: "notif-1" });
+            (prisma.notification.update as jest.Mock).mockResolvedValue({
                 id: "notif-1",
                 isRead: true
             });
 
-            await NotificationService.markAsRead("notif-1");
+            await NotificationService.markAsRead("user-1", "notif-1");
 
-            expect(mockPrisma.notification.update).toHaveBeenCalledWith({
+            expect(prisma.notification.update).toHaveBeenCalledWith({
                 where: { id: "notif-1" },
                 data: { isRead: true }
             });

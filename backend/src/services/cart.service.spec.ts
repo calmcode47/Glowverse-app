@@ -3,28 +3,33 @@ import { CartService } from "../../src/services/cart.service";
 import { AppError } from "../../src/utils/errors";
 
 // Mock dependencies
-const mockPrisma = {
-    cart: {
-        findUnique: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn()
-    },
-    cartItem: {
-        findFirst: jest.fn(),
-        create: jest.fn(),
-        update: jest.fn(),
-        delete: jest.fn()
-    },
-    product: {
-        findUnique: jest.fn()
-    }
-};
+import { prisma } from "../../src/config/database";
+const mockPrisma = prisma as any;
 
 // Mock prisma default export
-jest.mock("../../src/config/database", () => ({
-    __esModule: true,
-    default: mockPrisma
-}));
+jest.mock("../../src/config/database", () => {
+    const mockPrisma = {
+        cart: {
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn()
+        },
+        cartItem: {
+            findFirst: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            delete: jest.fn()
+        },
+        product: {
+            findUnique: jest.fn(),
+            update: jest.fn()
+        }
+    };
+    return {
+        __esModule: true,
+        prisma: mockPrisma
+    };
+});
 
 describe("CartService", () => {
     beforeEach(() => {
@@ -47,45 +52,57 @@ describe("CartService", () => {
                 ]
             };
 
-            mockPrisma.cart.findUnique.mockResolvedValue(mockCart);
+            (prisma.cart.findUnique as jest.Mock).mockResolvedValue(mockCart);
 
-            const result = await CartService.getCart("user-1");
+            const result = await CartService.getOrCreateCart("user-1");
 
             // Logic validation: 100 + 30 = 130
             // Assuming getCart returns the cart with calculated values or as stored
             expect(result).toBeDefined();
             // Checking if service logic adds anything extra or just returns DB data
-            expect(mockPrisma.cart.findUnique).toHaveBeenCalledWith({
+            expect(prisma.cart.findUnique).toHaveBeenCalledWith({
                 where: { userId: "user-1" },
-                include: { items: { include: { product: true } } }
+                include: {
+                    items: {
+                        include: { product: true },
+                        orderBy: { addedAt: 'desc' }
+                    }
+                }
             });
         });
     });
 
     describe("addToCart", () => {
         it("should add item to new cart", async () => {
-            mockPrisma.product.findUnique.mockResolvedValue({
+            (prisma.product.findUnique as jest.Mock).mockResolvedValue({
                 id: "prod-1",
                 price: 100,
                 stock: 10,
                 isActive: true
             });
 
-            mockPrisma.cart.findUnique.mockResolvedValue(null); // No cart yet
+            (prisma.cart.findUnique as jest.Mock).mockResolvedValue(null); // No cart yet
 
             // Mock transaction or create flow
-            mockPrisma.cart.create.mockResolvedValue({ id: "new-cart" });
-            mockPrisma.cartItem.create.mockResolvedValue({ id: "item-1" });
+            (prisma.product.findUnique as jest.Mock).mockResolvedValue({
+                id: "prod-1",
+                price: 100,
+                stock: 10,
+                isActive: true
+            });
+            (prisma.cart.findUnique as jest.Mock).mockResolvedValue(null); // No existing cart
+            (prisma.cart.create as jest.Mock).mockResolvedValue({ id: "new-cart", items: [] });
+            (prisma.cartItem.create as jest.Mock).mockResolvedValue({ id: "item-1" });
 
             await CartService.addToCart("user-1", "prod-1", 1);
 
-            expect(mockPrisma.product.findUnique).toHaveBeenCalled();
-            expect(mockPrisma.cart.create).toHaveBeenCalled();
-            expect(mockPrisma.cartItem.create).toHaveBeenCalled();
+            expect(prisma.product.findUnique).toHaveBeenCalled();
+            expect(prisma.cart.create).toHaveBeenCalled();
+            expect(prisma.cartItem.create).toHaveBeenCalled();
         });
 
         it("should throw error if product out of stock", async () => {
-            mockPrisma.product.findUnique.mockResolvedValue({
+            (prisma.product.findUnique as jest.Mock).mockResolvedValue({
                 id: "prod-1",
                 price: 100,
                 stock: 0, // Out of stock

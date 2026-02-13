@@ -1,18 +1,27 @@
 import * as Sentry from '@sentry/node';
 import { Request, Response, NextFunction } from 'express';
 
-// Request handler (must be first middleware)
-export const sentryRequestHandler = Sentry.Handlers.requestHandler();
+// Request handler - captures request data for Sentry
+export function sentryRequestHandler(req: Request, res: Response, next: NextFunction) {
+    Sentry.setContext('request', {
+        method: req.method,
+        url: req.url,
+        ip: req.ip,
+    });
+    next();
+}
 
-// Tracing handler
-export const sentryTracingHandler = Sentry.Handlers.tracingHandler();
+// Tracing handler - no-op if tracing not configured via Sentry v10 auto-instrumentation
+export function sentryTracingHandler(req: Request, _res: Response, next: NextFunction) {
+    // Sentry v10 uses auto-instrumentation; this is a compatibility shim
+    next();
+}
 
-// Error handler (must be after all routes)
-export const sentryErrorHandler = Sentry.Handlers.errorHandler({
-    shouldHandleError(error) {
-        return true; // Capture all errors
-    },
-});
+// Error handler (should be after all routes)
+export function sentryErrorHandler(err: Error, req: Request, res: Response, next: NextFunction) {
+    Sentry.captureException(err);
+    next(err);
+}
 
 // Custom context middleware
 export function sentryContextMiddleware(

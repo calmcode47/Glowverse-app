@@ -56,7 +56,7 @@ describe("Referral System Integration Tests", () => {
 
             // Verify only one code exists
             const codes = await prisma.referral.findMany({
-                where: { userId: referrer.id }
+                where: { referrerId: referrer.id }
             });
             expect(codes.length).toBe(1);
         });
@@ -98,14 +98,14 @@ describe("Referral System Integration Tests", () => {
             expect(response.body.success).toBe(true);
 
             // Verify referral usage recorded
-            const usage = await prisma.referralUsage.findFirst({
-                where: { referralCode: { code: referralCode } },
-                include: { usedBy: true }
+            const referral = await prisma.referral.findFirst({
+                where: { code: referralCode },
+                include: { referee: true }
             });
 
-            expect(usage).toBeDefined();
-            expect(usage?.usedBy.email).toBe(newUserData.email);
-            expect(usage?.status).toBe("PENDING"); // Pending until first purchase usually
+            expect(referral).toBeDefined();
+            expect(referral?.referee?.email).toBe(newUserData.email);
+            expect(referral?.status).toBe("PENDING"); // Pending until first purchase usually
         });
 
         it("should prevent self-referral", async () => {
@@ -151,8 +151,8 @@ describe("Referral System Integration Tests", () => {
             } else {
                 expect(response.status).toBe(201);
                 // Verify no usage recorded if it silently ignored
-                const usages = await prisma.referralUsage.count();
-                expect(usages).toBe(0);
+                const referrals = await prisma.referral.count({ where: { refereeId: { not: null } } });
+                expect(referrals).toBe(0);
             }
         });
     });
@@ -172,10 +172,11 @@ describe("Referral System Integration Tests", () => {
             });
 
             // Manually creating usage to simulate "Applied during register"
-            await prisma.referralUsage.create({
+            const referralRecord = await prisma.referral.findUnique({ where: { code: referralCode } });
+            await prisma.referral.update({
+                where: { id: referralRecord!.id },
                 data: {
-                    referralCodeId: (await prisma.referral.findUnique({ where: { code: referralCode } }))!.id,
-                    usedById: refereeUser.id,
+                    refereeId: refereeUser.id,
                     status: "PENDING"
                 }
             });

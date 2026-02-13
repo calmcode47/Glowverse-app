@@ -75,31 +75,21 @@ jobs:
       
       - name: Notify Slack - Success
         if: success()
-        uses: slackapi/slack-github-action@v1
+        uses: 8398a7/action-slack@v3
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "✅ Staging deployment successful",
-              "attachments": [{
-                "color": "good",
-                "text": "Branch: ${{ github.ref }}\\nCommit: ${{ github.sha }}\\nAuthor: ${{ github.actor }}"
-              }]
-            }
+          status: ${{ job.status }}
+          text: '✅ Staging deployment successful - Branch: ${{ github.ref }} | Commit: ${{ github.sha }} | Author: ${{ github.actor }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
       - name: Notify Slack - Failure
         if: failure()
-        uses: slackapi/slack-github-action@v1
+        uses: 8398a7/action-slack@v3
         with:
-          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
-          payload: |
-            {
-              "text": "❌ Staging deployment failed",
-              "attachments": [{
-                "color": "danger",
-                "text": "Branch: ${{ github.ref }}\\nCommit: ${{ github.sha }}\\nAuthor: ${{ github.actor }}"
-              }]
-            }
+          status: ${{ job.status }}
+          text: '❌ Staging deployment failed - Branch: ${{ github.ref }} | Commit: ${{ github.sha }} | Author: ${{ github.actor }}'
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       
       - name: Rollback on failure
         if: failure()

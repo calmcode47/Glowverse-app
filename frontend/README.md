@@ -1,453 +1,192 @@
-# Glowverse Mobile App
-
-**A premium React Native mobile experience built with Expo, combining AI-driven skin analysis with augmented reality virtual try-on features for an immersive beauty shopping experience.**
+# Glowverse Frontend - React Native Mobile App
 
 [![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54-black.svg)](https://expo.dev/)
+[![Expo](https://img.shields.io/badge/Expo%20SDK-54-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
-[![React Navigation](https://img.shields.io/badge/React%20Navigation-7-purple.svg)](https://reactnavigation.org/)
+
+Cross-platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web. Features 76+ reusable components, 30+ screens, advanced animations, and AR-powered virtual try-on experiences.
 
 ---
 
-## 📊 Project Status
+## 📊 Status
 
-**Completion:** 25% ⚠️  
-**UI Components:** 76+ reusable components ✅  
-**Screens:** 30 screens scaffolded ⚠️  
-**API Integration:** Not yet implemented 🔴  
-**State Management:** Not yet implemented 🔴  
-
----
-
-## 🌟 Key Features
-
-### Planned Features
-
-#### 🎨 Premium UI/UX
-- **76+ Reusable Components** - Buttons, cards, animations, forms
-- **Advanced Animations** - Parallax, scroll reveals, transitions
-- **Modern Design** - Glassmorphism, gradients, premium aesthetics
-- **Responsive Layout** - Optimized for all screen sizes
-
-#### 🤖 AI & AR Features
-- **AI Skin Analysis** - Real-time skin scanning via Perfect Corp AI
-- **Virtual Try-On** - High-fidelity AR makeup application
-- **Product Recommendations** - AI-powered suggestions
-- **Face Detection** - Advanced facial recognition
-
-#### 🛒 E-Commerce
-- **Product Catalog** - Browse 50+ beauty products
-- **Shopping Cart** - Full cart management
-- **Order Tracking** - Real-time order status
-- **Wishlist** - Save favorite products
-
-#### 💪 Wellness & Content
-- **Fitness Tracking** - Activity logging and goal tracking
-- **Beauty Guides** - Step-by-step tutorials
-- **Notifications** - Real-time push notifications
-- **Search** - Global search across products and guides
+| Area | Status | Details |
+|------|--------|---------|
+| Components | ✅ 76+ | 12 component categories |
+| Screens | ✅ 30+ | 17 screen categories |
+| Navigation | ✅ Setup | React Navigation 7 |
+| Theming | ✅ Done | Custom design system |
+| API Integration | ⚠️ Partial | Axios API client scaffolded |
+| State Management | ⚠️ Planned | Context + hooks pattern |
+| Testing | ⚠️ Scaffolded | Jest + Testing Library configured |
+| AR Features | ⚠️ Planned | Camera + face detection ready |
 
 ---
 
-## 🛠️ Tech Stack
-
-| Technology | Version | Purpose |
-|------------|---------|---------|
-| **React Native** | 0.81.5 | Mobile framework |
-| **Expo SDK** | 54 | Development platform |
-| **TypeScript** | 5.9 | Type safety |
-| **React Navigation** | 7 | Routing & navigation |
-| **React Native Paper** | 5.15 | UI components |
-| **Axios** | 1.13 | HTTP client |
-| **React Native Reanimated** | 4.1 | Animations |
-| **Lottie** | 7.3 | Vector animations |
-| **Expo Camera** | 17 | Camera access |
-| **Expo Image Picker** | 17 | Image selection |
-
----
-
-## 📦 Installation
-
-### Prerequisites
-- Node.js 18+ installed
-- npm or yarn package manager
-- Expo CLI (install globally: `npm install -g expo-cli`)
-- iOS Simulator (macOS) or Android Emulator
-
-### Quick Setup
+## 🚀 Quick Start
 
 ```bash
 # Install dependencies
 npm install
 
-# Start Expo development server
+# Start Expo dev server
 npm start
 
-# Or run on specific platform
-npm run web      # Web browser
-npm run ios      # iOS simulator (macOS only)
-npm run android  # Android emulator
+# Run on specific platform
+npm run web        # Web browser
+npm run ios        # iOS Simulator (macOS only)
+npm run android    # Android emulator
 ```
+
+**App running at:** `http://localhost:8081`
 
 ---
 
-## 🚀 Getting Started
-
-### 1. Install Dependencies
-```bash
-cd frontend
-npm install
-```
-
-### 2. Configure Environment
-
-Create a `.env` file (optional):
-```env
-EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
-EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
-```
-
-Or configure in `app.json`:
-```json
-{
-  "expo": {
-    "extra": {
-      "apiBaseUrl": "http://localhost:5000/api/v1",
-      "perfectCorpApiKey": "your-api-key"
-    }
-  }
-}
-```
-
-### 3. Launch App
-
-| Platform | Command | Description |
-|----------|---------|-------------|
-| **Web** | `npm run web` | Opens in browser |
-| **iOS** | `npm run ios` | iOS Simulator (macOS only) |
-| **Android** | `npm run android` | Android Emulator |
-| **Expo Go** | `npm start` | Scan QR code with Expo Go app |
-
----
-
-## 🗂️ Project Structure
+## 📁 Project Structure
 
 ```
 frontend/
+├── App.tsx                    # App entry point
+├── index.ts                   # Expo entry
 ├── src/
-│   ├── assets/              # Images, fonts, icons
-│   ├── components/          # Reusable UI components (76+)
-│   │   ├── animated/        # Animation components
-│   │   ├── animations/      # Scroll reveals, parallax
-│   │   ├── ar/              # AR-specific components
-│   │   ├── camera/          # Camera controls
-│   │   ├── common/          # Common UI (buttons, cards)
-│   │   ├── home/            # Home screen components
-│   │   ├── navigation/      # Navigation components
-│   │   ├── products/        # Product components
-│   │   ├── profile/         # Profile components
-│   │   ├── results/         # Results components
-│   │   └── ui/              # Base UI components
-│   ├── config/              # App configuration
-│   ├── constants/           # App constants
-│   ├── context/             # React Context providers
-│   ├── data/                # Static data
-│   ├── hooks/               # Custom React hooks (7)
-│   │   ├── useAnalysisPolling.ts
-│   │   ├── useAnimation.ts
-│   │   ├── useCamera.ts
-│   │   ├── useImagePicker.ts
-│   │   ├── usePerfectCorpAPI.ts
-│   │   └── useTryOnPolling.ts
-│   ├── navigation/          # Navigation setup
-│   ├── screens/             # Screen components (30)
-│   │   ├── analysis/        # Analysis screens
-│   │   ├── ar/              # AR/camera screens
-│   │   ├── auth/            # Authentication screens
-│   │   ├── camera/          # Camera screens
-│   │   ├── fitness/         # Fitness tracking
-│   │   ├── guide/           # Beauty guides
-│   │   ├── history/         # History screens
-│   │   ├── home/            # Home/dashboard
-│   │   ├── notifications/   # Notifications
-│   │   ├── onboarding/      # Onboarding flow
-│   │   ├── profile/         # User profile
-│   │   ├── promotions/      # Offers & referrals
-│   │   ├── results/         # Analysis results
-│   │   ├── search/          # Search screen
-│   │   ├── shop/            # Shopping screens
-│   │   ├── stats/           # Statistics
-│   │   └── wishlist/        # Wishlist
-│   ├── services/            # API services (to be implemented)
-│   │   └── api/             # API client layer
-│   ├── theme/               # Theme configuration
-│   └── utils/               # Utility functions
-├── __tests__/               # Test files
-├── App.tsx                  # App entry point
-├── app.json                 # Expo configuration
-├── babel.config.js          # Babel configuration
-├── jest.config.js           # Jest configuration
-├── package.json             # Dependencies
-└── tsconfig.json            # TypeScript configuration
+│   ├── components/            # 76+ reusable components
+│   │   ├── animated/          # Animated wrappers
+│   │   ├── animations/        # Animation components
+│   │   ├── ar/                # AR/camera overlays
+│   │   ├── camera/            # Camera components
+│   │   ├── common/            # Shared UI (buttons, cards, modals)
+│   │   ├── history/           # History/timeline components
+│   │   ├── home/              # Home screen widgets
+│   │   ├── navigation/        # Navigation components
+│   │   ├── products/          # Product cards, lists
+│   │   ├── profile/           # Profile components
+│   │   ├── results/           # Analysis result views
+│   │   └── ui/                # Base UI primitives
+│   ├── screens/               # 30+ screens
+│   │   ├── auth/              # Login, register, forgot password
+│   │   ├── home/              # Home, dashboard
+│   │   ├── shop/              # Product catalog, details, cart
+│   │   ├── ar/                # Virtual try-on, camera
+│   │   ├── analysis/          # Skin analysis
+│   │   ├── fitness/           # Activity tracking, goals
+│   │   ├── guide/             # Beauty tutorials
+│   │   ├── profile/           # User profile, settings
+│   │   ├── search/            # Global search
+│   │   ├── notifications/     # Notification center
+│   │   ├── promotions/        # Promo codes, offers
+│   │   ├── wishlist/          # Saved products
+│   │   ├── history/           # Order & scan history
+│   │   ├── results/           # Analysis results
+│   │   ├── stats/             # Statistics & analytics
+│   │   ├── camera/            # Camera screen
+│   │   └── onboarding/        # First-launch onboarding
+│   ├── navigation/            # React Navigation config
+│   ├── services/              # API client layer
+│   ├── hooks/                 # Custom React hooks
+│   ├── context/               # React context providers
+│   ├── config/                # App configuration
+│   ├── constants/             # App constants
+│   ├── theme/                 # Design system & colors
+│   ├── data/                  # Static/mock data
+│   └── utils/                 # Utility functions
+├── assets/                    # Images, fonts, Lottie animations
+├── types/                     # TypeScript type definitions
+├── __tests__/                 # Test files
+├── app.json                   # Expo configuration
+├── eas.json                   # EAS Build configuration
+├── babel.config.js            # Babel with module resolver
+├── tsconfig.json              # TypeScript configuration
+└── jest.config.js             # Jest test configuration
 ```
 
 ---
 
-## 📱 Screens
+## 🛠️ Technology Stack
 
-### Authentication (4 screens)
-- LoginScreen
-- RegisterScreen
-- SignUpScreen
-- OnboardingScreen
-
-### Home & Dashboard (2 screens)
-- HomeScreen
-- DashboardScreen
-
-### Shopping (3 screens)
-- ShopScreen
-- ProductDetailScreen
-- CartScreen
-
-### AR & Camera (2 screens)
-- ARCameraScreen
-- VirtualTryOnScreen
-
-### Analysis (3 screens)
-- ProcessingScreen
-- ResultsScreen
-- AnalysisResultsScreen
-
-### Profile (4 screens)
-- ProfileScreen
-- SettingsScreen
-- OrderHistoryScreen
-- AboutScreen
-
-### Fitness (2 screens)
-- FitnessTrackingScreen
-- StatisticsScreen
-
-### Content (2 screens)
-- GroomingGuideScreen
-- SearchScreen
-
-### Promotions (2 screens)
-- OffersScreen
-- ReferEarnScreen
-
-### Other (6 screens)
-- NotificationsScreen
-- WishlistScreen
-- HistoryScreen
-- TutorialScreen
-- etc.
-
----
-
-## 🎨 UI Components
-
-### Component Categories
-
-**Animations (11 components):**
-- AppleScrollAnimation, FadeInView, LoadingAnimation
-- ParallaxView, ScaleInView, ScrollAnimatedView
-- ScrollReveal, SlideInView, StaggeredList
-- SuccessAnimation, ParticleBackground
-
-**AR/Camera (9 components):**
-- ColorPicker, IntensitySlider, MakeupDrawer
-- ProductItem, SaveLookModal, CameraControls
-- CaptureButton, FaceGuideOverlay, ModeSelector
-
-**Common/UI (13 components):**
-- BottomSheet, Button, Card, CircularScore
-- Dropdown, EmptyState, ErrorBoundary, Input
-- LoadingOverlay, ProgressBar, Slider, Switch, Toast
-
-**Home/Dashboard (10 components):**
-- ActionGrid, CircularStats, FeatureCard
-- FeaturedCarousel, HeroBanner, HistoryItem
-- PriceTrendGraph, StatsSection, TipCard, TrendingCarousel
-
-**Products (10+ components):**
-- DiscoverProductCard, ModernProductCard, ProductCard
-- ProductCarousel, ProductFilter, ProductGrid, etc.
-
-**Total:** 76+ reusable components
-
----
-
-## 🔧 Custom Hooks
-
-1. **useAnalysisPolling** - Poll analysis results from backend
-2. **useAnimation** - Animation utilities and helpers
-3. **useCamera** - Camera permissions and controls
-4. **useImagePicker** - Image selection from gallery
-5. **usePerfectCorpAPI** - AR API integration
-6. **useTryOnPolling** - Poll try-on results
-7. **useAuth** - Authentication state (to be implemented)
+| Technology | Version | Purpose |
+|------------|---------|---------|
+| React Native | 0.81 | Mobile framework |
+| Expo SDK | 54 | Development & build platform |
+| TypeScript | 5.9 | Type safety |
+| React Navigation | 7 | Routing & navigation |
+| React Native Paper | 5 | Material Design components |
+| React Native Reanimated | 4.1 | Smooth animations |
+| React Native Gesture Handler | 2.28 | Touch gestures |
+| Expo Camera | 17 | Camera access |
+| Expo Image Picker | 17 | Photo selection |
+| Expo Linear Gradient | 15 | Gradient backgrounds |
+| Expo Blur | 15 | Blur effects |
+| Lottie React Native | 7.3 | Lottie animations |
+| Axios | 1.13 | HTTP client |
+| AsyncStorage | 2.2 | Local data persistence |
 
 ---
 
 ## 🧪 Testing
 
-### Test Configuration
-- **Framework:** Jest with jest-expo preset
-- **Testing Library:** @testing-library/react-native
-- **Coverage:** Enabled
-
-### Run Tests
-
 ```bash
-# Run all tests
-npm test
-
-# Watch mode
-npm run test:watch
-
-# Coverage report
-npm run test:coverage
+npm test          # Run tests with jest-expo
 ```
 
-**Status:** ⚠️ Test infrastructure ready, tests to be written
+**Test setup:** Jest 30 + @testing-library/react-native
 
 ---
 
-## 🚀 Build & Deployment
+## 📱 Build & Deploy
 
-### Development Builds
-
+### Development
 ```bash
-# Install EAS CLI
-npm install -g eas-cli
-
-# Login to Expo
-eas login
-
-# Configure project
-eas build:configure
-
-# Build for development
-eas build --profile development --platform ios
-eas build --profile development --platform android
+npm start         # Start Expo dev server
 ```
 
-### Production Builds
-
+### EAS Build (Production)
 ```bash
-# Build for production
-eas build --profile production --platform ios
-eas build --profile production --platform android
-
-# Submit to app stores
-eas submit --platform ios
-eas submit --platform android
+npx eas build --platform ios
+npx eas build --platform android
 ```
 
-### Over-the-Air (OTA) Updates
-
+### EAS Submit
 ```bash
-# Publish update
-eas update --branch production --message "Bug fixes"
+npx eas submit --platform ios
+npx eas submit --platform android
+```
+
+> See `eas.json` for build profiles (development, preview, production).
+
+---
+
+## 🔐 Environment
+
+```env
+EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
+EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
 ```
 
 ---
 
-## ⚠️ Current Limitations
+## 🎨 Design System
 
-### Not Yet Implemented
-
-1. **API Integration** 🔴
-   - No HTTP client configured
-   - No API service layer
-   - No authentication token management
-
-2. **State Management** 🔴
-   - No Redux/MobX/Zustand setup
-   - No global state management
-   - No persistent storage
-
-3. **Screen Implementations** 🔴
-   - Most screens are placeholders
-   - No business logic
-   - No data fetching
-
-4. **Form Validation** 🔴
-   - No form library (Formik/React Hook Form)
-   - No validation rules
-   - No error handling
-
-5. **Navigation Guards** 🔴
-   - No protected routes
-   - No authentication checks
-   - No deep linking
-
-6. **Push Notifications** 🔴
-   - Not configured
-   - No notification handlers
-
-7. **Testing** 🔴
-   - No component tests
-   - No integration tests
-   - 0% coverage
+- **Theming:** Custom design tokens in `src/theme/`
+- **Colors:** Curated palette with light/dark mode support
+- **Typography:** Modern font system
+- **Animations:** Reanimated-powered micro-interactions
+- **Components:** Premium glassmorphism, gradients, parallax effects
 
 ---
 
 ## 🗺️ Roadmap
 
-### Phase 1: Foundation (Weeks 1-2)
-- [ ] Set up Axios HTTP client
-- [ ] Implement authentication flow
-- [ ] Configure Redux Toolkit
-- [ ] Create API service layer
-
-### Phase 2: Core Features (Weeks 3-6)
-- [ ] Implement product catalog
-- [ ] Build shopping cart
-- [ ] Create checkout flow
-- [ ] User profile management
-
-### Phase 3: Advanced Features (Weeks 7-10)
-- [ ] AR try-on integration
-- [ ] Fitness tracking
-- [ ] Beauty guides
-- [ ] Push notifications
-
-### Phase 4: Polish (Weeks 11-12)
+- [ ] Complete API integration layer
+- [ ] Implement state management (Context + hooks)
+- [ ] Connect all screens to backend
+- [ ] Form validation with Zod
+- [ ] Offline mode with data caching
+- [ ] Push notifications (Expo Notifications)
+- [ ] AR camera integration
 - [ ] Component testing
 - [ ] Performance optimization
-- [ ] Bug fixes
-- [ ] App store submission
+- [ ] App Store / Play Store submission
 
 ---
 
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
-
----
-
-## 📄 License
-
-This project is proprietary software developed for the Glowverse beauty platform.
-
----
-
-## 🆘 Support
-
-For issues and questions:
-- **GitHub Issues:** Create an issue
-- **Email:** support@glowverse.com
-- **Expo Forums:** https://forums.expo.dev/
-
----
-
-**Built with ❤️ for the Glowverse beauty community**
-
-*Last Updated: February 12, 2026*
+*Last Updated: February 13, 2026*

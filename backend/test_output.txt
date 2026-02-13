@@ -1,0 +1,5 @@
+﻿  console.log
+    Setting up test database...
+
+      at Object.<anonymous> (__tests__/setup.ts:12:13)
+

@@ -1,24 +1,26 @@
 
-import { PromotionService } from "../../src/services/promotion.service";
+import PromotionService from "../../src/services/promotion.service";
 import { AppError } from "../../src/utils/errors";
+import { prisma } from "../../src/config/database";
 
-const mockPrisma = {
-    promotion: {
-        findUnique: jest.fn(),
-        update: jest.fn(),
-        findMany: jest.fn()
-    },
-    promotionUsage: {
-        findFirst: jest.fn(),
-        create: jest.fn()
-    },
-    $transaction: jest.fn((callback) => callback(mockPrisma))
-};
-
-jest.mock("../../src/config/database", () => ({
-    __esModule: true,
-    default: mockPrisma
-}));
+jest.mock("../../src/config/database", () => {
+    const mockPrisma: any = {
+        promotion: {
+            findUnique: jest.fn(),
+            update: jest.fn(),
+            findMany: jest.fn()
+        },
+        promotionUsage: {
+            findFirst: jest.fn(),
+            create: jest.fn()
+        },
+        $transaction: jest.fn((callback: any) => callback(mockPrisma))
+    };
+    return {
+        __esModule: true,
+        prisma: mockPrisma
+    };
+});
 
 describe("PromotionService", () => {
     beforeEach(() => {
@@ -40,14 +42,17 @@ describe("PromotionService", () => {
                 usageCount: 0
             };
 
-            mockPrisma.promotion.findUnique.mockResolvedValue(mockPromo);
-            mockPrisma.promotionUsage.findFirst.mockResolvedValue(null); // Not used by user yet
+            (prisma.promotion.findUnique as jest.Mock).mockResolvedValue(mockPromo);
+            (prisma.promotionUsage.findFirst as jest.Mock).mockResolvedValue(null); // Not used by user yet
 
-            const result = await PromotionService.validatePromotion("TEST10", "user-1", 100);
+            const result = await PromotionService.validatePromotion("TEST10", "user-1", {
+                subtotal: 100,
+                items: [{ productId: "p1", category: "SKINCARE" }]
+            });
 
             expect(result.isValid).toBe(true);
-            expect(result.discountAmount).toBe(10); // 10% of 100
-            expect(result.promotionId).toBe("promo-1");
+            expect(result.discount).toBe(10); // 10% of 100
+            expect(result.promotion.id).toBe("promo-1");
         });
 
         it("should return invalid for expired promo", async () => {
@@ -61,10 +66,12 @@ describe("PromotionService", () => {
                 usageCount: 0
             };
 
-            mockPrisma.promotion.findUnique.mockResolvedValue(mockPromo);
+            (prisma.promotion.findUnique as jest.Mock).mockResolvedValue(mockPromo);
 
-            await expect(PromotionService.validatePromotion("EXPIRED", "user-1", 100))
-                .rejects.toThrow(AppError);
+            await expect(PromotionService.validatePromotion("EXPIRED", "user-1", {
+                subtotal: 100,
+                items: []
+            })).rejects.toThrow(AppError);
         });
 
         it("should return invalid if usage limit reached", async () => {
@@ -78,10 +85,12 @@ describe("PromotionService", () => {
                 usageCount: 10 // Limit reached
             };
 
-            mockPrisma.promotion.findUnique.mockResolvedValue(mockPromo);
+            (prisma.promotion.findUnique as jest.Mock).mockResolvedValue(mockPromo);
 
-            await expect(PromotionService.validatePromotion("FULL", "user-1", 100))
-                .rejects.toThrow(AppError);
+            await expect(PromotionService.validatePromotion("FULL", "user-1", {
+                subtotal: 100,
+                items: []
+            })).rejects.toThrow(AppError);
         });
     });
 });

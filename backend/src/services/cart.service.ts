@@ -1,8 +1,7 @@
 import { PrismaClient, Cart, CartItem, Product, Prisma } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { ProductService } from './product.service';
-
-const prisma = new PrismaClient();
+import { prisma } from '../config/database';
 
 // Types for Cart with relations
 export interface CartItemWithProduct extends CartItem {

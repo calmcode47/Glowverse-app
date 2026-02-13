@@ -79,6 +79,10 @@ export const PerfectCorpMock = {
 };
 
 export class MockPerfectCorpService {
+  static async delay(ms: number = 100): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+  }
+
   static async detectFace(imageUrl: string): Promise<any> {
     if (imageUrl.includes("no-face")) return PerfectCorpMock.faceDetection.noFace;
     if (imageUrl.includes("invalid")) throw new Error("API Error: INVALID_IMAGE");
@@ -93,6 +97,22 @@ export class MockPerfectCorpService {
   static async analyzeSkin(imageUrl: string): Promise<any> {
     if (imageUrl.includes("error")) throw new Error("API Error: ANALYSIS_FAILED");
     return PerfectCorpMock.skinAnalysis.success;
+  }
+
+  static mockSkinAnalysis(): any {
+    return PerfectCorpMock.skinAnalysis.success;
+  }
+
+  static mockVirtualTryOn(): any {
+    return PerfectCorpMock.tryOn.success;
+  }
+
+  static mockRecommendations(): any {
+    return [
+      { productId: "prod_001", name: "Vitamin C Serum", score: 0.95, category: "skincare" },
+      { productId: "prod_002", name: "Hydrating Moisturizer", score: 0.90, category: "skincare" },
+      { productId: "prod_003", name: "Retinol Night Cream", score: 0.85, category: "skincare" },
+    ];
   }
 }
 

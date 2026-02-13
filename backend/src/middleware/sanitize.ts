@@ -1,5 +1,7 @@
 import mongoSanitize from 'express-mongo-sanitize';
+// @ts-ignore - xss-clean lacks TypeScript type definitions
 import xss from 'xss-clean';
+// @ts-ignore - hpp module types may be incomplete
 import hpp from 'hpp';
 import { Request, Response, NextFunction } from 'express';
 import logger from '../utils/logger';
@@ -26,20 +28,21 @@ export const preventHPP = hpp({
 });
 
 // Input length limits
-export function limitInputLength(req: Request, res: Response, next: NextFunction) {
+export function limitInputLength(req: Request, res: Response, next: NextFunction): void {
     const MAX_JSON_SIZE = 10 * 1024 * 1024; // 10MB
     const MAX_URL_LENGTH = 2048;
 
     // Check URL length
     if (req.url.length > MAX_URL_LENGTH) {
         logger.warn('URL too long', { url: req.url, length: req.url.length, ip: req.ip });
-        return res.status(414).json({
+        res.status(414).json({
             success: false,
             error: {
                 message: 'URL too long',
                 statusCode: 414,
             },
         });
+        return;
     }
 
     // Check body size (if JSON)
@@ -47,13 +50,14 @@ export function limitInputLength(req: Request, res: Response, next: NextFunction
         const contentLength = parseInt(req.headers['content-length'], 10);
         if (contentLength > MAX_JSON_SIZE) {
             logger.warn('Request body too large', { contentLength, ip: req.ip });
-            return res.status(413).json({
+            res.status(413).json({
                 success: false,
                 error: {
                     message: 'Request body too large',
                     statusCode: 413,
                 },
             });
+            return;
         }
     }
 
