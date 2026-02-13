@@ -22,10 +22,11 @@ import Animated, {
     Easing,
 } from 'react-native-reanimated';
 import { useTheme } from '../../theme/themeContext';
-import { AuthAPI } from "@services/api";
+import { useAuth } from "../../context/AuthContext";
 import { StackNavigationProp } from '@react-navigation/stack';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import ScrollReveal from '../../components/animations/ScrollReveal';
+import Biometrics from "../../services/biometrics.service";
 
 type LoginScreenProps = {
     navigation: StackNavigationProp<any>;
@@ -33,6 +34,7 @@ type LoginScreenProps = {
 
 export default function LoginScreen({ navigation }: LoginScreenProps) {
     const { theme, isDark } = useTheme();
+    const { login, refreshAuth } = useAuth();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +42,18 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     const [error, setError] = useState<string | null>(null);
     const [emailFocused, setEmailFocused] = useState(false);
     const [passwordFocused, setPasswordFocused] = useState(false);
+    const [rememberMe, setRememberMe] = useState(true);
+    const [biometricAvailable, setBiometricAvailable] = useState(false);
+    const [biometricEnabled, setBiometricEnabled] = useState(false);
+
+    React.useEffect(() => {
+        (async () => {
+            const ok = await Biometrics.isAvailable();
+            const pref = await Biometrics.getBiometricPreference();
+            setBiometricAvailable(ok);
+            setBiometricEnabled(ok && pref);
+        })();
+    }, []);
 
     const buttonScale = useSharedValue(1);
     const logoScale = useSharedValue(1);
@@ -86,20 +100,20 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
         try {
             setIsLoading(true);
             setError(null);
-            if (!email || !password) {
-                setError("Please enter both email and password");
+            const emailOk = /.+@.+\..+/.test(email.trim());
+            const passOk = password.length >= 8;
+            if (!emailOk) {
+                setError("Enter a valid email address");
                 return;
             }
-            await AuthAPI.login({ email: email.trim(), password });
-            navigation.navigate('MainTabs', { screen: 'HomeTab' } as any);
-        } catch (err: any) {
-            if (err?.response?.status === 401) {
-                setError("Invalid email or password");
-            } else if (err?.response?.status === 429) {
-                setError("Too many login attempts. Please try again later.");
-            } else {
-                setError(err?.response?.data?.message || err?.message || "Login failed. Please try again.");
+            if (!passOk) {
+                setError("Password must be at least 8 characters");
+                return;
             }
+            await login(email.trim(), password);
+        } catch (err: any) {
+            const msg = err?.message || "Login failed. Please try again.";
+            setError(msg);
         } finally {
             setIsLoading(false);
         }
@@ -233,6 +247,16 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                         <TouchableOpacity style={styles.forgotPassword}>
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
+                        <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
+                            <TouchableOpacity onPress={() => setRememberMe(!rememberMe)} style={{ marginRight: 8 }}>
+                                <MaterialCommunityIcons
+                                    name={rememberMe ? "checkbox-marked-outline" : "checkbox-blank-outline"}
+                                    size={20}
+                                    color={theme.colors.accent.emerald}
+                                />
+                            </TouchableOpacity>
+                            <Text style={{ color: theme.colors.text.primary }}>Remember me</Text>
+                        </View>
 
                         {/* Login Button */}
                         <Animated.View style={buttonAnimatedStyle}>
@@ -275,6 +299,34 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                         <View style={styles.dividerLine} />
                     </View>
                 </ScrollReveal>
+
+                {biometricAvailable && biometricEnabled ? (
+                    <ScrollReveal delay={450} direction="up">
+                        <View style={{ alignItems: "center", marginBottom: 16 }}>
+                            <TouchableOpacity
+                                onPress={async () => {
+                                    try {
+                                        const ok = await Biometrics.authenticate();
+                                        if (ok) {
+                                            try {
+                                                await refreshAuth();
+                                            } catch {
+                                                setError("Could not refresh session");
+                                            }
+                                        } else {
+                                            setError("Biometric authentication failed");
+                                        }
+                                    } catch (e: any) {
+                                        setError(e?.message || "Biometric login failed");
+                                    }
+                                }}
+                                style={{ padding: 12, borderRadius: 12, borderWidth: 1, borderColor: theme.colors.border.light, backgroundColor: theme.colors.background.elevated }}
+                            >
+                                <Text style={{ color: theme.colors.text.primary }}>Use Face ID / Touch ID</Text>
+                            </TouchableOpacity>
+                        </View>
+                    </ScrollReveal>
+                ) : null}
 
                 {/* Social Login */}
                 <ScrollReveal delay={500} direction="up">

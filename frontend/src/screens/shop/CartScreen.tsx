@@ -1,42 +1,208 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
-import { useTheme } from '../../theme/themeContext';
-import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
-import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useNavigation } from '@react-navigation/native';
+import React from "react";
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, RefreshControl } from "react-native";
+import { useTheme } from "../../theme/themeContext";
+import ProfessionalBackground from "../../components/animated/ProfessionalBackground";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import { useNavigation, useFocusEffect } from "@react-navigation/native";
+import * as CartAPI from "../../services/api/cart.api";
+import CartItem from "../../components/cart/CartItem";
+import CartSummary from "../../components/cart/CartSummary";
+import EmptyCart from "../../components/cart/EmptyCart";
+import PromoCodeInput from "../../components/cart/PromoCodeInput";
+import { useCart } from "../../context/CartContext";
 
 export default function CartScreen() {
-    const { theme } = useTheme();
-    const navigation = useNavigation();
+  const { theme } = useTheme();
+  const navigation = useNavigation();
+  const { setCount } = useCart();
+  const [cart, setCart] = React.useState<CartAPI.Cart | null>(null);
+  const [loading, setLoading] = React.useState(true);
+  const [refreshing, setRefreshing] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+  const [updating, setUpdating] = React.useState<Record<string, boolean>>({});
 
-    return (
-        <View style={styles.container}>
-            <ProfessionalBackground variant="subtle" />
+  const load = React.useCallback(async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const c = await CartAPI.getCart();
+      setCart(c);
+      setCount(c.itemCount);
+    } catch (e: any) {
+      setError(e?.message || "Failed to load cart");
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
-            <View style={styles.header}>
-                <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
-                    <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text.primary} />
-                </TouchableOpacity>
-                <Text style={[styles.title, { color: theme.colors.text.primary }]}>Your Cart</Text>
-                <View style={{ width: 40 }} />
-            </View>
+  useFocusEffect(
+    React.useCallback(() => {
+      load();
+    }, [load])
+  );
 
-            <View style={styles.emptyState}>
-                <View style={[styles.iconContainer, { backgroundColor: theme.colors.background.elevated }]}>
-                    <MaterialCommunityIcons name="cart-outline" size={64} color={theme.colors.text.secondary} />
-                </View>
-                <Text style={[styles.emptyText, { color: theme.colors.text.primary }]}>Your cart is empty</Text>
-                <Text style={[styles.emptySubtext, { color: theme.colors.text.secondary }]}>Looks like you haven't added anything yet.</Text>
+  const onRefresh = async () => {
+    setRefreshing(true);
+    await load();
+    setRefreshing(false);
+  };
 
-                <TouchableOpacity
-                    style={[styles.shopButton, { backgroundColor: theme.colors.accent.emerald }]}
-                    onPress={() => navigation.navigate('ShopTab' as any)}
-                >
-                    <Text style={[styles.shopButtonText, { color: theme.colors.text.inverse }]}>Start Shopping</Text>
-                </TouchableOpacity>
-            </View>
-        </View>
+  const optimisticUpdate = (itemId: string, delta: number) => {
+    setCart((c: CartAPI.Cart | null) => {
+      if (!c) return c;
+      const items = c.items.map((it: CartAPI.CartItem) => {
+        if (it.id !== itemId) return it;
+        const q = Math.max(1, it.quantity + delta);
+        return { ...it, quantity: q, total: q * it.price };
+      });
+      const itemCount = items.reduce((n: number, it: CartAPI.CartItem) => n + it.quantity, 0);
+      const subtotal = items.reduce((s: number, it: CartAPI.CartItem) => s + it.total, 0);
+      const total = subtotal + c.tax + c.shipping - (c.promo?.discountAmount || 0);
+      return { ...c, items, itemCount, subtotal, total };
+    });
+  };
+
+  const rollback = async () => {
+    const c = await CartAPI.getCart();
+    setCart(c);
+    setCount(c.itemCount);
+  };
+
+  const inc = async (id: string) => {
+    setUpdating((u: Record<string, boolean>) => ({ ...u, [id]: true }));
+    optimisticUpdate(id, 1);
+    try {
+      const it = cart?.items.find((x: CartAPI.CartItem) => x.id === id);
+      if (!it) throw new Error("Not found");
+      await CartAPI.updateItemQuantity(id, it.quantity + 1);
+      const c = await CartAPI.getCart();
+      setCart(c);
+      setCount(c.itemCount);
+    } catch {
+      await rollback();
+    } finally {
+      setUpdating((u: Record<string, boolean>) => ({ ...u, [id]: false }));
+    }
+  };
+
+  const dec = async (id: string) => {
+    const it = cart?.items.find((x: CartAPI.CartItem) => x.id === id);
+    if (!it || it.quantity <= 1) return;
+    setUpdating((u: Record<string, boolean>) => ({ ...u, [id]: true }));
+    optimisticUpdate(id, -1);
+    try {
+      await CartAPI.updateItemQuantity(id, it.quantity - 1);
+      const c = await CartAPI.getCart();
+      setCart(c);
+      setCount(c.itemCount);
+    } catch {
+      await rollback();
+    } finally {
+      setUpdating((u: Record<string, boolean>) => ({ ...u, [id]: false }));
+    }
+  };
+
+  const remove = async (id: string) => {
+    setUpdating((u: Record<string, boolean>) => ({ ...u, [id]: true }));
+    setCart((c: CartAPI.Cart | null) =>
+      c
+        ? {
+            ...c,
+            items: c.items.filter((x: CartAPI.CartItem) => x.id !== id),
+            itemCount: Math.max(0, c.itemCount - ((c.items.find((x: CartAPI.CartItem) => x.id === id)?.quantity as number) || 0))
+          }
+        : c
     );
+    try {
+      await CartAPI.removeItem(id);
+      const c = await CartAPI.getCart();
+      setCart(c);
+      setCount(c.itemCount);
+    } catch {
+      await rollback();
+    } finally {
+      setUpdating((u: Record<string, boolean>) => ({ ...u, [id]: false }));
+    }
+  };
+
+  const applyPromo = async (code: string) => {
+    await CartAPI.applyPromoCode(code);
+    const c = await CartAPI.getCart();
+    setCart(c);
+  };
+
+  const removePromo = async () => {
+    await CartAPI.removePromoCode();
+    const c = await CartAPI.getCart();
+    setCart(c);
+  };
+
+  const outOfStock = cart?.items?.some((it: CartAPI.CartItem) => it.product && it.product.inStock === false) || false;
+
+  if (loading && !cart) {
+    return (
+      <View style={styles.container}>
+        <ProfessionalBackground variant="subtle" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+          <Text style={{ color: theme.colors.text.primary }}>Loading...</Text>
+        </View>
+      </View>
+    );
+  }
+
+  if (error && !cart) {
+    return (
+      <View style={styles.container}>
+        <ProfessionalBackground variant="subtle" />
+        <View style={{ flex: 1, alignItems: "center", justifyContent: "center", gap: 12 }}>
+          <Text style={{ color: theme.colors.error }}>{error}</Text>
+          <TouchableOpacity onPress={load} style={{ backgroundColor: theme.colors.accent.emerald, paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10 }}>
+            <Text style={{ color: theme.colors.text.inverse, fontWeight: "800" }}>Retry</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <ProfessionalBackground variant="subtle" />
+      <View style={styles.header}>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text.primary} />
+        </TouchableOpacity>
+        <Text style={[styles.title, { color: theme.colors.text.primary }]}>Your Cart</Text>
+        <View style={{ width: 40 }} />
+      </View>
+      {!cart || cart.items.length === 0 ? (
+        <EmptyCart onBrowse={() => navigation.navigate("ShopTab" as any)} />
+      ) : (
+        <>
+          <FlatList
+            data={cart.items}
+            keyExtractor={(it) => it.id}
+            contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}
+            refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            renderItem={({ item }: { item: CartAPI.CartItem }) => (
+              <CartItem
+                item={item}
+                onIncrease={() => inc(item.id)}
+                onDecrease={() => dec(item.id)}
+                onRemove={() => remove(item.id)}
+                updating={!!updating[item.id]}
+              />
+            )}
+            ListHeaderComponent={<PromoCodeInput applied={cart.promo || null} onApply={applyPromo} onRemove={removePromo} />}
+          />
+          <CartSummary
+            cart={cart}
+            outOfStock={outOfStock}
+            onCheckout={() => navigation.navigate("Checkout")}
+          />
+        </>
+      )}
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -60,39 +226,6 @@ const styles = StyleSheet.create({
     },
     title: {
         fontSize: 20,
-        fontWeight: 'bold',
-    },
-    emptyState: {
-        flex: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 40,
-    },
-    iconContainer: {
-        width: 120,
-        height: 120,
-        borderRadius: 60,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginBottom: 24,
-    },
-    emptyText: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginBottom: 8,
-    },
-    emptySubtext: {
-        fontSize: 14,
-        textAlign: 'center',
-        marginBottom: 32,
-    },
-    shopButton: {
-        paddingHorizontal: 32,
-        paddingVertical: 16,
-        borderRadius: 12,
-    },
-    shopButtonText: {
-        fontSize: 16,
         fontWeight: 'bold',
     },
 });

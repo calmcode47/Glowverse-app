@@ -1,0 +1,42 @@
+{
+  "testRunner": "jest",
+  "runnerConfig": "e2e/jest.config.js",
+  "apps": {
+    "ios.debug": {
+      "type": "ios.app",
+      "binaryPath": "bin/ios/Debug.app",
+      "build": "echo 'Provide Detox build command for iOS here'",
+      "start": "expo start --ios"
+    },
+    "android.debug": {
+      "type": "android.apk",
+      "binaryPath": "bin/android/Debug.apk",
+      "build": "echo 'Provide Detox build command for Android here'",
+      "start": "expo start --android"
+    }
+  },
+  "devices": {
+    "simulator": {
+      "type": "ios.simulator",
+      "device": {
+        "type": "iPhone 14"
+      }
+    },
+    "emulator": {
+      "type": "android.emulator",
+      "device": {
+        "avdName": "Pixel_5_API_30"
+      }
+    }
+  },
+  "configurations": {
+    "ios.sim": {
+      "device": "simulator",
+      "app": "ios.debug"
+    },
+    "android.emu": {
+      "device": "emulator",
+      "app": "android.debug"
+    }
+  }
+}

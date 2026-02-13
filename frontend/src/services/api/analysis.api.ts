@@ -24,6 +24,11 @@ export async function createSkinAnalysis(file: { uri: string; name?: string; typ
   return res.data;
 }
 
+export async function createSkinAnalysisByUrl(imageUrl: string, userId?: string): Promise<{ analysis: Analysis }> {
+  const res = await client.post<{ analysis: Analysis }>("/api/v1/analysis/skin", { imageUrl, userId });
+  return res.data;
+}
+
 export async function getAnalyses(params?: Pagination): Promise<{ analyses: Analysis[]; pagination?: unknown }> {
   const res = await client.get<{ analyses: Analysis[]; pagination?: unknown }>("/api/v1/analysis", { params });
   return res.data;

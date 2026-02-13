@@ -1,100 +1,83 @@
-import React, { useState } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native';
+import React from 'react';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { useTheme } from '../../theme/themeContext';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import * as NotifAPI from "../../services/api/notifications.api";
+import NotificationCard from "../../components/notifications/NotificationCard";
 
-// Mock Data
-const MOCK_NOTIFICATIONS = [
-    {
-        id: '1',
-        title: 'Order Shipped!',
-        message: 'Your order #10234 has been shipped and is on its way.',
-        time: '2 hours ago',
-        type: 'order',
-        read: false,
-        icon: 'truck-delivery-outline',
-        color: '#10B981', // Emerald
-    },
-    {
-        id: '2',
-        title: 'Summer Sale is Live! ☀️',
-        message: 'Get up to 50% off on all sunglasses and beachwear. Limited time only.',
-        time: '5 hours ago',
-        type: 'promo',
-        read: false,
-        icon: 'tag-outline',
-        color: '#F59E0B', // Amber
-    },
-    {
-        id: '3',
-        title: 'New Login Detected',
-        message: 'We noticed a new login from iPhone 13 Pro in New York, USA.',
-        time: '1 day ago',
-        type: 'security',
-        read: true,
-        icon: 'shield-check-outline',
-        color: '#3B82F6', // Blue
-    },
-    {
-        id: '4',
-        title: 'Price Drop Alert',
-        message: 'The item "Ray-Ban Aviator Classic" in your wishlist is now on sale!',
-        time: '2 days ago',
-        type: 'price',
-        read: true,
-        icon: 'arrow-down-bold-circle-outline',
-        color: '#EC4899', // Pink
-    },
-    {
-        id: '5',
-        title: 'System Update',
-        message: 'Glowverse app has been updated to version 2.0. Check out the new 3D features!',
-        time: '3 days ago',
-        type: 'system',
-        read: true,
-        icon: 'cellphone-arrow-down',
-        color: '#8B5CF6', // Violet
-    },
-];
+function groupLabel(d: Date): "Today" | "Yesterday" | "This Week" | "Older" {
+  const now = new Date();
+  const diff = (now.getTime() - d.getTime()) / (1000 * 60 * 60 * 24);
+  if (diff < 1) return "Today";
+  if (diff < 2) return "Yesterday";
+  if (diff < 7) return "This Week";
+  return "Older";
+}
 
 export default function NotificationsScreen() {
     const { theme } = useTheme();
     const navigation = useNavigation();
-    const [notifications, setNotifications] = useState(MOCK_NOTIFICATIONS);
+    const [notifications, setNotifications] = React.useState<NotifAPI.AppNotification[]>([]);
+    const [groups, setGroups] = React.useState<Record<string, NotifAPI.AppNotification[]>>({});
+    const [loading, setLoading] = React.useState(true);
 
-    const handleMarkAllRead = () => {
-        setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+    const load = React.useCallback(async () => {
+      setLoading(true);
+      try {
+        const list = await NotifAPI.list();
+        setNotifications(list);
+        const g: Record<string, NotifAPI.AppNotification[]> = {};
+        list.forEach(n => {
+          const label = groupLabel(new Date(n.createdAt));
+          (g[label] = g[label] || []).push(n);
+        });
+        setGroups(g);
+      } finally {
+        setLoading(false);
+      }
+    }, []);
+
+    React.useEffect(() => { load(); }, [load]);
+
+    const handleMarkAllRead = async () => {
+      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
+      try { await NotifAPI.markAllRead(); } catch {}
     };
 
-    const renderItem = ({ item, index }: { item: typeof MOCK_NOTIFICATIONS[0], index: number }) => (
-        <Animated.View
-            entering={FadeInDown.delay(index * 100).springify()}
-            style={[
-                styles.notificationCard,
-                {
-                    backgroundColor: theme.colors.background.elevated,
-                    borderColor: item.read ? theme.colors.border.light : theme.colors.accent.blue + '40',
-                }
-            ]}
-        >
-            <View style={[styles.iconContainer, { backgroundColor: item.color + '15' }]}>
-                <MaterialCommunityIcons name={item.icon as any} size={24} color={item.color} />
-            </View>
-            <View style={styles.contentContainer}>
-                <View style={styles.headerRow}>
-                    <Text style={[styles.title, { color: theme.colors.text.primary }]}>{item.title}</Text>
-                    <Text style={[styles.time, { color: theme.colors.text.tertiary }]}>{item.time}</Text>
-                </View>
-                <Text style={[styles.message, { color: theme.colors.text.secondary }]}>{item.message}</Text>
-            </View>
-            {!item.read && (
-                <View style={[styles.dot, { backgroundColor: theme.colors.accent.blue }]} />
-            )}
+    const navigateDeepLink = (deep?: string) => {
+      if (!deep) return;
+      const [type, id] = deep.split(":");
+      if (type === "order") navigation.navigate("OrderDetail" as never, { orderId: id } as never);
+      else if (type === "product") navigation.navigate("ProductDetail" as never, { productId: id } as never);
+      else if (type === "promo") navigation.navigate("HomeTab" as never, {} as never);
+    };
+
+    const renderGroup = ({ item, index }: { item: [string, NotifAPI.AppNotification[]], index: number }) => {
+      const [label, items] = item;
+      return (
+        <Animated.View entering={FadeInDown.delay(index * 50).springify()}>
+          <Text style={[styles.groupTitle, { color: theme.colors.text.secondary }]}>{label}</Text>
+          {items.map((n, i) => (
+            <NotificationCard
+              key={n.id}
+              item={n}
+              onPress={async () => {
+                setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
+                try { await NotifAPI.markRead(n.id); } catch {}
+                navigateDeepLink(n.deepLink);
+              }}
+              onDelete={async () => {
+                setNotifications(prev => prev.filter(x => x.id !== n.id));
+                try { await NotifAPI.remove(n.id); } catch {}
+              }}
+            />
+          ))}
         </Animated.View>
-    );
+      );
+    };
 
     return (
         <View style={[styles.container, { backgroundColor: theme.colors.background.primary }]}>
@@ -115,11 +98,12 @@ export default function NotificationsScreen() {
             </View>
 
             <FlatList
-                data={notifications}
-                renderItem={renderItem}
-                keyExtractor={item => item.id}
-                contentContainerStyle={styles.listContent}
-                showsVerticalScrollIndicator={false}
+              data={Object.entries(groups)}
+              renderItem={renderGroup}
+              keyExtractor={([label]) => label}
+              contentContainerStyle={styles.listContent}
+              showsVerticalScrollIndicator={false}
+              ListEmptyComponent={!loading ? <Text style={{ color: theme.colors.text.secondary, textAlign: "center", marginTop: 24 }}>No notifications yet</Text> : null}
             />
         </View>
     );
@@ -156,6 +140,14 @@ const styles = StyleSheet.create({
     listContent: {
         paddingHorizontal: 20,
         paddingBottom: 40,
+    },
+    groupTitle: {
+        fontSize: 12,
+        fontWeight: '700',
+        marginTop: 8,
+        marginBottom: 6,
+        textTransform: 'uppercase',
+        letterSpacing: 0.5,
     },
     notificationCard: {
         flexDirection: 'row',

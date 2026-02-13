@@ -1,6 +1,8 @@
 import axios, { AxiosInstance, AxiosRequestConfig, AxiosResponse } from "axios";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL, REQUEST_TIMEOUT_MS } from "../../config/constants";
+import * as SecureStore from "expo-secure-store";
+import { ENV } from "../../config/environment";
+import { config } from "../../constants/config";
 import { handleAPIError } from "@utils/apiHelper";
 
 declare module "axios" {
@@ -15,19 +17,41 @@ declare module "axios" {
  * Creates a shared Axios client with interceptors
  */
 export const client: AxiosInstance = axios.create({
-  baseURL: API_BASE_URL,
-  timeout: REQUEST_TIMEOUT_MS
+  baseURL: ENV.apiBaseUrl,
+  timeout: config.timeoutMs
 });
 
+export type TokenProvider = {
+  getAccessToken: () => Promise<string | null>;
+  getRefreshToken: () => Promise<string | null>;
+  setTokens: (accessToken: string, refreshToken: string) => Promise<void>;
+  clearTokens: () => Promise<void>;
+};
+
+let tokenProvider: TokenProvider | null = null;
+
+export function registerAuthTokenProvider(provider: TokenProvider): void {
+  tokenProvider = provider;
+}
+
 async function getAccessToken(): Promise<string | null> {
+  if (tokenProvider?.getAccessToken) return tokenProvider.getAccessToken();
+  const v = await SecureStore.getItemAsync("pcAuthToken");
+  if (v) return v;
   return AsyncStorage.getItem("pcAuthToken");
 }
 
 async function getRefreshToken(): Promise<string | null> {
+  if (tokenProvider?.getRefreshToken) return tokenProvider.getRefreshToken();
+  const v = await SecureStore.getItemAsync("pcRefreshToken");
+  if (v) return v;
   return AsyncStorage.getItem("pcRefreshToken");
 }
 
 async function setTokens(accessToken: string, refreshToken: string): Promise<void> {
+  if (tokenProvider?.setTokens) return tokenProvider.setTokens(accessToken, refreshToken);
+  await SecureStore.setItemAsync("pcAuthToken", accessToken);
+  await SecureStore.setItemAsync("pcRefreshToken", refreshToken);
   await AsyncStorage.setItem("pcAuthToken", accessToken);
   await AsyncStorage.setItem("pcRefreshToken", refreshToken);
 }
@@ -39,12 +63,16 @@ async function refreshTokens(): Promise<void> {
   refreshing = (async () => {
     const rt = await getRefreshToken();
     if (!rt) {
+      if (tokenProvider?.clearTokens) await tokenProvider.clearTokens();
+      await SecureStore.deleteItemAsync("pcAuthToken");
+      await SecureStore.deleteItemAsync("pcRefreshToken");
       await AsyncStorage.removeItem("pcAuthToken");
+      await AsyncStorage.removeItem("pcRefreshToken");
       throw new Error("Authentication required");
     }
     const overrideBase = await AsyncStorage.getItem("apiBaseUrl");
     const base = overrideBase || client.defaults.baseURL || "";
-    const res = await axios.post(`${base}/api/${"v1"}/auth/refresh`, { refreshToken: rt }, { timeout: REQUEST_TIMEOUT_MS });
+    const res = await axios.post(`${base}/api/${"v1"}/auth/refresh`, { refreshToken: rt }, { timeout: config.timeoutMs });
     const data = res.data as { accessToken: string; refreshToken: string };
     await setTokens(data.accessToken, data.refreshToken);
   })();
@@ -104,12 +132,18 @@ client.interceptors.response.use(
         if (token) {
           cfg.headers = { ...(cfg.headers || {}), Authorization: `Bearer ${token}` } as any;
         } else {
+          if (tokenProvider?.clearTokens) await tokenProvider.clearTokens();
+          await SecureStore.deleteItemAsync("pcAuthToken");
+          await SecureStore.deleteItemAsync("pcRefreshToken");
           await AsyncStorage.removeItem("pcAuthToken");
           await AsyncStorage.removeItem("pcRefreshToken");
           throw new Error("Authentication required");
         }
         return client.request(cfg);
       } catch (e) {
+        if (tokenProvider?.clearTokens) await tokenProvider.clearTokens();
+        await SecureStore.deleteItemAsync("pcAuthToken");
+        await SecureStore.deleteItemAsync("pcRefreshToken");
         await AsyncStorage.removeItem("pcAuthToken");
         await AsyncStorage.removeItem("pcRefreshToken");
       }

@@ -26,8 +26,11 @@ import ActionGrid from '../../components/home/ActionGrid';
 import FeaturedCarousel from '../../components/home/FeaturedCarousel';
 import TrendingCarousel from '../../components/home/TrendingCarousel';
 import PriceTrendGraph from '../../components/home/PriceTrendGraph';
-import { products, featuredProducts, categories, newProducts, bestsellers } from '../../data/products';
+import { categories } from '../../data/products';
+import type { Product } from '../../data/products';
+import * as ProductsAPI from '../../services/api/products.api';
 import type { RootStackParamList } from '../../navigation/types';
+import PromotionBanner from '../../components/promotions/PromotionBanner';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -37,10 +40,51 @@ export default function HomeScreen() {
   const [activeCategory, setActiveCategory] = useState('all');
   const { scrollY, scrollHandler } = useAppleScrollHandler();
   const [refreshing, setRefreshing] = useState(false);
+  const [featured, setFeatured] = useState<Product[]>([]);
+  const [trending, setTrending] = useState<Product[]>([]);
+  const [newArrivals, setNewArrivals] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [err, setErr] = useState<string | null>(null);
   const onRefresh = () => {
     setRefreshing(true);
-    setTimeout(() => setRefreshing(false), 1200);
+    (async () => {
+      try {
+        const [f, t, n] = await Promise.all([
+          ProductsAPI.getFeaturedProducts(),
+          ProductsAPI.getBestsellers(),
+          ProductsAPI.getNewArrivals()
+        ]);
+        setFeatured(f);
+        setTrending(t);
+        setNewArrivals(n);
+        setErr(null);
+      } catch (e: any) {
+        setErr(e?.message || 'Failed to refresh');
+      } finally {
+        setRefreshing(false);
+      }
+    })();
   };
+
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const [f, t, n] = await Promise.all([
+          ProductsAPI.getFeaturedProducts(),
+          ProductsAPI.getBestsellers(),
+          ProductsAPI.getNewArrivals()
+        ]);
+        setFeatured(f);
+        setTrending(t);
+        setNewArrivals(n);
+        setErr(null);
+      } catch (e: any) {
+        setErr(e?.message || 'Failed to load products');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const styles = createStyles(theme, isDark);
 
@@ -102,32 +146,7 @@ export default function HomeScreen() {
         {/* Promo Banner with Parallax */}
         <ParallaxView scrollY={scrollY} speed={0.15}>
           <ScrollReveal delay={100} scale springy>
-            <View style={styles.promoBanner}>
-              <LinearGradient
-                colors={theme.colors.gradients.primary}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.promoGradient}
-              >
-                <View style={styles.promoContent}>
-                  <View>
-                    <Text style={styles.promoTitle}>Summer Collection</Text>
-                    <Text style={styles.promoSubtitle}>Up to 40% off on sunglasses</Text>
-                  </View>
-                  <TouchableOpacity
-                    style={styles.promoButton}
-                    onPress={() => navigation.navigate('ShopTab' as any)}
-                  >
-                    <Text style={styles.promoButtonText}>Shop Now</Text>
-                    <MaterialCommunityIcons
-                      name="arrow-right"
-                      size={16}
-                      color={theme.colors.accent.emerald}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </LinearGradient>
-            </View>
+            <PromotionBanner items={[]} onPress={() => navigation.navigate('Promotions' as any)} />
           </ScrollReveal>
         </ParallaxView>
 
@@ -190,7 +209,18 @@ export default function HomeScreen() {
 
         {/* Featured Products Carousel */}
         <ScrollReveal delay={700} direction="up" springy>
-          <FeaturedCarousel products={featuredProducts} />
+          {loading ? (
+            <View style={{ paddingHorizontal: theme.spacing.lg, flexDirection: 'row', gap: 12 }}>
+              <View style={{ width: SCREEN_WIDTH * 0.6 }}>
+                <View style={{ height: 220, backgroundColor: theme.colors.background.elevated, borderRadius: 16 }} />
+              </View>
+              <View style={{ width: SCREEN_WIDTH * 0.6 }}>
+                <View style={{ height: 220, backgroundColor: theme.colors.background.elevated, borderRadius: 16 }} />
+              </View>
+            </View>
+          ) : (
+            <FeaturedCarousel products={featured} />
+          )}
         </ScrollReveal>
 
         {/* Price Tracking Section (New) */}
@@ -207,7 +237,7 @@ export default function HomeScreen() {
             showsHorizontalScrollIndicator={false}
             contentContainerStyle={styles.priceTrendsContainer}
           >
-            {products.filter(p => p.priceHistory).slice(0, 5).map((product, idx) => (
+            {trending.filter(p => p.priceHistory).slice(0, 5).map((product, idx) => (
               <TouchableOpacity
                 key={product.id}
                 style={styles.priceTrendCard}
@@ -236,7 +266,7 @@ export default function HomeScreen() {
         </ScrollReveal>
 
         <View style={{ marginBottom: theme.spacing.xl }}>
-          <TrendingCarousel products={bestsellers} />
+          <TrendingCarousel products={trending} />
         </View>
 
         {/* New Arrivals (Extra Content) */}
@@ -245,7 +275,7 @@ export default function HomeScreen() {
             <Text style={styles.sectionTitle}>New Arrivals</Text>
           </View>
           <View style={styles.newArrivalsGrid}>
-            {newProducts.slice(0, 2).map((product, index) => (
+            {newArrivals.slice(0, 2).map((product, index) => (
               <ScrollReveal key={product.id} delay={1150 + index * 100} direction="up" springy>
                 <ModernProductCard
                   product={product}

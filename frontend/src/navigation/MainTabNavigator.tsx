@@ -12,11 +12,30 @@ import ShopScreen from '../screens/shop/ShopScreen';
 import CameraScreen from '../screens/camera/CameraScreen';
 import WishlistScreen from '../screens/wishlist/WishlistScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import { useCart } from '../context/CartContext';
+import * as NotifAPI from '../services/api/notifications.api';
+import { useFocusEffect } from '@react-navigation/native';
 
 const Tab = createBottomTabNavigator<RootTabParamList>();
 
 export default function MainTabNavigator() {
   const { theme } = useTheme();
+  const { count } = useCart();
+  const [unread, setUnread] = React.useState(0);
+  useFocusEffect(
+    React.useCallback(() => {
+      let mounted = true;
+      (async () => {
+        try {
+          const list = await NotifAPI.list();
+          if (mounted) setUnread(list.filter((n) => !n.read).length);
+        } catch {}
+      })();
+      return () => {
+        mounted = false;
+      };
+    }, [])
+  );
 
   return (
     <Tab.Navigator
@@ -63,6 +82,7 @@ export default function MainTabNavigator() {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="home-variant" size={size} color={color} />
           ),
+          tabBarBadge: unread > 0 ? unread : undefined,
         }}
       />
       <Tab.Screen
@@ -73,6 +93,7 @@ export default function MainTabNavigator() {
           tabBarIcon: ({ color, size }) => (
             <MaterialCommunityIcons name="shopping" size={size} color={color} />
           ),
+          tabBarBadge: count > 0 ? count : undefined,
         }}
       />
       <Tab.Screen

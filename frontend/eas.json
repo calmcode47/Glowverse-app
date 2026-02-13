@@ -12,6 +12,8 @@
       },
       "env": {
         "API_BASE_URL": "http://localhost:5000/api/v1",
+        "CLOUDINARY_CLOUD_NAME": "dev-cloud",
+        "ENVIRONMENT": "development",
         "PERFECT_CORP_API_KEY": "replace_me_dev",
         "ANALYTICS_ID": "dev-analytics",
         "SENTRY_DSN": ""
@@ -21,7 +23,9 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "API_BASE_URL": "https://api.perfectcorp.com/v1",
+        "API_BASE_URL": "https://staging-api.glowverse.com/api/v1",
+        "CLOUDINARY_CLOUD_NAME": "staging-cloud",
+        "ENVIRONMENT": "staging",
         "PERFECT_CORP_API_KEY": "replace_me_preview",
         "ANALYTICS_ID": "preview-analytics",
         "SENTRY_DSN": ""
@@ -30,7 +34,9 @@
     "production": {
       "channel": "production",
       "env": {
-        "API_BASE_URL": "https://your-domain.railway.app/api/v1",
+        "API_BASE_URL": "https://api.glowverse.com/api/v1",
+        "CLOUDINARY_CLOUD_NAME": "prod-cloud",
+        "ENVIRONMENT": "production",
         "PERFECT_CORP_API_KEY": "replace_me_prod",
         "ANALYTICS_ID": "prod-analytics",
         "SENTRY_DSN": ""
@@ -38,6 +44,15 @@
     }
   },
   "submit": {
-    "production": {}
+    "production": {
+      "android": {
+        "serviceAccountKeyPath": "./google-service-account.json"
+      },
+      "ios": {
+        "appleId": "your-apple-id@email.com",
+        "ascAppId": "1234567890",
+        "appleTeamId": "ABCD123456"
+      }
+    }
   }
 }

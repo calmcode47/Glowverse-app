@@ -8,9 +8,13 @@ import { Text, View } from "react-native";
 import { ThemeProvider } from "./src/theme/themeContext";
 import { useTheme } from "./src/theme/themeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { API_BASE_URL } from "./src/config/constants";
+import { ENV } from "./src/config/environment";
 import RootNavigator from "./src/navigation/RootNavigator";
-import ErrorBoundary from "./src/components/common/ErrorBoundary";
+import { AuthProvider } from "./src/context/AuthContext";
+import { CartProvider } from "./src/context/CartContext";
+import { FavoritesProvider } from "./src/context/FavoritesContext";
+import ErrorBoundary from "./src/components/error/ErrorBoundary";
+import Constants from "expo-constants";
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
   const { theme } = useTheme();
@@ -24,8 +28,8 @@ export default function App() {
   const [connected, setConnected] = React.useState(true);
   React.useEffect(() => {
     (async () => {
-      await AsyncStorage.setItem("apiBaseUrl", API_BASE_URL);
-      const origin = API_BASE_URL.replace(/\/api\/v1$/, "");
+      await AsyncStorage.setItem("apiBaseUrl", ENV.apiBaseUrl);
+      const origin = ENV.apiBaseUrl.replace(/\/api\/v1$/, "");
       try {
         const res = await fetch(`${origin}/health`);
         setConnected(res.status === 200);
@@ -34,16 +38,40 @@ export default function App() {
       }
     })();
   }, []);
+  React.useEffect(() => {
+    try {
+      const dsn = ENV.sentryDSN;
+      if (dsn) {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        const Sentry = require("@sentry/react-native");
+        Sentry.init({
+          dsn,
+          enableInExpoDevelopment: false,
+          debug: false,
+          environment: ENV.environment,
+          release: Constants.expoConfig?.version
+        });
+      }
+    } catch {}
+  }, []);
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <ThemeProvider>
-            <NavigationContainer>
-              <ConnectivityBanner connected={connected} base={API_BASE_URL} />
-              <RootNavigator />
-              <StatusBar style="auto" />
-            </NavigationContainer>
+            <AuthProvider>
+              <CartProvider>
+                <FavoritesProvider>
+                  <ErrorBoundary>
+                    <NavigationContainer>
+                      <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
+                      <RootNavigator />
+                      <StatusBar style="auto" />
+                    </NavigationContainer>
+                  </ErrorBoundary>
+                </FavoritesProvider>
+              </CartProvider>
+            </AuthProvider>
           </ThemeProvider>
         </SafeAreaProvider>
       </GestureHandlerRootView>

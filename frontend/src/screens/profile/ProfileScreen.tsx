@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import {
   View,
   Text,
@@ -14,26 +14,29 @@ import { useTheme } from '../../theme/themeContext';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import ScrollReveal from '../../components/animations/ScrollReveal';
 import ProfileHeader from '../../components/profile/ProfileHeader';
-import EditProfileModal from '../../components/profile/EditProfileModal';
+import * as UserAPI from '../../services/api/user.api';
+import { useAuth } from '../../context/AuthContext';
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const navigation = useNavigation<any>();
+  const { user: authUser } = useAuth();
+  const [user, setUser] = React.useState<{ name?: string; email?: string; avatar?: string; createdAt?: string } | null>(null);
+  const [stats, setStats] = React.useState<{ orders: number; wishlist: number; reviews: number }>({ orders: 0, wishlist: 0, reviews: 0 });
+  const [loading, setLoading] = React.useState(true);
 
-  const [user, setUser] = useState({
-    name: 'Alex Morgan',
-    email: 'alex.morgan@example.com',
-    avatar: 'https://images.unsplash.com/photo-1551816230-ef5deaed4a26?auto=format&fit=crop&w=400&q=80',
-    level: 'Gold Member',
-    points: 3420,
-  });
-
-  const [isEditModalVisible, setIsEditModalVisible] = useState(false);
-
-  const handleUpdateProfile = (name: string, email: string) => {
-    setUser(prev => ({ ...prev, name, email }));
-    // Ideally call an API here
-  };
+  React.useEffect(() => {
+    (async () => {
+      try {
+        const me = await UserAPI.getCurrentUser();
+        setUser(me.user as any);
+        const s = await UserAPI.getStats();
+        setStats({ orders: s.totals?.orders || 0, wishlist: s.favorites || 0, reviews: s.totals?.reviews || 0 });
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, []);
 
   const styles = createStyles(theme, isDark);
 
@@ -48,10 +51,7 @@ export default function ProfileScreen() {
       >
         {/* Profile Header */}
         <ScrollReveal delay={0}>
-          <ProfileHeader
-            user={user}
-            onEditAvatar={() => setIsEditModalVisible(true)}
-          />
+          <ProfileHeader user={user || { name: "", email: "" }} onEditAvatar={() => navigation.navigate('EditProfile')} />
         </ScrollReveal>
 
         {/* Stats Row */}
@@ -59,22 +59,22 @@ export default function ProfileScreen() {
           <View style={styles.statsRow}>
             <StatCard
               icon="package-variant-closed"
-              value="29"
+              value={String(stats.orders)}
               label="Orders"
               onPress={() => navigation.navigate('OrderHistory')}
               styles={styles}
             />
             <StatCard
               icon="heart"
-              value="12"
+              value={String(stats.wishlist)}
               label="Wishlist"
               onPress={() => navigation.navigate('WishlistTab')}
               styles={styles}
             />
             <StatCard
               icon="star"
-              value="4.8"
-              label="Rating"
+              value={String(stats.reviews)}
+              label="Reviews"
               onPress={() => { }}
               styles={styles}
             />
@@ -85,16 +85,13 @@ export default function ProfileScreen() {
         <ScrollReveal delay={200}>
           <Text style={styles.sectionTitle}>Account & Beauty Profile</Text>
           <View style={styles.menuSection}>
-            <MenuItem
-              icon="account-edit"
-              label="Edit Personal Info"
-              onPress={() => setIsEditModalVisible(true)}
-              styles={styles}
-            />
+            <MenuItem icon="account-edit" label="Edit Personal Info" onPress={() => navigation.navigate('EditProfile')} styles={styles} />
+            <MenuItem icon="home-city" label="Addresses" onPress={() => navigation.navigate('Addresses')} styles={styles} />
+            <MenuItem icon="gift-outline" label="Refer & Earn" onPress={() => navigation.navigate('Referrals')} styles={styles} />
             <MenuItem
               icon="face-man-shimmer"
               label="Skin Analysis History"
-              onPress={() => navigation.navigate('UserHistory')}
+              onPress={() => navigation.navigate('AnalysisHistory')}
               styles={styles}
             />
             <MenuItem
@@ -171,12 +168,7 @@ export default function ProfileScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      <EditProfileModal
-        isVisible={isEditModalVisible}
-        onClose={() => setIsEditModalVisible(false)}
-        user={user}
-        onSave={handleUpdateProfile}
-      />
+      
     </View>
   );
 }

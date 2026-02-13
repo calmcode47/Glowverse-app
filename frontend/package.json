@@ -17,6 +17,8 @@
     "expo": "~54.0.33",
     "expo-blur": "~15.0.8",
     "expo-camera": "~17.0.10",
+    "expo-local-authentication": "~14.0.2",
+    "expo-secure-store": "~13.0.2",
     "expo-constants": "^18.0.13",
     "expo-face-detector": "^13.0.2",
     "expo-file-system": "~19.0.21",

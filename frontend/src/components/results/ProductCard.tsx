@@ -1,7 +1,8 @@
 import React from "react";
-import { View, Image, StyleSheet, TouchableOpacity } from "react-native";
+import { View, StyleSheet, TouchableOpacity } from "react-native";
 import { Text, Button, IconButton, useTheme } from "react-native-paper";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
+import OptimizedImage from "../common/OptimizedImage";
 
 type Props = {
   image: string;
@@ -18,7 +19,7 @@ export default function ProductCard({ image, name, brand, price, rating, onTryOn
   const theme = useTheme();
   return (
     <View style={[styles.card, { backgroundColor: theme.colors.surface }]}>
-      <Image source={{ uri: image }} style={styles.image} />
+      <OptimizedImage uri={image} variant="thumb" />
       <View style={styles.info}>
         <Text variant="labelLarge">{name}</Text>
         {brand ? <Text variant="bodySmall" style={{ color: theme.colors.outline }}>{brand}</Text> : null}

@@ -12,8 +12,10 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeContext';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
-import { products } from '../../data/products';
 import type { Product } from '../../data/products';
+import * as ProductsAPI from '../../services/api/products.api';
+import * as CartAPI from '../../services/api/cart.api';
+import FavoriteButton from "../../components/common/FavoriteButton";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -39,23 +41,38 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const productId = route?.params?.productId;
   const passedProduct = route?.params?.product;
 
-  // Find the actual product:
-  // 1. Use passed product object (from Dashboard/MockData)
-  // 2. Find in static products list (from ShopData)
-  // 3. Fallback to first product
-  const product = passedProduct || products.find(p => p.id === productId) || products[0];
+  const [product, setProduct] = useState<Product | null>(passedProduct || null);
+  const [loading, setLoading] = useState(!passedProduct);
+  const [loadError, setLoadError] = useState<string | null>(null);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
-  const [selectedSize, setSelectedSize] = useState(product.sizes?.[0] || 'M');
-  const [selectedColor, setSelectedColor] = useState(product.colors?.[0] || '');
+  const [selectedSize, setSelectedSize] = useState('M');
+  const [selectedColor, setSelectedColor] = useState('');
   const [quantity, setQuantity] = useState(1);
   const [isFavorite, setIsFavorite] = useState(false);
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
 
-  // Prepare images array (use product image or images array)
-  const productImages = product.images || (product.image ? [product.image] : []);
+  React.useEffect(() => {
+    if (!productId || passedProduct) return;
+    (async () => {
+      try {
+        setLoading(true);
+        const p = await ProductsAPI.getProductById(String(productId));
+        setProduct(p);
+        if (p.sizes && p.sizes.length) setSelectedSize(p.sizes[0]);
+        if (p.colors && p.colors.length) setSelectedColor(p.colors[0]);
+        setLoadError(null);
+      } catch (e: any) {
+        setLoadError(e?.message || 'Product Unavailable');
+      } finally {
+        setLoading(false);
+      }
+    })();
+  }, [productId]);
+
+  const productImages = product?.images || (product?.image ? [product.image] : []);
 
   const styles = createStyles(theme, isDark);
 
@@ -68,6 +85,24 @@ export default function ProductDetailScreen({ route, navigation }: any) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
       >
+        {!product && loading ? (
+          <View style={{ padding: 16 }}>
+            <View style={{ height: SCREEN_WIDTH, backgroundColor: theme.colors.background.elevated, borderRadius: 16 }} />
+            <View style={{ height: 16 }} />
+            <View style={{ height: 14, backgroundColor: theme.colors.background.elevated, borderRadius: 8, width: "60%" }} />
+            <View style={{ height: 10 }} />
+            <View style={{ height: 14, backgroundColor: theme.colors.background.elevated, borderRadius: 8, width: "40%" }} />
+          </View>
+        ) : null}
+        {loadError && !product ? (
+          <View style={{ padding: 16, alignItems: 'center' }}>
+            <Text style={{ color: theme.colors.text.primary, marginBottom: 8 }}>Product Unavailable</Text>
+            <TouchableOpacity onPress={() => navigation.goBack()} style={{ paddingHorizontal: 12, paddingVertical: 8, backgroundColor: theme.colors.accent.emerald, borderRadius: 10 }}>
+              <Text style={{ color: theme.colors.text.inverse, fontWeight: '700' }}>Back to Shop</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
+        {product ? (
         {/* Image Gallery */}
         <View style={styles.imageGallery}>
           <ScrollView
@@ -115,13 +150,9 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           )}
 
           {/* Favorite & Back Buttons */}
-          <TouchableOpacity style={styles.favoriteButton} onPress={() => setIsFavorite(!isFavorite)}>
-            <MaterialCommunityIcons
-              name={isFavorite ? 'heart' : 'heart-outline'}
-              size={24}
-              color={isFavorite ? theme.colors.accent.rose : theme.colors.text.primary}
-            />
-          </TouchableOpacity>
+          <View style={styles.favoriteButton}>
+            <FavoriteButton productId={product.id} size={24} />
+          </View>
 
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
             <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text.primary} />
@@ -312,6 +343,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             )}
           </View>
         </View>
+        ) : null}
 
         <View style={{ height: 120 }} />
       </ScrollView>
@@ -341,7 +373,15 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             </LinearGradient>
           </TouchableOpacity>
 
-          <TouchableOpacity style={styles.addToCartButton}>
+          <TouchableOpacity
+            style={styles.addToCartButton}
+            onPress={async () => {
+              if (!product) return;
+              try {
+                await CartAPI.addItem({ productId: product.id, quantity });
+              } catch {}
+            }}
+          >
             <LinearGradient colors={theme.colors.gradients.primary} style={styles.addToCartGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
               <MaterialCommunityIcons name="cart-plus" size={20} color={theme.colors.text.inverse} />
             </LinearGradient>

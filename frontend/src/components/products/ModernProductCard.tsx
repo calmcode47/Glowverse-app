@@ -1,9 +1,10 @@
 import React from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeContext';
 import type { Product } from '../../data/products';
+import OptimizedImage from '../common/OptimizedImage';
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44;
@@ -32,11 +33,7 @@ export default function ModernProductCard({ product, onPress, style, width }: Mo
                 {/* Image Section */}
                 <View style={styles.imageContainer}>
                     {product.image && !imageError ? (
-                        <Image
-                            source={{ uri: product.image }}
-                            style={styles.image}
-                            onError={() => setImageError(true)}
-                        />
+                        <OptimizedImage uri={product.image} variant="thumb" />
                     ) : (
                         <View style={styles.placeholder}>
                             <MaterialCommunityIcons name="image-off-outline" size={32} color={theme.colors.text.secondary} />

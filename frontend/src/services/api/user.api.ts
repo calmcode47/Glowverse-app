@@ -33,3 +33,23 @@ export async function deleteHistoryItem(id: string): Promise<{ message: string }
   const res = await client.delete<{ message: string }>(`/api/v1/users/history/${id}`);
   return res.data;
 }
+
+export async function getCurrentUser(): Promise<{ user: User }> {
+  const res = await client.get<{ user: User }>("/api/v1/auth/me");
+  return res.data;
+}
+
+export async function updateUser(userId: string, data: Partial<User> & { phoneNumber?: string; dateOfBirth?: string; gender?: string }): Promise<{ user: User }> {
+  const res = await client.patch<{ user: User }>(`/api/v1/users/${encodeURIComponent(userId)}`, data as any);
+  return res.data;
+}
+
+export async function changePassword(userId: string, data: { currentPassword: string; newPassword: string }): Promise<{ message: string }> {
+  const res = await client.patch<{ message: string }>(`/api/v1/users/${encodeURIComponent(userId)}/password`, data);
+  return res.data;
+}
+
+export async function deleteAccount(userId: string, data: { password: string }): Promise<{ message: string }> {
+  const res = await client.delete<{ message: string }>(`/api/v1/users/${encodeURIComponent(userId)}`, { data });
+  return res.data;
+}
