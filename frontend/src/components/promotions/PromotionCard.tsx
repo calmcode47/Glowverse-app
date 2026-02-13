@@ -4,6 +4,8 @@ import { useTheme } from "../../theme/themeContext";
 import type { Promotion } from "../../services/api/promotions.api";
 import { Button } from "react-native-paper";
 import * as Clipboard from "expo-clipboard";
+import { Share } from "react-native";
+import { deepLinkingService } from "../../services/deepLinking.service";
 
 type Props = {
   promo: Promotion;
@@ -38,6 +40,11 @@ export default function PromotionCard({ promo, featured, onPress, onShop, onCopi
         <View style={styles.footer}>
           {countdown ? <Text style={[styles.expiry, soon && { color: theme.colors.accent.rose }]}>Ends in {countdown}</Text> : exp ? <Text style={styles.expiry}>Expires {exp.toLocaleDateString()}</Text> : null}
           <Button mode="contained-tonal" onPress={() => onShop(promo.code)}>Shop Now</Button>
+          <Button mode="text" onPress={async () => {
+            const link = deepLinkingService.createUniversalLink("promo", { code: promo.code || "" });
+            const message = `Check out this deal: ${promo.title}. Use code ${promo.code}. ${link}`;
+            try { await Share.share({ message }); } catch {}
+          }}>Share</Button>
         </View>
       </View>
     </TouchableOpacity>

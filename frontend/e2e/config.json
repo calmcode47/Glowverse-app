@@ -1,0 +1,8 @@
+{
+  "testRunner": "jest",
+  "setupFilesAfterEnv": ["detox/runners/jest/adapter"],
+  "testEnvironment": "node",
+  "testTimeout": 120000,
+  "reporters": ["detox/runners/jest/reporter"],
+  "verbose": true
+}

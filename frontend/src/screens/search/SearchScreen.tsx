@@ -11,6 +11,7 @@ import SearchSuggestions from "../../components/search/SearchSuggestions";
 import RecentSearches from "../../components/search/RecentSearches";
 import PopularSearches from "../../components/search/PopularSearches";
 import FilterModal from "../../components/shop/FilterModal";
+import { analytics } from "../../services/analytics.service";
 
 export default function SearchScreen() {
   const { theme } = useTheme();
@@ -35,11 +36,15 @@ export default function SearchScreen() {
       const res = await ProductsAPI.searchProducts(q.trim(), { category: filters.category, brand: filters.brand, sortBy: sortKey, page: 1, limit: 40 });
       setResults(res.products);
       setResultCount(res.total);
+      await analytics.logSearch(q.trim(), res.total);
     } finally {
       setLoading(false);
     }
   }, [filters]);
 
+  React.useEffect(() => {
+    analytics.logScreenView("Search", "SearchScreen");
+  }, []);
   React.useEffect(() => {
     const id = setTimeout(async () => {
       if (query.trim().length === 0) {

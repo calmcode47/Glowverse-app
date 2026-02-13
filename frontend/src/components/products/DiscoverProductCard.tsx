@@ -1,14 +1,5 @@
 import React, { useState } from 'react';
-import {
-    View,
-    Text,
-    Image,
-    TouchableOpacity,
-    StyleSheet,
-    Dimensions,
-    Pressable,
-    Platform,
-} from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, Pressable, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import Animated, {
@@ -21,6 +12,8 @@ import Animated, {
 } from 'react-native-reanimated';
 import { useTheme } from '../../theme/themeContext';
 import type { Product } from '../../data/products';
+import OptimizedImage from '../common/OptimizedImage';
+import { getCloudinaryUrl } from '../../utils/cloudinaryTransform';
 
 interface DiscoverProductCardProps {
     product: Product;
@@ -126,12 +119,15 @@ export default function DiscoverProductCard({
                         {/* Product Image with Parallax & Fallback */}
                         <View style={styles.imageContainer}>
                             {product.image && !imageError ? (
-                                <Animated.Image
-                                    source={{ uri: product.image }}
-                                    style={[styles.productImage, imageAnimatedStyle]}
+                                <Animated.View style={[styles.productImage, imageAnimatedStyle]}>
+                                  <OptimizedImage
+                                    uri={getCloudinaryUrl(product.image, { width: Math.round(cardWidth * 1.2), height: Math.round(cardHeight * 0.65), quality: 'auto', format: 'auto' })}
+                                    width={Math.round(cardWidth * 1.2)}
+                                    height={Math.round(cardHeight * 0.65)}
                                     resizeMode="cover"
-                                    onError={() => setImageError(true)}
-                                />
+                                    priority="normal"
+                                  />
+                                </Animated.View>
                             ) : (
                                 <View style={styles.placeholderContainer}>
                                     <MaterialCommunityIcons

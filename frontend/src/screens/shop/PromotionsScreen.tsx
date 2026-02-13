@@ -6,6 +6,8 @@ import * as PromoAPI from "../../services/api/promotions.api";
 import PromotionCard from "../../components/promotions/PromotionCard";
 import { useNavigation } from "@react-navigation/native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useEffect } from "react";
+import { measureScreenLoad } from "../../utils/performanceMonitor";
 
 export default function PromotionsScreen() {
   const { theme } = useTheme();
@@ -13,6 +15,10 @@ export default function PromotionsScreen() {
   const navigation = useNavigation<any>();
   const [items, setItems] = React.useState<PromoAPI.Promotion[]>([]);
   const [loading, setLoading] = React.useState(true);
+  useEffect(() => {
+    const end = measureScreenLoad("Promotions");
+    return end;
+  }, []);
 
   React.useEffect(() => {
     (async () => {

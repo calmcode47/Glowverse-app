@@ -4,6 +4,7 @@ import { useTheme } from "../../theme/themeContext";
 import ProfessionalBackground from "../../components/animated/ProfessionalBackground";
 import * as RefAPI from "../../services/api/referrals.api";
 import ShareCard from "../../components/referral/ShareCard";
+import { deepLinkingService } from "../../services/deepLinking.service";
 import ReferralStats from "../../components/referral/ReferralStats";
 
 export default function ReferralScreen() {
@@ -26,7 +27,7 @@ export default function ReferralScreen() {
       <ProfessionalBackground variant="subtle" />
       {data ? (
         <>
-          <ShareCard code={data.code} link={data.link} />
+          <ShareCard code={data.code} link={deepLinkingService.createUniversalLink("referral", { code: data.code })} />
           <ReferralStats total={data.total} earned={data.earned} pending={data.pending} friends={data.friends} />
           <View style={styles.how}>
             <Text style={styles.title}>How It Works</Text>

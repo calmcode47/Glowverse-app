@@ -10,6 +10,7 @@ import CartSummary from "../../components/cart/CartSummary";
 import EmptyCart from "../../components/cart/EmptyCart";
 import PromoCodeInput from "../../components/cart/PromoCodeInput";
 import { useCart } from "../../context/CartContext";
+import { analytics } from "../../services/analytics.service";
 
 export default function CartScreen() {
   const { theme } = useTheme();
@@ -38,6 +39,7 @@ export default function CartScreen() {
   useFocusEffect(
     React.useCallback(() => {
       load();
+      analytics.logScreenView("Cart", "CartScreen");
     }, [load])
   );
 
@@ -114,10 +116,12 @@ export default function CartScreen() {
         : c
     );
     try {
+      const item = cart?.items.find((x) => x.id === id);
       await CartAPI.removeItem(id);
       const c = await CartAPI.getCart();
       setCart(c);
       setCount(c.itemCount);
+      if (item) await analytics.logRemoveFromCart(item);
     } catch {
       await rollback();
     } finally {
@@ -197,7 +201,10 @@ export default function CartScreen() {
           <CartSummary
             cart={cart}
             outOfStock={outOfStock}
-            onCheckout={() => navigation.navigate("Checkout")}
+            onCheckout={() => {
+              if (cart) analytics.logBeginCheckout(cart);
+              navigation.navigate("Checkout");
+            }}
           />
         </>
       )}

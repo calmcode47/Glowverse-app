@@ -1,13 +1,5 @@
 import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  Dimensions,
-  Image,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeContext';
@@ -15,7 +7,12 @@ import ProfessionalBackground from '../../components/animated/ProfessionalBackgr
 import type { Product } from '../../data/products';
 import * as ProductsAPI from '../../services/api/products.api';
 import * as CartAPI from '../../services/api/cart.api';
+import { analytics } from '../../services/analytics.service';
+import { useCart } from '../../context/CartContext';
 import FavoriteButton from "../../components/common/FavoriteButton";
+import OptimizedImage from "../../components/common/OptimizedImage";
+import { getCloudinaryUrl } from "../../utils/cloudinaryTransform";
+import { usePageAnnouncement } from "../../hooks/usePageAnnouncement";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -40,6 +37,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const { theme, isDark } = useTheme();
   const productId = route?.params?.productId;
   const passedProduct = route?.params?.product;
+  const { addItemOptimistic, setCount } = useCart();
 
   const [product, setProduct] = useState<Product | null>(passedProduct || null);
   const [loading, setLoading] = useState(!passedProduct);
@@ -72,9 +70,17 @@ export default function ProductDetailScreen({ route, navigation }: any) {
     })();
   }, [productId]);
 
+  React.useEffect(() => {
+    if (product) {
+      analytics.logViewItem(product);
+      analytics.logScreenView('ProductDetail', 'ProductDetailScreen');
+    }
+  }, [product]);
+
   const productImages = product?.images || (product?.image ? [product.image] : []);
 
   const styles = createStyles(theme, isDark);
+  usePageAnnouncement("Product Details", product ? `${product.name} product details` : "Product details");
 
   return (
     <View style={styles.container}>
@@ -117,7 +123,13 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           >
             {productImages.length > 0 ? productImages.map((imgUrl: string, idx: number) => (
               <View key={idx} style={styles.imageContainer}>
-                <Image source={{ uri: imgUrl }} style={styles.productImage} />
+                <OptimizedImage
+                  uri={getCloudinaryUrl(imgUrl, { width: Math.round(SCREEN_WIDTH), height: Math.round(SCREEN_WIDTH), quality: 'auto', format: 'auto' })}
+                  width={Math.round(SCREEN_WIDTH)}
+                  height={Math.round(SCREEN_WIDTH)}
+                  resizeMode="contain"
+                  priority={idx === 0 ? 'high' : 'normal'}
+                />
               </View>
             )) : (
               <View style={styles.imageContainer}>
@@ -378,7 +390,20 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             onPress={async () => {
               if (!product) return;
               try {
-                await CartAPI.addItem({ productId: product.id, quantity });
+                if (addItemOptimistic) {
+                  await addItemOptimistic(product, quantity);
+                } else {
+                  await CartAPI.addItem({ productId: product.id, quantity });
+                  await analytics.logAddToCart({
+                    id: 'tmp',
+                    productId: product.id,
+                    product,
+                    quantity,
+                    price: product.price,
+                    total: product.price * quantity
+                  } as any);
+                  setCount?.((c: number) => c + quantity);
+                }
               } catch {}
             }}
           >

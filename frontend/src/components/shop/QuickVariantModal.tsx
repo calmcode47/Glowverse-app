@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, Modal, TouchableOpacity, StyleSheet, ScrollView } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import type { Product } from "../../data/products";
+import FocusTrap from "../a11y/FocusTrap";
+import { focusManagement } from "../../utils/focusManagement";
 
 type Props = {
   visible: boolean;
@@ -16,6 +18,7 @@ export default function QuickVariantModal({ visible, product, onAdd, onDismiss }
   const [selectedSize, setSelectedSize] = React.useState<string | undefined>(product.sizes?.[0]);
   const [selectedColor, setSelectedColor] = React.useState<string | undefined>(product.colors?.[0]);
   const [loading, setLoading] = React.useState(false);
+  const firstRef = React.useRef<View>(null);
   React.useEffect(() => {
     setSelectedSize(product.sizes?.[0]);
     setSelectedColor(product.colors?.[0]);
@@ -23,7 +26,8 @@ export default function QuickVariantModal({ visible, product, onAdd, onDismiss }
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onDismiss}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <FocusTrap active={visible} returnFocus onEscape={onDismiss}>
+        <View style={styles.sheet} accessible accessibilityLabel="Variant selector" accessibilityRole="menu">
           <Text style={styles.title}>{product.name}</Text>
           {product.colors && product.colors.length ? (
             <View style={{ marginTop: 8 }}>
@@ -34,6 +38,9 @@ export default function QuickVariantModal({ visible, product, onAdd, onDismiss }
                     key={c}
                     onPress={() => setSelectedColor(c)}
                     style={[styles.choice, selectedColor === c && styles.choiceActive]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: selectedColor === c }}
+                    accessibilityLabel={`Color ${c}`}
                   >
                     <Text style={[styles.choiceText, selectedColor === c && styles.choiceTextActive]}>{c}</Text>
                   </TouchableOpacity>
@@ -50,6 +57,9 @@ export default function QuickVariantModal({ visible, product, onAdd, onDismiss }
                     key={s}
                     onPress={() => setSelectedSize(s)}
                     style={[styles.choice, selectedSize === s && styles.choiceActive]}
+                    accessibilityRole="radio"
+                    accessibilityState={{ selected: selectedSize === s }}
+                    accessibilityLabel={`Size ${s}`}
                   >
                     <Text style={[styles.choiceText, selectedSize === s && styles.choiceTextActive]}>{s}</Text>
                   </TouchableOpacity>
@@ -58,7 +68,7 @@ export default function QuickVariantModal({ visible, product, onAdd, onDismiss }
             </View>
           ) : null}
           <View style={styles.actions}>
-            <TouchableOpacity onPress={onDismiss} style={styles.secondary}>
+            <TouchableOpacity onPress={onDismiss} style={styles.secondary} ref={firstRef} accessibilityLabel="Cancel" accessibilityRole="button">
               <Text style={styles.secondaryText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -73,11 +83,14 @@ export default function QuickVariantModal({ visible, product, onAdd, onDismiss }
               }}
               style={styles.primary}
               disabled={loading}
+              accessibilityLabel="Add to cart"
+              accessibilityRole="button"
             >
               <Text style={styles.primaryText}>{loading ? "Adding..." : "Add to Cart"}</Text>
             </TouchableOpacity>
           </View>
         </View>
+        </FocusTrap>
       </View>
     </Modal>
   );

@@ -1,10 +1,10 @@
-# Glowverse Frontend - React Native Mobile App
+# Glowverse Frontend — React Native Mobile App
 
 [![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
 [![Expo](https://img.shields.io/badge/Expo%20SDK-54-black.svg)](https://expo.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
 
-Cross-platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web. Features 76+ reusable components, 30+ screens, advanced animations, and AR-powered virtual try-on experiences.
+Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web. Includes 76+ reusable components, 30+ screens, advanced animations, AR try‑on, AI analysis, robust testing, analytics, and offline capabilities.
 
 ---
 
@@ -12,31 +12,56 @@ Cross-platform mobile application for the Glowverse AI/AR beauty platform. Built
 
 | Area | Status | Details |
 |------|--------|---------|
-| Components | ✅ 76+ | 12 component categories |
-| Screens | ✅ 30+ | 17 screen categories |
-| Navigation | ✅ Setup | React Navigation 7 |
-| Theming | ✅ Done | Custom design system |
-| API Integration | ⚠️ Partial | Axios API client scaffolded |
-| State Management | ⚠️ Planned | Context + hooks pattern |
-| Testing | ⚠️ Scaffolded | Jest + Testing Library configured |
-| AR Features | ⚠️ Planned | Camera + face detection ready |
+| Components | ✅ 76+ | 12 categories |
+| Screens | ✅ 30+ | 17 categories |
+| Navigation | ✅ Done | React Navigation 7 |
+| Theming | ✅ Done | Custom design system (light/dark) |
+| API Integration | ✅ Done | Axios client with auth/refresh |
+| State | ✅ Done | Context + hooks |
+| Analytics | ✅ Done | Firebase Analytics + Sentry breadcrumbs |
+| Offline | ✅ Done | Request queue, optimistic cart, caching |
+| Testing | ✅ Done | Unit + Detox E2E |
+| AR Features | ✅ Done | Virtual try‑on + capture |
+
+---
+
+## ✨ Features
+
+- Authentication with token refresh and secure storage
+- Product catalog, detail pages with image galleries
+- Cart and checkout with card, Apple Pay, Google Pay
+- Promotions and order creation with order confirmation
+- AR virtual try‑on flow with capture and overlays
+- AI skin analysis screens and results
+- Global search with filters and sorting
+- Favorites, profile, addresses, orders
+- Theming with design tokens and light/dark modes
+- Deep links and universal links navigation
+- Error boundaries and graceful network handling
+- Analytics instrumentation
+  - Screen views, product views, search, add/remove cart
+  - Begin checkout and purchase events
+  - AR start/complete and analysis start/complete
+  - Share, referral, and promo events
+- Offline capabilities
+  - AsyncStorage queue for non‑GET requests while offline
+  - Automatic synchronization on reconnect with retry/backoff
+  - Optimistic UI updates for cart
+  - Product caching for offline detail view
+- Testing
+  - Jest unit tests with coverage thresholds
+  - Detox E2E tests for shopping, profile/orders, AR/analysis
 
 ---
 
 ## 🚀 Quick Start
 
-```bash
-# Install dependencies
-npm install
-
-# Start Expo dev server
-npm start
-
-# Run on specific platform
-npm run web        # Web browser
-npm run ios        # iOS Simulator (macOS only)
-npm run android    # Android emulator
-```
+- Install dependencies: `npm install`
+- Start dev server: `npm start`
+- Run on platforms:
+  - `npm run web`
+  - `npm run ios`
+  - `npm run android`
 
 **App running at:** `http://localhost:8081`
 
@@ -81,7 +106,7 @@ frontend/
 │   │   ├── camera/            # Camera screen
 │   │   └── onboarding/        # First-launch onboarding
 │   ├── navigation/            # React Navigation config
-│   ├── services/              # API client layer
+│   ├── services/              # API, analytics, offline
 │   ├── hooks/                 # Custom React hooks
 │   ├── context/               # React context providers
 │   ├── config/                # App configuration
@@ -90,6 +115,8 @@ frontend/
 │   ├── data/                  # Static/mock data
 │   └── utils/                 # Utility functions
 ├── assets/                    # Images, fonts, Lottie animations
+├── app-store-assets/          # Store screenshots (device‑specific)
+├── e2e/                       # Detox test suite & config
 ├── types/                     # TypeScript type definitions
 ├── __tests__/                 # Test files
 ├── app.json                   # Expo configuration
@@ -119,16 +146,33 @@ frontend/
 | Lottie React Native | 7.3 | Lottie animations |
 | Axios | 1.13 | HTTP client |
 | AsyncStorage | 2.2 | Local data persistence |
+| NetInfo | 11.4 | Connectivity status |
+| Firebase Analytics | 8 | Analytics and events |
+| Stripe RN | 0.33 | Payments (card/Apple Pay/Google Pay) |
+| Detox | 20 | E2E tests |
 
 ---
 
 ## 🧪 Testing
 
-```bash
-npm test          # Run tests with jest-expo
-```
+- Unit tests
+  - Run: `npm test`
+  - Coverage: `npm run test:coverage`
+  - Framework: jest‑expo + @testing‑library/react‑native
+  - Stable mocks for icons, navigation, SecureStore, Camera, Media Library, NetInfo
+- End‑to‑End tests (Detox)
+  - Build iOS: `npm run e2e:ios:build`
+  - Test iOS: `npm run e2e:ios:test`
+  - Build Android: `npm run e2e:android:build`
+  - Test Android: `npm run e2e:android:test`
+  - CI: `npm run e2e:test:ci`
+  - Config: `.detoxrc.json`, `e2e/config.json`
+  - Suites:
+    - `e2e/shopping.e2e.js` — browse, add to cart, checkout, search, filter
+    - `e2e/profile.e2e.js` — orders, order details, profile edit, addresses
+    - `e2e/ar-analysis.e2e.js` — try‑on flow and skin analysis
 
-**Test setup:** Jest 30 + @testing-library/react-native
+**Coverage gates:** per‑file line thresholds for critical logic (e.g., auth context and cart API).
 
 ---
 
@@ -155,11 +199,26 @@ npx eas submit --platform android
 
 ---
 
-## 🔐 Environment
+## 🔐 Configuration & Environment
 
+### Expo config (app.json)
+- Name/slug: Glowverse / glowverse
+- iOS: `bundleIdentifier: com.glowverse.app`, `supportsTablet: false`, non‑exempt encryption false
+- Android: `package: com.glowverse.app`, `versionCode: 1`, adaptive icon, permissions
+- Icon/splash:
+  - Icon: `assets/icon.png` (provide 1024×1024 PNG, no transparency)
+  - Splash: `assets/splash-icon.png` (2048×2048 PNG, safe area)
+- EAS project: set `extra.eas.projectId`
+- Deep links: scheme `glowverse`, associated domains for iOS and intent filters for Android
+
+### Environment variables
+- API base URL, analytics ID, Sentry DSN, and Stripe keys are configured via `app.json` extras and the ENV layer.
+- Example:
 ```env
 EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
 EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
+EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_***
+EXPO_PUBLIC_SENTRY_DSN=https://***
 ```
 
 ---
@@ -174,19 +233,40 @@ EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
 
 ---
 
-## 🗺️ Roadmap
+## 🧩 Implementations Summary
 
-- [ ] Complete API integration layer
-- [ ] Implement state management (Context + hooks)
-- [ ] Connect all screens to backend
-- [ ] Form validation with Zod
-- [ ] Offline mode with data caching
-- [ ] Push notifications (Expo Notifications)
-- [ ] AR camera integration
-- [ ] Component testing
-- [ ] Performance optimization
-- [ ] App Store / Play Store submission
+- Analytics
+  - Service: `src/services/analytics.service.ts`
+  - Screen tracking via NavigationContainer
+  - Instrumented screens: Product detail, Cart, Checkout, Search, Virtual Try‑On, Auth login
+- Offline Capabilities
+  - Queue: `src/services/offlineQueue.service.ts` with AsyncStorage persistence and NetInfo recovery
+  - API client interceptors queue non‑GET requests when offline
+  - OfflineIndicator: global banner for offline/syncing states
+  - Cache: `src/services/cache.service.ts` for product detail pages
+  - Optimistic cart add in `CartContext`
+- Testing
+  - Unit tests for cart API and others
+  - Detox suites: shopping, profile/orders, AR/analysis
+  - Stable jest setup and mocks
+- Checkout
+  - Multi‑step checkout (shipping → payment → review → confirmation)
+  - Stripe card and platform pay stubs integrated
+- App Store Readiness
+  - app.json finalized for name, identifiers, and permissions
+  - Screenshots folder scaffolded: `app-store-assets/`
 
 ---
 
-*Last Updated: February 13, 2026*
+## 🗺️ Roadmap
+
+- [ ] Complete API integration layer
+- [ ] Broader offline caching for lists and search
+- [ ] Robust conflict resolution UI for failed syncs
+- [ ] Push notifications (Expo Notifications)
+- [ ] More performance profiling and bundle optimization
+- [ ] App Store / Play Store submission automation
+
+---
+
+*Last Updated: February 14, 2026*

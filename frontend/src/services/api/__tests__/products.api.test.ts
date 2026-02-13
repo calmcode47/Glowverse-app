@@ -20,6 +20,6 @@ describe("products.api", () => {
   it("handles API errors", async () => {
     const { client } = require("../client");
     client.get.mockRejectedValueOnce(new Error("Network error"));
-    await expect(getProducts()).rejects.toThrow("Something went wrong. Please try again.");
+    await expect(getProducts()).rejects.toThrow("Network error");
   });
 });

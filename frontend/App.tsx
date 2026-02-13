@@ -10,11 +10,18 @@ import { useTheme } from "./src/theme/themeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ENV } from "./src/config/environment";
 import RootNavigator from "./src/navigation/RootNavigator";
+import { analytics } from "./src/services/analytics.service";
 import { AuthProvider } from "./src/context/AuthContext";
 import { CartProvider } from "./src/context/CartContext";
 import { FavoritesProvider } from "./src/context/FavoritesContext";
 import ErrorBoundary from "./src/components/error/ErrorBoundary";
 import Constants from "expo-constants";
+import { NotificationsProvider } from "./src/context/NotificationsContext";
+import { initializeStripe } from "./src/services/stripe.service";
+import { deepLinkingService } from "./src/services/deepLinking.service";
+import { usePreloadScreens } from "./src/hooks/usePreloadScreens";
+import OfflineIndicator from "./src/components/common/OfflineIndicator";
+import { offlineQueue } from "./src/services/offlineQueue.service";
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
   const { theme } = useTheme();
@@ -26,6 +33,9 @@ function ConnectivityBanner({ connected, base }: { connected: boolean; base: str
 
 export default function App() {
   const [connected, setConnected] = React.useState(true);
+  const navigationRef = React.useRef<any>(null);
+  const routeNameRef = React.useRef<string | undefined>();
+  usePreloadScreens();
   React.useEffect(() => {
     (async () => {
       await AsyncStorage.setItem("apiBaseUrl", ENV.apiBaseUrl);
@@ -54,23 +64,82 @@ export default function App() {
       }
     } catch {}
   }, []);
+  React.useEffect(() => {
+    initializeStripe().catch(() => {});
+    offlineQueue.initialize().catch(() => {});
+  }, []);
+  React.useEffect(() => {
+    deepLinkingService.setNavigationRef(navigationRef);
+    (async () => {
+      try {
+        const url = await deepLinkingService.getInitialURL();
+        if (url) {
+          setTimeout(() => {
+            deepLinkingService.navigate(url);
+          }, 1000);
+        }
+      } catch {}
+    })();
+    const unsub = deepLinkingService.addListener((url) => {
+      deepLinkingService.navigate(url);
+    });
+    return () => unsub();
+  }, []);
+  const linking = {
+    prefixes: ["glowverse://", "https://glowverse.com/app", "https://www.glowverse.com/app"],
+    config: {
+      screens: {
+        Home: "home",
+        Shop: "products",
+        ProductDetail: "product/:productId",
+        Cart: "cart",
+        Checkout: "checkout",
+        OrderDetail: "order/:orderId",
+        OrderHistory: "orders",
+        VirtualTryOn: "try-on/:productId?",
+        AnalysisResults: "analysis/:analysisId",
+        Promotions: "promo/:code?",
+        Referral: "referral/:code?",
+        Profile: "profile",
+        Settings: "settings",
+        Notifications: "notifications/:notificationId?"
+      }
+    }
+  } as const;
   return (
     <ErrorBoundary>
       <GestureHandlerRootView style={{ flex: 1 }}>
         <SafeAreaProvider>
           <ThemeProvider>
             <AuthProvider>
-              <CartProvider>
-                <FavoritesProvider>
-                  <ErrorBoundary>
-                    <NavigationContainer>
-                      <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
-                      <RootNavigator />
-                      <StatusBar style="auto" />
-                    </NavigationContainer>
-                  </ErrorBoundary>
-                </FavoritesProvider>
-              </CartProvider>
+              <NotificationsProvider>
+                <CartProvider>
+                  <FavoritesProvider>
+                    <ErrorBoundary>
+                    <NavigationContainer
+                        ref={navigationRef}
+                        linking={linking as any}
+                        onReady={() => {
+                          routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
+                        }}
+                        onStateChange={async () => {
+                          const previous = routeNameRef.current;
+                          const current = navigationRef.current?.getCurrentRoute()?.name;
+                          if (current && previous !== current) {
+                            await analytics.logScreenView(current);
+                          }
+                          routeNameRef.current = current;
+                        }}
+                      >
+                        <OfflineIndicator />
+                        <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
+                        <RootNavigator />
+                        <StatusBar style="auto" />
+                      </NavigationContainer>
+                    </ErrorBoundary>
+                  </FavoritesProvider>
+                </CartProvider>
+              </NotificationsProvider>
             </AuthProvider>
           </ThemeProvider>
         </SafeAreaProvider>

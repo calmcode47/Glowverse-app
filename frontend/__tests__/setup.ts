@@ -33,14 +33,39 @@ jest.mock("expo-media-library", () => ({
   getPermissionsAsync: jest.fn(async () => ({ status: "granted" }))
 }));
 
-jest.mock("@react-navigation/native", () => {
-  const actual = jest.requireActual("@react-navigation/native");
+jest.mock("@react-navigation/native", () => ({
+  useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
+  useRoute: () => ({ params: {} })
+}));
+
+jest.mock("expo-secure-store", () => {
+  let store: Record<string, string> = {};
   return {
-    ...actual,
-    useNavigation: () => ({ navigate: jest.fn(), goBack: jest.fn() }),
-    useRoute: () => ({ params: {} })
+    __esModule: true,
+    setItemAsync: jest.fn(async (k: string, v: string) => {
+      store[k] = v;
+    }),
+    getItemAsync: jest.fn(async (k: string) => store[k] ?? null),
+    deleteItemAsync: jest.fn(async (k: string) => {
+      delete store[k];
+    })
   };
 });
+
+jest.mock("@expo/vector-icons", () => {
+  const React = require("react");
+  const { Text } = require("react-native");
+  const Icon = ({ name, size, color }: any) => React.createElement(Text, { accessibilityLabel: `icon-${name}` }, "");
+  return { MaterialCommunityIcons: Icon, Ionicons: Icon, Feather: Icon, FontAwesome: Icon };
+}, { virtual: true });
+
+jest.mock("@react-native-community/netinfo", () => ({
+  __esModule: true,
+  default: {
+    addEventListener: jest.fn(() => () => {}),
+    fetch: jest.fn(async () => ({ isConnected: true }))
+  }
+}));
 
 jest.mock("@services/api/client", () => {
   return {

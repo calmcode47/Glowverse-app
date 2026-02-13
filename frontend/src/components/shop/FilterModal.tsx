@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, Modal, TouchableOpacity, StyleSheet, TextInput } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import type { Filters } from "./FilterBar";
+import FocusTrap from "../a11y/FocusTrap";
+import { focusManagement } from "../../utils/focusManagement";
 
 type Props = {
   visible: boolean;
@@ -16,15 +18,18 @@ export default function FilterModal({ visible, value, onChange, onClose, categor
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const [draft, setDraft] = React.useState<Filters>(value);
+  const firstRef = React.useRef<View>(null);
   React.useEffect(() => setDraft(value), [value, visible]);
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
-        <View style={styles.sheet}>
+        <FocusTrap active={visible} returnFocus onEscape={onClose}>
+        <View style={styles.sheet} accessible accessibilityLabel="Filter options" accessibilityRole="dialog">
           <Text style={styles.title}>Filters</Text>
           <View style={styles.row}>
             <Text style={styles.label}>Category</Text>
             <TextInput
+              ref={firstRef}
               value={draft.category || ""}
               onChangeText={(t) => setDraft({ ...draft, category: t || undefined })}
               placeholder="e.g. makeup"
@@ -68,7 +73,7 @@ export default function FilterModal({ visible, value, onChange, onClose, categor
             />
           </View>
           <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} style={styles.secondary}>
+            <TouchableOpacity onPress={onClose} style={styles.secondary} accessibilityLabel="Cancel filters" accessibilityRole="button">
               <Text style={styles.secondaryText}>Cancel</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -77,11 +82,14 @@ export default function FilterModal({ visible, value, onChange, onClose, categor
                 onClose();
               }}
               style={styles.primary}
+              accessibilityLabel="Apply filters"
+              accessibilityRole="button"
             >
               <Text style={styles.primaryText}>Apply</Text>
             </TouchableOpacity>
           </View>
         </View>
+        </FocusTrap>
       </View>
     </Modal>
   );

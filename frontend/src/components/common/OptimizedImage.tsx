@@ -21,6 +21,19 @@ type Props = {
   decorative?: boolean;
 };
 
+function hasCloudinaryTransform(u: string): boolean {
+  try {
+    const url = new URL(u);
+    if (!url.hostname.includes("cloudinary")) return false;
+    const parts = url.pathname.split("/");
+    const idx = parts.findIndex((p) => p === "upload");
+    if (idx !== -1 && parts[idx + 1]) {
+      return parts[idx + 1].includes("c_");
+    }
+  } catch {}
+  return false;
+}
+
 export default function OptimizedImage({ uri, width, height, priority = "normal", resizeMode = "cover", placeholder, variant = "thumb", visible = true, alt, decorative }: Props) {
   const [loaded, setLoaded] = React.useState(false);
   const fade = React.useRef(new Animated.Value(0)).current;
@@ -30,7 +43,7 @@ export default function OptimizedImage({ uri, width, height, priority = "normal"
 
   if (!visible) return <View style={{ width, height, backgroundColor: "#e5e7eb", borderRadius: 12 }} />;
 
-  const hi = transform(uri, variant);
+  const hi = hasCloudinaryTransform(uri) ? uri : transform(uri, variant);
   const lo = placeholder || lowRes(uri);
 
   const a11yProps: any = decorative

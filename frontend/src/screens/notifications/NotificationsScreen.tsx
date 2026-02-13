@@ -7,6 +7,9 @@ import ProfessionalBackground from '../../components/animated/ProfessionalBackgr
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import * as NotifAPI from "../../services/api/notifications.api";
 import NotificationCard from "../../components/notifications/NotificationCard";
+import { useNotifications } from "../../context/NotificationsContext";
+import { useEffect } from "react";
+import { measureScreenLoad } from "../../utils/performanceMonitor";
 
 function groupLabel(d: Date): "Today" | "Yesterday" | "This Week" | "Older" {
   const now = new Date();
@@ -20,32 +23,25 @@ function groupLabel(d: Date): "Today" | "Yesterday" | "This Week" | "Older" {
 export default function NotificationsScreen() {
     const { theme } = useTheme();
     const navigation = useNavigation();
-    const [notifications, setNotifications] = React.useState<NotifAPI.AppNotification[]>([]);
+    const { notifications, loading, markAllAsRead, markAsRead, deleteNotification, refreshNotifications } = useNotifications();
     const [groups, setGroups] = React.useState<Record<string, NotifAPI.AppNotification[]>>({});
-    const [loading, setLoading] = React.useState(true);
+    useEffect(() => {
+      const end = measureScreenLoad("Notifications");
+      return end;
+    }, []);
 
     const load = React.useCallback(async () => {
-      setLoading(true);
-      try {
-        const list = await NotifAPI.list();
-        setNotifications(list);
-        const g: Record<string, NotifAPI.AppNotification[]> = {};
-        list.forEach(n => {
-          const label = groupLabel(new Date(n.createdAt));
-          (g[label] = g[label] || []).push(n);
-        });
-        setGroups(g);
-      } finally {
-        setLoading(false);
-      }
-    }, []);
+      const g: Record<string, NotifAPI.AppNotification[]> = {};
+      notifications.forEach(n => {
+        const label = groupLabel(new Date(n.createdAt));
+        (g[label] = g[label] || []).push(n as any);
+      });
+      setGroups(g);
+    }, [notifications]);
 
     React.useEffect(() => { load(); }, [load]);
 
-    const handleMarkAllRead = async () => {
-      setNotifications(prev => prev.map(n => ({ ...n, read: true })));
-      try { await NotifAPI.markAllRead(); } catch {}
-    };
+    const handleMarkAllRead = async () => { await markAllAsRead(); };
 
     const navigateDeepLink = (deep?: string) => {
       if (!deep) return;
@@ -65,13 +61,11 @@ export default function NotificationsScreen() {
               key={n.id}
               item={n}
               onPress={async () => {
-                setNotifications(prev => prev.map(x => x.id === n.id ? { ...x, read: true } : x));
-                try { await NotifAPI.markRead(n.id); } catch {}
+                await markAsRead(n.id)
                 navigateDeepLink(n.deepLink);
               }}
               onDelete={async () => {
-                setNotifications(prev => prev.filter(x => x.id !== n.id));
-                try { await NotifAPI.remove(n.id); } catch {}
+                await deleteNotification(n.id)
               }}
             />
           ))}

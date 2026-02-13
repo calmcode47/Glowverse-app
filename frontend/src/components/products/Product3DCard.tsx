@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import Animated, {
     useSharedValue,
     useAnimatedStyle,
@@ -12,6 +12,8 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { darkTheme } from '../../theme/darkTheme';
 import type { Product } from '../../data/products';
+import OptimizedImage from '../common/OptimizedImage';
+import { getCloudinaryUrl } from '../../utils/cloudinaryTransform';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.85;
@@ -93,7 +95,13 @@ export default function Product3DCard({ product, onPress, index = 0 }: Product3D
                         {/* Product Image */}
                         <View style={styles.imageContainer}>
                             {product.image ? (
-                                <Image source={{ uri: product.image }} style={styles.image} />
+                                <OptimizedImage
+                                  uri={getCloudinaryUrl(product.image, { width: Math.round(CARD_WIDTH), height: Math.round(CARD_WIDTH), quality: 'auto', format: 'auto' })}
+                                  width={Math.round(CARD_WIDTH)}
+                                  height={Math.round(CARD_WIDTH)}
+                                  resizeMode="contain"
+                                  priority="high"
+                                />
                             ) : (
                                 <LinearGradient
                                     colors={[categoryColor + '40', categoryColor + '20']}

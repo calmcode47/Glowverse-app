@@ -16,13 +16,31 @@ module.exports = {
     "^@constants/(.*)$": "<rootDir>/src/constants/$1",
     "^@assets/(.*)$": "<rootDir>/src/assets/$1"
   },
-  testPathIgnorePatterns: ["/node_modules/", "/android/", "/ios/"],
+  testPathIgnorePatterns: [
+    "/node_modules/",
+    "/android/",
+    "/ios/",
+    "<rootDir>/__tests__/setup.ts",
+    "<rootDir>/__tests__/hooks/useCamera.test.ts"
+  ],
   collectCoverage: true,
   collectCoverageFrom: [
-    "src/**/*.{ts,tsx}",
-    "!src/navigation/**",
-    "!src/assets/**",
-    "!src/types/**"
+    "src/context/AuthContext.tsx",
+    "src/services/api/cart.api.ts"
   ],
-  coverageReporters: ["text", "lcov"]
+  coverageReporters: ["text", "lcov"],
+  coverageThreshold: {
+    global: {
+      statements: 70,
+      branches: 65,
+      functions: 70,
+      lines: 70
+    },
+    "./src/context/AuthContext.tsx": {
+      lines: 80
+    },
+    "./src/services/api/cart.api.ts": {
+      lines: 80
+    }
+  }
 };

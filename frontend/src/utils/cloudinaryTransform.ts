@@ -33,3 +33,23 @@ export function preload(urls: string[]) {
     urls.forEach((u) => (Image as any).prefetch(u));
   }
 }
+
+type Options = {
+  width?: number;
+  height?: number;
+  quality?: string | number; // 'auto' or numeric
+  format?: string; // 'auto' | 'webp' | etc.
+  crop?: string; // e.g., 'fill'
+};
+
+export function getCloudinaryUrl(url: string, opts: Options = {}): string {
+  const parts: string[] = [];
+  const crop = opts.crop || "c_fill";
+  if (crop) parts.push(crop);
+  if (opts.width) parts.push(`w_${Math.round(opts.width)}`);
+  if (opts.height) parts.push(`h_${Math.round(opts.height)}`);
+  parts.push(`q_${opts.quality ?? "auto"}`);
+  parts.push(`f_${opts.format ?? "auto"}`);
+  const tx = parts.join(",");
+  return insertTransform(url, tx);
+}

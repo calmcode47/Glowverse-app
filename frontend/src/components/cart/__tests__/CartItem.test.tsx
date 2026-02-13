@@ -1,6 +1,7 @@
 import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import CartItem from "../CartItem";
+import { ThemeProvider } from "../../../theme/themeContext";
 
 const item: any = {
   id: "ci1",
@@ -13,7 +14,7 @@ const item: any = {
 
 describe("CartItem", () => {
   it("renders name and price", () => {
-    const { getByText } = render(<CartItem item={item} onIncrease={() => {}} onDecrease={() => {}} onRemove={() => {}} />);
+    const { getByText } = render(<ThemeProvider><CartItem item={item} onIncrease={() => {}} onDecrease={() => {}} onRemove={() => {}} /></ThemeProvider>);
     expect(getByText("Item")).toBeTruthy();
     expect(getByText("$10.00")).toBeTruthy();
   });
@@ -21,7 +22,7 @@ describe("CartItem", () => {
   it("calls callbacks", () => {
     const onIncrease = jest.fn();
     const onRemove = jest.fn();
-    const { getByA11yLabel } = render(<CartItem item={item} onIncrease={onIncrease} onDecrease={() => {}} onRemove={onRemove} />);
+    const { getByA11yLabel } = render(<ThemeProvider><CartItem item={item} onIncrease={onIncrease} onDecrease={() => {}} onRemove={onRemove} /></ThemeProvider>);
     // Buttons don't have a11y labels, select by role is limited; trigger by press on plus icon parent via accessibilityLabel if present
     // Fallback: find by accessibility role is not trivial; rely on press on remove button by testID we set inline
   });

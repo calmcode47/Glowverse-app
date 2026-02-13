@@ -14,6 +14,8 @@
         "API_BASE_URL": "http://localhost:5000/api/v1",
         "CLOUDINARY_CLOUD_NAME": "dev-cloud",
         "ENVIRONMENT": "development",
+        "STRIPE_PUBLISHABLE_KEY": "pk_test_xxx",
+        "STRIPE_MERCHANT_ID": "merchant.com.glowverse.dev",
         "PERFECT_CORP_API_KEY": "replace_me_dev",
         "ANALYTICS_ID": "dev-analytics",
         "SENTRY_DSN": ""
@@ -26,6 +28,8 @@
         "API_BASE_URL": "https://staging-api.glowverse.com/api/v1",
         "CLOUDINARY_CLOUD_NAME": "staging-cloud",
         "ENVIRONMENT": "staging",
+        "STRIPE_PUBLISHABLE_KEY": "pk_test_xxx",
+        "STRIPE_MERCHANT_ID": "merchant.com.glowverse.staging",
         "PERFECT_CORP_API_KEY": "replace_me_preview",
         "ANALYTICS_ID": "preview-analytics",
         "SENTRY_DSN": ""
@@ -37,6 +41,8 @@
         "API_BASE_URL": "https://api.glowverse.com/api/v1",
         "CLOUDINARY_CLOUD_NAME": "prod-cloud",
         "ENVIRONMENT": "production",
+        "STRIPE_PUBLISHABLE_KEY": "pk_live_xxx",
+        "STRIPE_MERCHANT_ID": "merchant.com.glowverse",
         "PERFECT_CORP_API_KEY": "replace_me_prod",
         "ANALYTICS_ID": "prod-analytics",
         "SENTRY_DSN": ""

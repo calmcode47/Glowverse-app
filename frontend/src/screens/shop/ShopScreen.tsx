@@ -13,6 +13,7 @@ import ProductCard from "../../components/shop/ProductCard";
 import ProductSkeleton from "../../components/shop/ProductSkeleton";
 import FilterBar, { Filters } from "../../components/shop/FilterBar";
 import FilterModal from "../../components/shop/FilterModal";
+import { focusManagement } from "../../utils/focusManagement";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const GAP = 12;
@@ -72,6 +73,13 @@ export default function ShopScreen() {
   React.useEffect(() => {
     load(true);
   }, [filters]);
+  React.useEffect(() => {
+    if (loading) {
+      focusManagement.announce("Loading products");
+    } else if (!loading && items.length > 0) {
+      focusManagement.announce(`${items.length} products loaded`);
+    }
+  }, [loading, items.length]);
 
   React.useEffect(() => {
     const cat = route?.params?.category as string | undefined;

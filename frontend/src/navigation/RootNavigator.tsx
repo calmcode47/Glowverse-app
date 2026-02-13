@@ -6,22 +6,14 @@ import MainTabNavigator from "./MainTabNavigator";
 import OnboardingScreen from "@screens/auth/OnboardingScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
 import RegisterScreen from "@screens/auth/RegisterScreen";
-import AnalysisResultsScreen from "@screens/results/AnalysisResultsScreen";
-import ProcessingScreen from "@screens/analysis/ProcessingScreen";
-import SettingsScreen from "@screens/profile/SettingsScreen";
 import TutorialScreen from "@screens/onboarding/TutorialScreen";
 import ProductDetailScreen from "@screens/shop/ProductDetailScreen";
 import CategoryScreen from "@screens/shop/CategoryScreen";
 import HistoryScreen from "@screens/history/HistoryScreen";
-import OrderHistoryScreen from "@screens/profile/OrderHistoryScreen";
 import AboutScreen from "@screens/profile/AboutScreen";
-import CartScreen from '../screens/shop/CartScreen';
-import SearchScreen from '../screens/search/SearchScreen';
-import NotificationsScreen from '../screens/notifications/NotificationsScreen';
-import VirtualTryOnScreen from "@screens/ar/VirtualTryOnScreen";
+import CartScreen from "../screens/shop/CartScreen";
+import SearchScreen from "../screens/search/SearchScreen";
 import TryOnHistoryScreen from "@screens/ar/TryOnHistoryScreen";
-import PromotionsScreen from "@screens/shop/PromotionsScreen";
-import ReferralScreen from "@screens/profile/ReferralScreen";
 import { ActivityIndicator } from "react-native-paper";
 import HeaderRight from "@components/navigation/HeaderRight";
 import BackButton from "@components/navigation/BackButton";
@@ -29,15 +21,26 @@ import type { RootStackParamList } from "./types";
 import { theme as appTheme } from "@constants/theme";
 import CheckoutScreen from "@screens/shop/CheckoutScreen";
 import OrderConfirmationScreen from "@screens/shop/OrderConfirmationScreen";
-import OrderDetailScreen from "@screens/profile/OrderDetailScreen";
-import SkinAnalysisScreen from "@screens/analysis/SkinAnalysisScreen";
-import AnalysisProcessingScreen from "@screens/analysis/AnalysisProcessingScreen";
-import AnalysisResultsScreen from "@screens/analysis/AnalysisResultsScreen";
-import AnalysisHistoryScreen from "@screens/analysis/AnalysisHistoryScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import AddressesScreen from "@screens/profile/AddressesScreen";
 import EditAddressScreen from "@screens/profile/EditAddressScreen";
 import { useAuth } from "@context/AuthContext";
+import React, { Suspense } from "react";
+import LazyScreenLoading from "@components/loading/LazyScreenLoading";
+import LazyLoadErrorBoundary from "@components/error/LazyLoadErrorBoundary";
+import { lazyLoad } from "@utils/lazyLoad";
+
+const OrderHistoryScreen = lazyLoad(() => import("@screens/profile/OrderHistoryScreen"));
+const OrderDetailScreen = lazyLoad(() => import("@screens/profile/OrderDetailScreen"));
+const AnalysisHistoryScreen = lazyLoad(() => import("@screens/analysis/AnalysisHistoryScreen"));
+const AnalysisResultsScreen = lazyLoad(() => import("@screens/analysis/AnalysisResultsScreen"));
+const SettingsScreen = lazyLoad(() => import("@screens/profile/SettingsScreen"));
+const NotificationsScreen = lazyLoad(() => import("@screens/notifications/NotificationsScreen"));
+const PromotionsScreen = lazyLoad(() => import("@screens/shop/PromotionsScreen"));
+const ReferralScreen = lazyLoad(() => import("@screens/profile/ReferralScreen"));
+const VirtualTryOnScreen = lazyLoad(() => import("@screens/ar/VirtualTryOnScreen"));
+const SkinAnalysisScreen = lazyLoad(() => import("@screens/analysis/SkinAnalysisScreen"));
+const AnalysisProcessingScreen = lazyLoad(() => import("@screens/analysis/AnalysisProcessingScreen"));
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -66,6 +69,8 @@ export default function RootNavigator() {
   }
 
   return (
+    <LazyLoadErrorBoundary>
+      <Suspense fallback={<LazyScreenLoading />}>
     <Stack.Navigator
       initialRouteName={!hasOnboarded ? "Onboarding" : isAuthenticated ? "MainTabs" : "Login"}
       screenOptions={{
@@ -337,5 +342,7 @@ export default function RootNavigator() {
         }}
       />
     </Stack.Navigator>
+      </Suspense>
+    </LazyLoadErrorBoundary>
   );
 }

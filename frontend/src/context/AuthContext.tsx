@@ -2,6 +2,7 @@ import React from "react";
 import * as SecureStore from "expo-secure-store";
 import * as AuthAPI from "../services/api/auth.api";
 import { client, registerAuthTokenProvider } from "../services/api/client";
+import { analytics } from "../services/analytics.service";
 
 type User = { id: string; email: string; name?: string; profile?: Record<string, unknown> };
 type RegisterData = { email: string; password: string; name?: string };
@@ -97,6 +98,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     await setTokens(res.tokens.accessToken, res.tokens.refreshToken);
     setAccessToken(res.tokens.accessToken);
     setUser(res.user);
+    try {
+      await analytics.setUserId(res.user.id);
+      await analytics.setUserProperties({
+        email: res.user.email,
+        name: res.user.name || ""
+      });
+    } catch {}
   };
 
   const register = async (data: RegisterData): Promise<void> => {

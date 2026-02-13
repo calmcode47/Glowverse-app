@@ -4,6 +4,8 @@ import * as SecureStore from "expo-secure-store";
 import { ENV } from "../../config/environment";
 import { config } from "../../constants/config";
 import { handleAPIError } from "@utils/apiHelper";
+import NetInfo from "@react-native-community/netinfo";
+import { offlineQueue } from "../offlineQueue.service";
 
 declare module "axios" {
   export interface AxiosRequestConfig {
@@ -104,12 +106,35 @@ client.interceptors.request.use(async (cfg) => {
   }
   if (cfg.retry === undefined) cfg.retry = 2;
   if (cfg.retryDelayMs === undefined) cfg.retryDelayMs = 400;
+  try {
+    const state = await NetInfo.fetch();
+    const method = (cfg.method || "get").toLowerCase();
+    if (!state.isConnected && method !== "get") {
+      const base = cfg.baseURL || client.defaults.baseURL || "";
+      const url = (cfg.url || "").startsWith("http") ? (cfg.url as string) : `${base?.replace(/\/$/, "")}${cfg.url?.startsWith("/") ? "" : "/"}${cfg.url}`;
+      await offlineQueue.addToQueue(url as string, method, cfg.data, cfg.headers as Record<string, string>);
+      const err = new Error("OFFLINE_QUEUED");
+      (err as any).__offlineQueued = true;
+      throw err;
+    }
+  } catch {
+    // ignore
+  }
   return cfg;
 });
 
 client.interceptors.response.use(
   (res: AxiosResponse) => res,
   async (error) => {
+    if (error?.message === "OFFLINE_QUEUED" || error?.__offlineQueued) {
+      return Promise.resolve({
+        data: { queued: true },
+        status: 202,
+        statusText: "Queued for sync",
+        headers: {},
+        config: error.config
+      } as AxiosResponse);
+    }
     const cfg = error.config as AxiosRequestConfig | undefined;
     const status = error?.response?.status;
     const shouldRetry =

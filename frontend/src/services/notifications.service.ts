@@ -1,50 +1,94 @@
-import AsyncStorage from "@react-native-async-storage/async-storage";
-let Notifications: any = null;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Notifications = require("expo-notifications");
-} catch {}
+import * as Notifications from "expo-notifications";
+import * as Device from "expo-device";
+import { Platform } from "react-native";
+import Constants from "expo-constants";
 
-const TOKEN_KEY = "push-token";
-const listeners: Array<() => void> = [];
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldPlaySound: true,
+    shouldSetBadge: true
+  })
+});
 
-export async function requestPermission(): Promise<boolean> {
-  if (!Notifications) return false;
-  const { status } = await Notifications.requestPermissionsAsync();
-  return status === "granted";
-}
+export class PushNotificationService {
+  private notificationListener?: Notifications.Subscription;
+  private responseListener?: Notifications.Subscription;
 
-export async function registerDeviceToken(): Promise<string | null> {
-  if (!Notifications) return null;
-  try {
-    const token = await Notifications.getExpoPushTokenAsync();
-    await AsyncStorage.setItem(TOKEN_KEY, token.data || token);
-    return token.data || token;
-  } catch {
-    return null;
+  async requestPermissions(): Promise<boolean> {
+    if (!Device.isDevice) {
+      return false;
+    }
+    const { status: existingStatus } = await Notifications.getPermissionsAsync();
+    let finalStatus = existingStatus;
+    if (existingStatus !== "granted") {
+      const { status } = await Notifications.requestPermissionsAsync();
+      finalStatus = status;
+    }
+    return finalStatus === "granted";
+  }
+
+  async registerForPushNotifications(): Promise<string | null> {
+    try {
+      const hasPermission = await this.requestPermissions();
+      if (!hasPermission) return null;
+      const token = await Notifications.getExpoPushTokenAsync({
+        projectId: (Constants as any).expoConfig?.extra?.eas?.projectId || (Constants as any).easConfig?.projectId
+      } as any);
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("default", {
+          name: "default",
+          importance: Notifications.AndroidImportance.MAX,
+          vibrationPattern: [0, 250, 250, 250],
+          lightColor: "#FF231F7C"
+        });
+        await Notifications.setNotificationChannelAsync("orders", {
+          name: "Order Updates",
+          importance: Notifications.AndroidImportance.HIGH,
+          vibrationPattern: [0, 250, 250, 250]
+        });
+        await Notifications.setNotificationChannelAsync("promotions", {
+          name: "Promotions & Offers",
+          importance: Notifications.AndroidImportance.DEFAULT
+        });
+      }
+      return token.data;
+    } catch {
+      return null;
+    }
+  }
+
+  handleNotificationReceived(callback: (notification: Notifications.Notification) => void): void {
+    this.notificationListener = Notifications.addNotificationReceivedListener(callback);
+  }
+
+  handleNotificationTapped(callback: (response: Notifications.NotificationResponse) => void): void {
+    this.responseListener = Notifications.addNotificationResponseReceivedListener(callback);
+  }
+
+  async setBadgeCount(count: number): Promise<void> {
+    await Notifications.setBadgeCountAsync(count);
+  }
+
+  async clearBadge(): Promise<void> {
+    await Notifications.setBadgeCountAsync(0);
+  }
+
+  async scheduleLocalNotification(title: string, body: string, data?: any): Promise<string> {
+    return await Notifications.scheduleNotificationAsync({
+      content: { title, body, data, sound: true },
+      trigger: null
+    });
+  }
+
+  async cancelNotification(id: string): Promise<void> {
+    await Notifications.cancelScheduledNotificationAsync(id);
+  }
+
+  cleanup(): void {
+    if (this.notificationListener) Notifications.removeNotificationSubscription(this.notificationListener);
+    if (this.responseListener) Notifications.removeNotificationSubscription(this.responseListener);
   }
 }
 
-export function addListeners() {
-  if (!Notifications) return { remove: () => {} };
-  const sub1 = Notifications.addNotificationReceivedListener(() => {
-    listeners.forEach((fn) => fn());
-  });
-  const sub2 = Notifications.addNotificationResponseReceivedListener((response: any) => {
-    listeners.forEach((fn) => fn());
-  });
-  return {
-    remove: () => {
-      sub1?.remove?.();
-      sub2?.remove?.();
-    }
-  };
-}
-
-export function onNotificationsChanged(cb: () => void) {
-  listeners.push(cb);
-  return () => {
-    const idx = listeners.indexOf(cb);
-    if (idx >= 0) listeners.splice(idx, 1);
-  };
-}
+export const notificationService = new PushNotificationService();

@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { View, Text, Image, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import Animated, {
@@ -10,6 +10,8 @@ import Animated, {
     withTiming,
 } from "react-native-reanimated";
 import { theme } from "@constants/theme";
+import OptimizedImage from "../common/OptimizedImage";
+import { getCloudinaryUrl } from "../../utils/cloudinaryTransform";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -90,7 +92,13 @@ export default function AnimatedProductCard({
                 {/* Product Image */}
                 <View style={styles.imageContainer}>
                     {product.image ? (
-                        <Image source={{ uri: product.image }} style={styles.image} resizeMode="cover" />
+                        <OptimizedImage
+                          uri={getCloudinaryUrl(product.image, { width: Math.round(width), height: Math.round(width), quality: 'auto', format: 'auto' })}
+                          width={Math.round(width)}
+                          height={Math.round(width)}
+                          resizeMode="cover"
+                          priority="normal"
+                        />
                     ) : (
                         <LinearGradient
                             colors={theme.colors.gradient.orange}

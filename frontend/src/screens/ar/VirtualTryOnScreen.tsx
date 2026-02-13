@@ -17,6 +17,7 @@ import CompareControl from "@components/ar/CompareControl";
 import CaptureButton from "@components/ar/CaptureButton";
 import * as ProductsAPI from "@services/api/products.api";
 import * as CartAPI from "@services/api/cart.api";
+import { analytics } from "@services/analytics.service";
 
 export default function VirtualTryOnScreen() {
   const theme = useTheme();
@@ -42,6 +43,7 @@ export default function VirtualTryOnScreen() {
   const [reveal, setReveal] = React.useState<number>(1); // 0..1 reveal overlay height for compare
   const backoffRef = React.useRef<number>(1000);
   const timeoutRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+  const startRef = React.useRef<number | null>(null);
 
   const categories = ["Lipstick", "Eyeshadow", "Blush", "Foundation"];
   const products = [
@@ -99,7 +101,12 @@ export default function VirtualTryOnScreen() {
       addImage({ uri: result.uri, timestamp: Date.now(), mode: "makeup" } as any);
       toastRef.current?.show({ title: "Applying makeup...", variant: "info" });
       backoffRef.current = 1000;
+      startRef.current = Date.now();
       await pollForResults(tryOnId);
+      if (startRef.current) {
+        const duration = (Date.now() - startRef.current) / 1000;
+        await analytics.logTryOnComplete(tryOnId, duration);
+      }
     } catch (error) {
       console.error("Try-on error:", error);
       setProcessing(false);
@@ -131,6 +138,7 @@ export default function VirtualTryOnScreen() {
         const p = await ProductsAPI.getProductById(pid);
         setProduct(p);
         if (p.colors?.length) setSelectedColor(p.colors[0]);
+        if (p) await analytics.logTryOnStart(p as any);
       } finally {
         setProductLoading(false);
       }

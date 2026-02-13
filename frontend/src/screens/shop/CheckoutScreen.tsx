@@ -8,9 +8,12 @@ import PaymentStep from "../../components/checkout/PaymentStep";
 import ReviewStep from "../../components/checkout/ReviewStep";
 import * as CartAPI from "../../services/api/cart.api";
 import * as OrdersAPI from "../../services/api/orders.api";
+import { createPaymentIntent } from "../../services/api/payments.api";
+import { useStripe } from "@stripe/stripe-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../../context/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { analytics } from "../../services/analytics.service";
 
 export default function CheckoutScreen() {
   const { theme } = useTheme();
@@ -25,7 +28,9 @@ export default function CheckoutScreen() {
   const [placing, setPlacing] = React.useState(false);
   const [placeError, setPlaceError] = React.useState<string | null>(null);
   const [termsAccepted, setTermsAccepted] = React.useState(false);
+  const [paymentMethodId, setPaymentMethodId] = React.useState<string | null>(null);
   const labels = ["Shipping", "Payment", "Review"];
+  const { confirmPayment, handleNextAction, confirmApplePayPayment, confirmGooglePayPayment } = useStripe();
 
   React.useEffect(() => {
     (async () => {
@@ -47,21 +52,55 @@ export default function CheckoutScreen() {
     })();
   }, []);
 
-  const next = () => setStep((s) => Math.min(3, s + 1));
-  const back = () => setStep((s) => Math.max(1, s - 1));
+  const next = () => setStep((s: number) => Math.min(3, s + 1));
+  const back = () => setStep((s: number) => Math.max(1, s - 1));
 
   const placeOrder = async () => {
     if (!cart || !shippingId || !paymentMethod) return;
     setPlacing(true);
     setPlaceError(null);
     try {
-      const items = cart.items.map((it) => ({ productId: it.productId, variantId: it.variantId, quantity: it.quantity }));
+      await analytics.logBeginCheckout(cart);
+      let paymentIntentId: string | undefined = undefined;
+      if (paymentMethod === "card") {
+        if (!paymentMethodId) throw new Error("Please provide a valid payment method");
+        const cartTotal = Math.round(cart.total * 100);
+        const intent = await createPaymentIntent({ amount: cartTotal, currency: "usd", metadata: { cartId: cart.id } });
+        const clientSecret = intent.clientSecret;
+        const res = await confirmPayment(clientSecret, { paymentMethodType: "Card", paymentMethodData: { paymentMethodId } });
+        if (res?.error) throw new Error(res.error.message || "Payment failed");
+        if (res?.paymentIntent?.status === "requires_action") {
+          const next = await handleNextAction(clientSecret);
+          if (next?.error) throw new Error(next.error.message || "Authentication failed");
+          if (next?.paymentIntent?.status !== "succeeded") throw new Error("Authentication incomplete");
+          paymentIntentId = next?.paymentIntent?.id;
+        } else {
+          paymentIntentId = res?.paymentIntent?.id;
+        }
+      } else if (paymentMethod === "applepay") {
+        const cartTotal = Math.round(cart.total * 100);
+        const intent = await createPaymentIntent({ amount: cartTotal, currency: "usd", metadata: { cartId: cart.id, platform: "applepay" } });
+        const clientSecret = intent.clientSecret;
+        const cap = await confirmApplePayPayment(clientSecret);
+        if ((cap as any)?.error) throw new Error((cap as any).error.message || "Apple Pay confirmation failed");
+        paymentIntentId = (cap as any)?.paymentIntent?.id;
+      } else if (paymentMethod === "googlepay") {
+        const cartTotal = Math.round(cart.total * 100);
+        const intent = await createPaymentIntent({ amount: cartTotal, currency: "usd", metadata: { cartId: cart.id, platform: "googlepay" } });
+        const clientSecret = intent.clientSecret;
+        const cgp = await confirmGooglePayPayment(clientSecret);
+        if ((cgp as any)?.error) throw new Error((cgp as any).error.message || "Google Pay confirmation failed");
+        paymentIntentId = (cgp as any)?.paymentIntent?.id;
+      }
+      const items = cart.items.map((it: CartAPI.CartItem) => ({ productId: it.productId, variantId: it.variantId, quantity: it.quantity }));
       const order = await OrdersAPI.createOrder({
         items,
         shippingAddressId: shippingId,
         paymentMethod,
-        promoCode: cart.promo?.code
-      });
+        promoCode: cart.promo?.code,
+        ...(paymentIntentId ? { notes: `pi:${paymentIntentId}` } : {})
+      } as any);
+      await analytics.logPurchase(order as any);
       await CartAPI.clearCart();
       setCount(0);
       navigation.navigate("OrderConfirmation", { orderId: order.id });
@@ -86,14 +125,14 @@ export default function CheckoutScreen() {
       ) : (
         <>
           {step === 1 ? <ShippingStep selectedId={shippingId} onSelect={setShippingId} /> : null}
-          {step === 2 ? <PaymentStep selected={paymentMethod as any} onSelect={setPaymentMethod as any} /> : null}
+          {step === 2 ? <PaymentStep selected={paymentMethod as any} onSelect={setPaymentMethod as any} onPaymentMethodReady={setPaymentMethodId} cartTotal={cart.total} /> : null}
           {step === 3 ? (
             <ReviewStep
               cart={cart}
               address={undefined}
               paymentMethod={paymentMethod}
               termsAccepted={termsAccepted}
-              onToggleTerms={() => setTermsAccepted((v) => !v)}
+              onToggleTerms={() => setTermsAccepted((v: boolean) => !v)}
               onPlaceOrder={placeOrder}
               placing={placing}
               error={placeError}
@@ -106,8 +145,8 @@ export default function CheckoutScreen() {
             <View style={{ flex: 1 }} />
             <TouchableOpacity
               onPress={next}
-              disabled={(step === 1 && !shippingId) || step === 3}
-              style={[styles.navPrimary, ((step === 1 && !shippingId) || step === 3) && { opacity: 0.5 }]}
+              disabled={(step === 1 && !shippingId) || (step === 2 && paymentMethod === "card" && !paymentMethodId) || step === 3}
+              style={[styles.navPrimary, ((step === 1 && !shippingId) || (step === 2 && paymentMethod === "card" && !paymentMethodId) || step === 3) && { opacity: 0.5 }]}
             >
               <Text style={styles.navPrimaryText}>{step < 3 ? "Next" : "Done"}</Text>
             </TouchableOpacity>
