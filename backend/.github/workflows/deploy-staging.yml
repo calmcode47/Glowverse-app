@@ -1,0 +1,110 @@
+name: Deploy to Staging
+
+on:
+  push:
+    branches: [staging]
+  workflow_dispatch:
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/glowverse-backend
+
+jobs:
+  deploy:
+    name: Deploy to Staging Environment
+    runs-on: ubuntu-latest
+    # environment:
+    #   name: staging  # Create this environment in GitHub repo settings first
+    #   url: https://staging-api.glowverse.com
+
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.STAGING_SSH_KEY }}
+      
+      - name: Add staging server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.STAGING_SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Pull latest Docker image
+        run: |
+          ssh ${{ secrets.STAGING_SERVER_USER }}@${{ secrets.STAGING_SERVER_HOST }} << 'EOF'
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }}
+          EOF
+      
+      - name: Run database migrations
+        run: |
+          ssh ${{ secrets.STAGING_SERVER_USER }}@${{ secrets.STAGING_SERVER_HOST }} << 'EOF'
+            docker run --rm \
+              --network glowverse-network \
+              -e DATABASE_URL="${{ secrets.STAGING_DATABASE_URL }}" \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:staging-${{ github.sha }} \
+              npx prisma migrate deploy
+          EOF
+      
+      - name: Deploy new version
+        run: |
+          ssh ${{ secrets.STAGING_SERVER_USER }}@${{ secrets.STAGING_SERVER_HOST }} << 'EOF'
+            cd /opt/glowverse/backend
+            
+            # Update docker-compose with new image
+            export IMAGE_TAG=staging-${{ github.sha }}
+            
+            # Pull and restart services
+            docker-compose pull
+            docker-compose up -d --no-deps --build backend
+            
+            # Wait for health check
+            sleep 10
+            
+            # Verify deployment
+            curl -f http://localhost:5000/health || exit 1
+          EOF
+      
+      - name: Run smoke tests
+        run: |
+          sleep 5
+          curl -f https://staging-api.glowverse.com/health || exit 1
+          curl -f https://staging-api.glowverse.com/api/v1/health || exit 1
+      
+      - name: Notify Slack - Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "✅ Staging deployment successful",
+              "attachments": [{
+                "color": "good",
+                "text": "Branch: ${{ github.ref }}\\nCommit: ${{ github.sha }}\\nAuthor: ${{ github.actor }}"
+              }]
+            }
+      
+      - name: Notify Slack - Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "❌ Staging deployment failed",
+              "attachments": [{
+                "color": "danger",
+                "text": "Branch: ${{ github.ref }}\\nCommit: ${{ github.sha }}\\nAuthor: ${{ github.actor }}"
+              }]
+            }
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          ssh ${{ secrets.STAGING_SERVER_USER }}@${{ secrets.STAGING_SERVER_HOST }} << 'EOF'
+            cd /opt/glowverse/backend
+            docker-compose up -d --no-deps backend
+          EOF

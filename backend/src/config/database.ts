@@ -6,7 +6,12 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 export const prisma =
   globalForPrisma.prisma ||
   new PrismaClient({
-    log: env.nodeEnv === "development" ? ["query", "error", "warn"] : ["error"],
+    log: [
+      { emit: 'event', level: 'query' },
+      { emit: 'stdout', level: 'info' },
+      { emit: 'stdout', level: 'warn' },
+      { emit: 'stdout', level: 'error' },
+    ],
     errorFormat: "pretty"
   });
 
@@ -19,3 +24,4 @@ process.on("beforeExit", async () => {
 });
 
 export default prisma;
+

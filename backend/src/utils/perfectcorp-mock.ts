@@ -1,72 +1,99 @@
-import { SkinAnalysisResult, VirtualTryOnResult, ProductRecommendation } from "@app-types/perfectcorp.types";
-
-export class PerfectCorpMock {
-  static mockSkinAnalysis(): SkinAnalysisResult {
-    return {
-      analysisId: `mock-analysis-${Date.now()}`,
-      skinType: "combination",
-      skinTone: "medium",
-      concerns: ["acne", "dark_spots", "fine_lines"],
-      scores: {
-        overall: 7.5,
-        hydration: 6.8,
-        texture: 7.2,
-        clarity: 8.0
-      },
-      recommendations: this.mockRecommendations()
-    };
-  }
-
-  static mockVirtualTryOn(): VirtualTryOnResult {
-    return {
-      resultImageUrl: "https://via.placeholder.com/800x800/FF6B9D/FFFFFF?text=Virtual+Try-On+Result",
-      productDetails: {
-        id: "MOCK-LIPSTICK-001",
-        name: "Ruby Red Matte Lipstick",
-        brand: "BeautyBrand",
-        color: "#C41E3A"
+/**
+ * PerfectCorp API Mock Data
+ * Simulates responses from PerfectCorp AR/AI endpoints
+ */
+export const PerfectCorpMock = {
+  // Face Detection
+  faceDetection: {
+    success: {
+      result: "success",
+      face_count: 1,
+      faces: [
+        {
+          face_id: "face_123",
+          landmarks: [[10, 10], [20, 20], [30, 30]], // Simplified landmarks
+          attributes: {
+            age: 25,
+            gender: "female",
+            emotion: "happy",
+            skin_tone: "fair"
+          }
+        }
+      ]
+    },
+    noFace: {
+      result: "success",
+      face_count: 0,
+      faces: []
+    },
+    error: {
+      error: {
+        code: "INVALID_IMAGE",
+        message: "The provided image format is not supported."
       }
-    };
-  }
+    }
+  },
 
-  static mockRecommendations(): ProductRecommendation[] {
-    return [
-      {
-        id: "PROD-001",
-        name: "Hydrating Face Serum",
-        brand: "SkinCare Pro",
-        category: "skincare",
-        price: 49.99,
-        imageUrl: "https://via.placeholder.com/300x300/4A90E2/FFFFFF?text=Serum",
-        rating: 4.5,
-        suitabilityScore: 0.92
-      },
-      {
-        id: "PROD-002",
-        name: "Vitamin C Moisturizer",
-        brand: "GlowUp",
-        category: "skincare",
-        price: 39.99,
-        imageUrl: "https://via.placeholder.com/300x300/7ED321/FFFFFF?text=Moisturizer",
-        rating: 4.7,
-        suitabilityScore: 0.88
-      },
-      {
-        id: "PROD-003",
-        name: "Matte Finish Foundation",
-        brand: "MakeupMasters",
-        category: "makeup",
-        price: 44.99,
-        imageUrl: "https://via.placeholder.com/300x300/F5A623/FFFFFF?text=Foundation",
-        rating: 4.6,
-        suitabilityScore: 0.85
+  // Makeup Try-On
+  tryOn: {
+    success: {
+      result: "success",
+      image_url: "https://api.perfectcorp.com/v1/tryon/result_abc123.jpg",
+      products_applied: [
+        {
+          sku: "LIP-RED-001",
+          type: "lipstick",
+          color: "#FF0000"
+        }
+      ]
+    },
+    invalidProduct: {
+      error: {
+        code: "INVALID_SKU",
+        message: "Product SKU not found or not mapped."
       }
-    ];
+    }
+  },
+
+  // Skin Analysis
+  skinAnalysis: {
+    success: {
+      result: "success",
+      skin_score: 85,
+      skin_age: 23,
+      concerns: {
+        spots: { score: 80, severity: "low" },
+        wrinkles: { score: 90, severity: "none" },
+        texture: { score: 75, severity: "medium" },
+        dark_circles: { score: 85, severity: "low" }
+      },
+      summary: "Your skin is in great condition!"
+    },
+    error: {
+      error: {
+        code: "ANALYSIS_FAILED",
+        message: "Could not analyze skin features. Please try another photo."
+      }
+    }
+  }
+};
+
+export class MockPerfectCorpService {
+  static async detectFace(imageUrl: string): Promise<any> {
+    if (imageUrl.includes("no-face")) return PerfectCorpMock.faceDetection.noFace;
+    if (imageUrl.includes("invalid")) throw new Error("API Error: INVALID_IMAGE");
+    return PerfectCorpMock.faceDetection.success;
   }
 
-  static async delay(ms: number = 1500): Promise<void> {
-    return new Promise((resolve) => setTimeout(resolve, ms));
+  static async tryOnMakeup(imageUrl: string, products: any[]): Promise<any> {
+    if (products.some(p => p.sku === "INVALID")) throw new Error("API Error: INVALID_SKU");
+    return PerfectCorpMock.tryOn.success;
+  }
+
+  static async analyzeSkin(imageUrl: string): Promise<any> {
+    if (imageUrl.includes("error")) throw new Error("API Error: ANALYSIS_FAILED");
+    return PerfectCorpMock.skinAnalysis.success;
   }
 }
 
-export default PerfectCorpMock;
+export default MockPerfectCorpService;

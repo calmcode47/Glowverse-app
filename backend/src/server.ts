@@ -1,14 +1,25 @@
+import dotenv from 'dotenv';
+
+// Load environment variables FIRST
+dotenv.config();
+
+// Validate environment BEFORE importing anything else
+import { validateEnv } from './config/env.validator';
+validateEnv();
+
+// Now safe to import app and config
 import app from "./app";
-import env from "@config/env";
+import { config } from './config';
 import prisma from "@config/database";
 import logger from "@utils/logger";
 
-const PORT = env.port;
+const PORT = config.server.port;
+const HOST = config.server.host;
 
-const server = app.listen(PORT, () => {
-  logger.info(`🚀 Server running on port ${PORT} in ${env.nodeEnv} mode`);
-  logger.info(`📡 API: http://localhost:${PORT}/api/${env.apiVersion}`);
-  logger.info(`🏥 Health: http://localhost:${PORT}/health`);
+const server = app.listen(PORT, HOST, () => {
+  logger.info(`🚀 Server running in ${config.server.env} mode`);
+  logger.info(`📡 API: http://${HOST}:${PORT}/api/v1`);
+  logger.info(`🏥 Health: http://${HOST}:${PORT}/health`);
 });
 
 const gracefulShutdown = async (signal: string) => {
@@ -41,3 +52,4 @@ process.on("uncaughtException", (error: Error) => {
 });
 
 export default server;
+

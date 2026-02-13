@@ -1,0 +1,173 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy (commit SHA or tag)'
+        required: true
+        type: string
+
+env:
+  REGISTRY: docker.io
+  IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/glowverse-backend
+
+jobs:
+  approval:
+    name: Production Deployment Approval
+    runs-on: ubuntu-latest
+    # environment: production-approval  # Create this environment in GitHub repo settings first
+    steps:
+      - name: Approval checkpoint
+        run: echo "Deployment approved by ${{ github.actor }}"
+  
+  backup:
+    name: Backup Production Database
+    runs-on: ubuntu-latest
+    needs: approval
+    steps:
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+      
+      - name: Add production server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Create database backup
+        run: |
+          ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+            BACKUP_FILE="/backups/glowverse-$(date +%Y%m%d-%H%M%S).sql"
+            docker exec glowverse-postgres pg_dump -U postgres glowverse > $BACKUP_FILE
+            echo "Backup created: $BACKUP_FILE"
+          EOF
+  
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    needs: backup
+    # environment:
+    #   name: production  # Create 'production' environment in GitHub repo settings first
+    #   url: https://api.glowverse.com
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up SSH
+        uses: webfactory/ssh-agent@v0.9.0
+        with:
+          ssh-private-key: ${{ secrets.PRODUCTION_SSH_KEY }}
+      
+      - name: Add production server to known hosts
+        run: |
+          mkdir -p ~/.ssh
+          ssh-keyscan -H ${{ secrets.PRODUCTION_SERVER_HOST }} >> ~/.ssh/known_hosts
+      
+      - name: Pull Docker image
+        run: |
+          ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+            docker pull ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }}
+          EOF
+      
+      - name: Run database migrations
+        run: |
+          ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+            docker run --rm \
+              --network glowverse-network \
+              -e DATABASE_URL="${{ secrets.PRODUCTION_DATABASE_URL }}" \
+              ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.event.inputs.version }} \
+              npx prisma migrate deploy
+          EOF
+      
+      - name: Deploy with zero-downtime (Blue-Green)
+        run: |
+          ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+            cd /opt/glowverse/backend
+            
+            # Update image tag
+            export IMAGE_TAG=${{ github.event.inputs.version }}
+            
+            # Scale up new version (green)
+            docker-compose up -d --no-deps --scale backend=2 backend
+            
+            # Wait for new instances to be healthy
+            sleep 30
+            
+            # Verify health
+            docker-compose exec -T backend curl -f http://localhost:5000/health || exit 1
+            
+            # Scale down old version (blue)
+            docker-compose up -d --no-deps --scale backend=1 backend
+            
+            # Final health check
+            sleep 10
+            curl -f http://localhost:5000/health || exit 1
+          EOF
+      
+      - name: Monitor error rates
+        run: |
+          sleep 60
+          # Check Sentry for error spike
+          # This would integrate with Sentry API
+          echo "Monitoring error rates for 60 seconds..."
+      
+      - name: Run production smoke tests
+        run: |
+          curl -f https://api.glowverse.com/health || exit 1
+          curl -f https://api.glowverse.com/api/v1/health || exit 1
+          # Add more critical endpoint checks
+      
+      - name: Create Sentry release
+        uses: getsentry/action-release@v1
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_ORG: ${{ secrets.SENTRY_ORG }}
+          SENTRY_PROJECT: glowverse-backend
+        with:
+          environment: production
+          version: ${{ github.event.inputs.version }}
+      
+      - name: Notify Slack - Success
+        if: success()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚀 Production deployment successful",
+              "attachments": [{
+                "color": "good",
+                "text": "Version: ${{ github.event.inputs.version }}\\nDeployed by: ${{ github.actor }}"
+              }]
+            }
+      
+      - name: Notify Slack - Failure
+        if: failure()
+        uses: slackapi/slack-github-action@v1
+        with:
+          webhook: ${{ secrets.SLACK_WEBHOOK_URL }}
+          payload: |
+            {
+              "text": "🚨 Production deployment failed - ROLLBACK REQUIRED",
+              "attachments": [{
+                "color": "danger",
+                "text": "Version: ${{ github.event.inputs.version }}\\nDeployed by: ${{ github.actor }}"
+              }]
+            }
+      
+      - name: Rollback on failure
+        if: failure()
+        run: |
+          ssh ${{ secrets.PRODUCTION_SERVER_USER }}@${{ secrets.PRODUCTION_SERVER_HOST }} << 'EOF'
+            cd /opt/glowverse/backend
+            
+            # Restore previous version
+            docker-compose up -d --no-deps backend
+            
+            # Verify rollback
+            sleep 10
+            curl -f http://localhost:5000/health || exit 1
+          EOF

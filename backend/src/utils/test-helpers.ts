@@ -261,6 +261,34 @@ export class TestHelpers {
     }
 
     /**
+     * Create test referral code
+     */
+    static async createTestReferralCode(data?: {
+        userId?: string;
+        code?: string;
+    }) {
+        // Create user if not provided
+        let userId = data?.userId;
+        if (!userId) {
+            const user = await this.createTestUser({
+                email: `referrer-${Date.now()}@example.com`
+            });
+            userId = user.id;
+        }
+
+        const referral = await prisma.referralCode.create({
+            data: {
+                userId: userId!,
+                code: data?.code || `REF${Date.now()}`,
+                usageCount: 0,
+                isActive: true
+            }
+        });
+
+        return referral;
+    }
+
+    /**
      * Wait for async operations
      */
     static async wait(ms: number): Promise<void> {
