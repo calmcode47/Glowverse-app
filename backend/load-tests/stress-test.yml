@@ -1,0 +1,40 @@
+config:
+  target: "https://staging.glowverse.app"
+  phases:
+    # Gradual ramp-up to breaking point
+    - duration: 60
+      arrivalRate: 10
+      name: "Stage 1 - Baseline"
+    
+    - duration: 60
+      arrivalRate: 50
+      name: "Stage 2 - Normal Load"
+    
+    - duration: 60
+      arrivalRate: 100
+      name: "Stage 3 - High Load"
+    
+    - duration: 60
+      arrivalRate: 200
+      name: "Stage 4 - Very High Load"
+    
+    - duration: 60
+      arrivalRate: 500
+      name: "Stage 5 - Extreme Load"
+    
+    - duration: 60
+      arrivalRate: 1000
+      name: "Stage 6 - Breaking Point"
+  
+  plugins:
+    metrics-by-endpoint: {}
+
+scenarios:
+  - name: "Mixed Traffic"
+    flow:
+      - get:
+          url: "/api/products"
+      - get:
+          url: "/api/health"
+      - get:
+          url: "/api/guides"

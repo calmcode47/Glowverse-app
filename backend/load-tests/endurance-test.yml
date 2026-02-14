@@ -1,0 +1,23 @@
+config:
+  target: "https://staging.glowverse.app"
+  phases:
+    # 2-hour sustained load
+    - duration: 7200
+      arrivalRate: 50
+      name: "Endurance Test - 2 Hours"
+  
+  plugins:
+    metrics-by-endpoint: {}
+
+scenarios:
+  - name: "Realistic User Behavior"
+    flow:
+      - get:
+          url: "/api/products"
+          think: 3
+      - get:
+          url: "/api/health"
+          think: 1
+      - get:
+          url: "/api/guides"
+          think: 5

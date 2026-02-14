@@ -179,6 +179,7 @@ model User {
   guideLikes        GuideLike[]
   guideBookmarks    GuideBookmark[]
   guideComments     GuideComment[]
+  productReviews    ProductReview[]
 
   @@map("users")
 }
@@ -386,6 +387,7 @@ model Product {
   cartItems             CartItem[]
   orderItems            OrderItem[]
   favorites             Favorite[]
+  reviews               ProductReview[]
 
   @@map("products")
   @@index([category, isActive])
@@ -394,6 +396,10 @@ model Product {
   @@index([sku])
   @@index([brand])
   @@index([createdAt])
+  @@index([price])
+  @@index([rating])
+  @@index([category, price])
+  @@index([category, rating])
 }
 
 /// Cart model - one cart per user
@@ -541,6 +547,8 @@ model Notification {
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@index([type])
+  @@index([isRead])
+  @@index([createdAt])
 }
 
 // ============================================
@@ -763,6 +771,9 @@ model Guide {
   @@index([category, isPublished])
   @@index([slug])
   @@index([tags])
+  @@index([authorId])
+  @@index([createdAt])
+  @@index([publishedAt])
 }
 
 /// GuideStep model - individual steps in multi-step guides
@@ -800,6 +811,31 @@ model GuideLike {
   @@index([userId])
 }
 
+model ProductReview {
+  id        String   @id @default(uuid())
+  productId String
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  rating    Int      // 1-5
+  title     String?
+  comment   String?  @db.Text
+  images    String   @default("[]") // JSON array of image URLs
+  
+  isVerifiedPurchase Boolean @default(false)
+  helpfulCount Int   @default(0)
+  
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  @@map("product_reviews")
+  @@index([productId])
+  @@index([userId])
+  @@index([rating])
+  @@index([createdAt])
+}
+
 /// GuideBookmark model - saved guides for users
 model GuideBookmark {
   id        String   @id @default(uuid())
@@ -812,6 +848,7 @@ model GuideBookmark {
   
   @@unique([guideId, userId])
   @@map("guide_bookmarks")
+  @@index([guideId])
   @@index([userId])
 }
 

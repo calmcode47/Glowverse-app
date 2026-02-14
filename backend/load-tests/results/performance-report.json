@@ -1,0 +1,72 @@
+{
+  "timestamp": "2026-02-14T18:39:16.436Z",
+  "environment": "http://localhost:3000",
+  "results": [
+    {
+      "name": "Health Check",
+      "url": "http://localhost:3000/api/health",
+      "requests": {
+        "total": 176762,
+        "average": 5892.94,
+        "p50": 164,
+        "p99": 212
+      },
+      "throughput": {
+        "average": 12638617.6,
+        "total": 379154490
+      },
+      "errors": 0
+    },
+    {
+      "name": "Product Listing",
+      "url": "http://localhost:3000/api/products?category=skincare",
+      "requests": {
+        "total": 341578,
+        "average": 5693.4,
+        "p50": 33,
+        "p99": 88
+      },
+      "throughput": {
+        "average": 12439415.47,
+        "total": 746347930
+      },
+      "errors": 0
+    },
+    {
+      "name": "Product Search",
+      "url": "http://localhost:3000/api/search?q=moisturizer",
+      "requests": {
+        "total": 342036,
+        "average": 5701.07,
+        "p50": 33,
+        "p99": 91
+      },
+      "throughput": {
+        "average": 12387123.2,
+        "total": 743244228
+      },
+      "errors": 0
+    },
+    {
+      "name": "Guide Listing",
+      "url": "http://localhost:3000/api/guides",
+      "requests": {
+        "total": 337350,
+        "average": 5622.95,
+        "p50": 12,
+        "p99": 39
+      },
+      "throughput": {
+        "average": 12060945.07,
+        "total": 723615750
+      },
+      "errors": 0
+    }
+  ],
+  "summary": {
+    "totalTests": 4,
+    "averageP95": null,
+    "averageP99": 107.5,
+    "totalErrors": 0
+  }
+}

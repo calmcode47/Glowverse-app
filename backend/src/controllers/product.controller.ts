@@ -25,14 +25,27 @@ export class ProductController {
                 sortBy: req.query.sortBy as any
             };
 
+            // Check if cursor pagination is requested
+            if (req.query.cursor) {
+                const result = await ProductService.getProductsCursor(
+                    req.query.cursor as string,
+                    filters.limit,
+                    filters
+                );
+                return res.status(200).json({
+                    success: true,
+                    data: result
+                });
+            }
+
             const result = await ProductService.getAllProducts(filters);
 
-            res.status(200).json({
+            return res.status(200).json({
                 success: true,
                 data: result
             });
         } catch (error) {
-            next(error);
+            return next(error);
         }
     }
 

@@ -2,7 +2,7 @@ import { Router } from "express";
 import TryOnController from "@controllers/tryon.controller";
 import { authenticate } from "@middleware/auth";
 import { uploadSingle, handleUploadError } from "@middleware/upload";
-import { perfectCorpLimiter } from "@middleware/rateLimiter";
+import { AdaptiveRateLimiter } from "@middleware/adaptive-rate-limit";
 import { validate } from "@middleware/validation";
 import { body, param, query } from "express-validator";
 
@@ -11,7 +11,7 @@ router.use(authenticate);
 
 router.post(
   "/",
-  perfectCorpLimiter,
+  AdaptiveRateLimiter.createTieredLimiter("tryon-create", 5), // 5x cost per request
   uploadSingle,
   handleUploadError,
   validate([

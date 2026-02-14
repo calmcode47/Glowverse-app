@@ -2,6 +2,8 @@ import { Request, Response } from "express";
 import prisma from "@config/database";
 import AuthService from "@services/auth.service";
 import { AppError } from "@utils/errors";
+import { DDoSProtection } from "../middleware/ddos-protection";
+import { IPReputationService } from "../services/ip-reputation.service";
 
 const AuthController = {
   async register(req: Request, res: Response) {
@@ -12,8 +14,21 @@ const AuthController = {
 
   async login(req: Request, res: Response) {
     const { email, password } = req.body as { email: string; password: string };
-    const { user, tokens } = await AuthService.login({ email, password });
-    return res.status(200).json({ user, tokens });
+    const ip = req.ip || 'unknown';
+
+    try {
+      const { user, tokens } = await AuthService.login({ email, password });
+
+      // Successful login - improve reputation and clear failed attempts
+      await IPReputationService.updateReputation(ip, 'good', 1);
+
+      return res.status(200).json({ user, tokens });
+    } catch (error) {
+      // Track failed attempt
+      await DDoSProtection.trackFailedAuth(ip);
+      await IPReputationService.updateReputation(ip, 'bad', 2);
+      throw error;
+    }
   },
 
   async refreshToken(req: Request, res: Response) {

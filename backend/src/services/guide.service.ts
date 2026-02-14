@@ -51,6 +51,28 @@ export class GuideService {
     }
 
     /**
+     * Get guides with real-time counts (Optimized N+1 fix)
+     */
+    static async getGuidesWithCounts() {
+        return await prisma.guide.findMany({
+            include: {
+                author: {
+                    select: { id: true, name: true, avatar: true },
+                },
+                _count: {
+                    select: {
+                        likes: true,
+                        bookmarks: true,
+                        comments: true,
+                    },
+                },
+            },
+            orderBy: { publishedAt: 'desc' },
+            take: 20
+        });
+    }
+
+    /**
      * Get a single guide by ID or Slug
      */
     static async getGuide(idOrSlug: string, userId?: string) {

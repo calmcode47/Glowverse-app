@@ -14,6 +14,8 @@ import fitnessRoutes from "./fitness.routes";
 import guideRoutes from "./guide.routes";
 import perfectcorpRoutes from "./perfectcorp.routes";
 import uploadRoutes from "./upload.routes";
+import rateLimitRoutes from "./admin/rate-limits.routes";
+import metricsRoutes from "./metrics.routes";
 
 /**
  * Register all application routes
@@ -62,6 +64,12 @@ export const registerRoutes = (app: Application, apiPrefix: string): void => {
     // ============================================
     app.use(`${apiPrefix}/perfectcorp`, perfectcorpRoutes);
     app.use(`${apiPrefix}/upload`, uploadRoutes);
+
+    // ============================================
+    // ADMIN & SYSTEM
+    // ============================================
+    app.use(`${apiPrefix}/admin/rate-limits`, rateLimitRoutes);
+    app.use(`${apiPrefix}/metrics`, metricsRoutes);
 
     // Deprecated path alias for upload (for backward compatibility)
     app.use("/images/upload", uploadRoutes);

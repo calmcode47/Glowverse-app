@@ -12,6 +12,10 @@ import fitnessRoutes from '@routes/fitness.routes';
 import guideRoutes from '@routes/guide.routes';
 import searchRoutes from '@routes/search.routes';
 import { registerRoutes } from "@routes/index";
+import { initDbMetrics } from "./utils/db-metrics";
+
+// Initialize DB monitoring
+initDbMetrics();
 
 const app: Application = express();
 

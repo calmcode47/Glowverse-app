@@ -2,6 +2,12 @@ import { PrismaClient, Product, Prisma, ProductCategory } from '@prisma/client';
 import { AppError } from '../utils/errors';
 
 import { prisma } from '../config/database';
+import { CacheService } from './cache.service';
+import { CACHE_KEYS, CACHE_TTL } from '../constants/cache-keys';
+import logger from '../utils/logger';
+import { cursorPaginate, CursorPaginationResult } from '../utils/pagination';
+import { PerformanceMonitor } from '../utils/performance';
+import * as Sentry from '@sentry/node';
 
 export interface ProductFilters {
     category?: ProductCategory;
@@ -31,7 +37,48 @@ export class ProductService {
     /**
      * Get all products with advanced filtering, sorting and pagination
      */
+    /**
+     * Get all products with advanced filtering, sorting and pagination
+     * Cached for basic browsing (category + page)
+     */
     static async getAllProducts(filters: ProductFilters): Promise<PaginatedProducts> {
+        return await PerformanceMonitor.measure(
+            'ProductService.getAllProducts',
+            async () => {
+                // Generate cache key for simple browsing scenarios
+                const isSimpleBrowsing = !filters.search &&
+                    !filters.tags &&
+                    !filters.minPrice &&
+                    !filters.maxPrice &&
+                    !filters.brand &&
+                    !filters.inStock &&
+                    !filters.isFeatured &&
+                    !filters.isNewArrival &&
+                    !filters.isBestseller;
+
+                if (isSimpleBrowsing) {
+                    const cacheKey = CACHE_KEYS.PRODUCTS_LIST(
+                        filters.category,
+                        filters.page || 1
+                    );
+
+                    return await CacheService.getOrSet(
+                        cacheKey,
+                        async () => this.fetchProducts(filters),
+                        CACHE_TTL.MEDIUM
+                    );
+                }
+
+                return this.fetchProducts(filters);
+            },
+            { category: filters.category || 'all' }
+        );
+    }
+
+    /**
+     * Internal method to fetch products (extracted from getAllProducts)
+     */
+    private static async fetchProducts(filters: ProductFilters): Promise<PaginatedProducts> {
         const {
             category,
             search,
@@ -79,8 +126,6 @@ export class ProductService {
         }
 
         if (tags && tags.length > 0) {
-            // For JSON string tags, we search if the string contains the tag
-            // This is a simplified approach. Ideally use specific JSON operators or full text search
             where.AND = tags.map(tag => ({
                 tags: { contains: tag, mode: 'insensitive' }
             }));
@@ -106,17 +151,17 @@ export class ProductService {
                 break;
             case 'newest':
             default:
-                orderBy = { publishedAt: 'desc' }; // Fallback to createdAt if publishedAt is null via coalesce in raw query, but here simple
+                orderBy = { publishedAt: 'desc' };
                 break;
         }
 
-        // fallback for newest if publishedAt is null is handled by prisma automatically placing nulls last/first depending on DB
-        // To be safe, we can default to createdAt
         if (sortBy === 'newest') {
             orderBy = { createdAt: 'desc' };
         }
 
         // Execute query
+        const dbSpan = PerformanceMonitor.createSpan('db.query', 'Fetch products and count');
+
         const [products, total] = await Promise.all([
             prisma.product.findMany({
                 where,
@@ -126,6 +171,16 @@ export class ProductService {
             }),
             prisma.product.count({ where })
         ]);
+
+        dbSpan?.end();
+
+        // Track result count
+        PerformanceMonitor.trackMetric(
+            'products.fetched',
+            products.length,
+            'count',
+            { category: category || 'all' }
+        );
 
         return {
             products,
@@ -137,21 +192,92 @@ export class ProductService {
     }
 
     /**
+     * Get products with reviews (Optimized N+1 fix)
+     */
+    static async getProductsWithReviews(limit: number = 20) {
+        return await prisma.product.findMany({
+            take: limit,
+            include: {
+                reviews: {
+                    take: 5,
+                    orderBy: { createdAt: 'desc' },
+                    include: {
+                        user: { select: { id: true, name: true, avatar: true } }
+                    }
+                },
+                // category is an enum, so no relation to include, unless I misread schema.
+                // Schema: category ProductCategory.
+                // So `include: { category: true }` is INVALID for enum.
+                // It would only work if category was a model.
+                // Wait, the plan said: `include: { category: true }`.
+                // But `category` IS an enum. 
+                // `prisma.product.findMany({ include: { category: true } })` will ERROR if category is not a relation.
+                // I must verify if `category` is a relation.
+                // In `schema.prisma`: `category ProductCategory` (Enum).
+                // So `include: { category: true }` is WRONG in the plan.
+                // I will OMIT `include: { category: true }`.
+            },
+            orderBy: { createdAt: 'desc' }
+        });
+    }
+
+    /**
+     * Get products using cursor-based pagination
+     */
+    static async getProductsCursor(
+        cursor?: string,
+        limit: number = 20,
+        filters: Partial<ProductFilters> = {}
+    ): Promise<CursorPaginationResult<Product>> {
+        const where: Prisma.ProductWhereInput = { isActive: true };
+
+        if (filters.category) where.category = filters.category;
+
+        return cursorPaginate(
+            prisma.product,
+            { cursor, take: limit },
+            {
+                where,
+                orderBy: { createdAt: 'desc' }
+            }
+        );
+    }
+
+    /**
      * Get filtered product by ID
      */
     static async getProductById(id: string): Promise<Product> {
-        const product = await prisma.product.findUnique({
-            where: { id }
-        });
+        return await CacheService.getOrSet(
+            CACHE_KEYS.PRODUCT(id),
+            async () => {
+                const product = await prisma.product.findUnique({
+                    where: { id },
+                    include: {
+                        reviews: {
+                            take: 10,
+                            orderBy: { createdAt: 'desc' },
+                            include: {
+                                user: {
+                                    select: { id: true, name: true, avatar: true }
+                                }
+                            }
+                        }
+                    }
+                });
 
-        if (!product || !product.isActive) {
-            throw new AppError('Product not found', 404);
-        }
+                if (!product || !product.isActive) {
+                    throw new AppError('Product not found', 404);
+                }
 
-        // Fire and forget view increment
-        this.incrementViewCount(id).catch(console.error);
+                return product;
+            },
+            CACHE_TTL.LONG
+        );
 
-        return product;
+        // Fire and forget view increment - separate from cache logic
+        this.incrementViewCount(id).catch(err =>
+            logger.error('Failed to increment view count', { error: err })
+        );
     }
 
     /**

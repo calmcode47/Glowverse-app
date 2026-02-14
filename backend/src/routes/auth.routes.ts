@@ -3,13 +3,18 @@ import { body } from "express-validator";
 import AuthController from "@controllers/auth.controller";
 import { validate } from "@middleware/validation";
 import { authenticate } from "@middleware/auth";
-import { authLimiter } from "@middleware/rateLimiter";
+import { AdaptiveRateLimiter } from "@middleware/adaptive-rate-limit";
+import { DDoSProtection } from "@middleware/ddos-protection";
 
 const router = Router();
 
+// Apply DDoS protection and bot detection to all auth routes
+router.use(DDoSProtection.detectSuspiciousActivity);
+router.use(DDoSProtection.detectBot);
+
 router.post(
   "/register",
-  authLimiter,
+  AdaptiveRateLimiter.createBurstLimiter(3), // 3 per minute
   validate([
     body("email").isEmail().normalizeEmail(),
     body("password").isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/),
@@ -20,12 +25,17 @@ router.post(
 
 router.post(
   "/login",
-  authLimiter,
+  AdaptiveRateLimiter.createBurstLimiter(5), // 5 per minute
   validate([body("email").isEmail().normalizeEmail(), body("password").notEmpty()]),
   AuthController.login
 );
 
-router.post("/refresh", validate([body("refreshToken").notEmpty()]), AuthController.refreshToken);
+router.post(
+  "/refresh",
+  AdaptiveRateLimiter.createBurstLimiter(10), // 10 per minute
+  validate([body("refreshToken").notEmpty()]),
+  AuthController.refreshToken
+);
 router.post("/logout", AuthController.logout);
 router.post("/logout-all", authenticate, AuthController.logoutAll);
 router.get("/me", authenticate, AuthController.getProfile);
