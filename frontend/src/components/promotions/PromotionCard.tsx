@@ -6,6 +6,7 @@ import { Button } from "react-native-paper";
 import * as Clipboard from "expo-clipboard";
 import { Share } from "react-native";
 import { deepLinkingService } from "../../services/deepLinking.service";
+import { usePromoAnalytics } from "../../hooks/analytics/usePromoAnalytics";
 
 type Props = {
   promo: Promotion;
@@ -18,12 +19,13 @@ type Props = {
 export default function PromotionCard({ promo, featured, onPress, onShop, onCopied }: Props) {
   const { theme } = useTheme();
   const styles = createStyles(theme, featured);
+  const { trackPromoViewed, trackPromoCopied } = usePromoAnalytics();
   const exp = promo.expiresAt ? new Date(promo.expiresAt) : null;
   const ms = exp ? exp.getTime() - Date.now() : null;
   const soon = ms !== null && ms > 0 && ms < 24 * 60 * 60 * 1000;
   const countdown = ms && ms > 0 ? formatDuration(ms) : null;
   return (
-    <TouchableOpacity onPress={onPress} style={styles.card}>
+    <TouchableOpacity onPress={() => { trackPromoViewed(promo.code); onPress(); }} style={styles.card}>
       {promo.image ? <Image source={{ uri: promo.image }} style={styles.image} /> : <View style={[styles.image, { backgroundColor: theme.colors.background.secondary }]} />}
       <View style={styles.content}>
         <View style={styles.row}>
@@ -34,7 +36,7 @@ export default function PromotionCard({ promo, featured, onPress, onShop, onCopi
         {promo.code ? (
           <View style={styles.codeRow}>
             <Text style={styles.code}>{promo.code}</Text>
-            <TouchableOpacity onPress={async () => { try { await Clipboard.setStringAsync(promo.code!); onCopied?.(); } catch { onCopied?.(); } }}><Text style={styles.copy}>Copy Code</Text></TouchableOpacity>
+            <TouchableOpacity onPress={async () => { try { await Clipboard.setStringAsync(promo.code!); trackPromoCopied(promo.code!); onCopied?.(); } catch { onCopied?.(); } }}><Text style={styles.copy}>Copy Code</Text></TouchableOpacity>
           </View>
         ) : null}
         <View style={styles.footer}>

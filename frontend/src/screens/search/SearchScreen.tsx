@@ -12,6 +12,7 @@ import RecentSearches from "../../components/search/RecentSearches";
 import PopularSearches from "../../components/search/PopularSearches";
 import FilterModal from "../../components/shop/FilterModal";
 import { analytics } from "../../services/analytics.service";
+import { imagePreloader } from "../../services/imagePreloader.service";
 
 export default function SearchScreen() {
   const { theme } = useTheme();
@@ -114,6 +115,11 @@ export default function SearchScreen() {
             keyExtractor={(item) => item.id}
             numColumns={2}
             contentContainerStyle={styles.resultsList}
+            removeClippedSubviews
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            windowSize={5}
+            updateCellsBatchingPeriod={50}
             renderItem={({ item }) => (
               <ProductCard
                 product={item}
@@ -121,6 +127,13 @@ export default function SearchScreen() {
                 onAddedToCart={() => {}}
               />
             )}
+            onViewableItemsChanged={({ viewableItems }) => {
+              const indices = viewableItems.map(v => (typeof v.index === "number" ? v.index : -1)).filter(i => i >= 0);
+              if (indices.length > 0) {
+                imagePreloader.preloadForList(results as any, { start: Math.min(...indices), end: Math.max(...indices) }, 2);
+              }
+            }}
+            viewabilityConfig={{ minimumViewTime: 50, viewAreaCoveragePercentThreshold: 20 }}
             ListEmptyComponent={
               <View style={styles.emptyState}>
                 <Text style={{ color: theme.colors.text.secondary }}>No results found</Text>

@@ -2,6 +2,7 @@ import React from "react";
 import { render, fireEvent } from "@testing-library/react-native";
 import ProductCard from "../ProductCard";
 import { ThemeProvider } from "../../../theme/themeContext";
+import { TestIDs } from "../../../constants/testIDs";
 
 jest.mock("../../../context/CartContext", () => ({
   useCart: () => ({ count: 0, setCount: jest.fn() })
@@ -35,7 +36,7 @@ describe("ProductCard", () => {
   it("calls onPress when tapped", () => {
     const onPress = jest.fn();
     const { getByTestId } = render(<ThemeProvider><ProductCard product={product as any} onPress={onPress} /></ThemeProvider>);
-    fireEvent.press(getByTestId("product-card"));
+    fireEvent.press(getByTestId(TestIDs.PRODUCT_LIST.PRODUCT_CARD(product.id)));
     expect(onPress).toHaveBeenCalled();
   });
 

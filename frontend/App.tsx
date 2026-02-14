@@ -20,8 +20,10 @@ import { NotificationsProvider } from "./src/context/NotificationsContext";
 import { initializeStripe } from "./src/services/stripe.service";
 import { deepLinkingService } from "./src/services/deepLinking.service";
 import { usePreloadScreens } from "./src/hooks/usePreloadScreens";
-import OfflineIndicator from "./src/components/common/OfflineIndicator";
-import { offlineQueue } from "./src/services/offlineQueue.service";
+import { InteractionManager } from "react-native";
+import { memoryUsageMonitor } from "./src/utils/performance";
+import { apiHealthMonitor } from "./src/services/apiHealthMonitor";
+ 
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
   const { theme } = useTheme();
@@ -66,7 +68,19 @@ export default function App() {
   }, []);
   React.useEffect(() => {
     initializeStripe().catch(() => {});
-    offlineQueue.initialize().catch(() => {});
+  }, []);
+  React.useEffect(() => {
+    const cancel = InteractionManager.runAfterInteractions(() => {
+      try {
+        // Defer any non-critical work until after interactions
+        memoryUsageMonitor(10000);
+        apiHealthMonitor.start();
+      } catch {}
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
   }, []);
   React.useEffect(() => {
     deepLinkingService.setNavigationRef(navigationRef);
@@ -131,7 +145,6 @@ export default function App() {
                           routeNameRef.current = current;
                         }}
                       >
-                        <OfflineIndicator />
                         <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
                         <RootNavigator />
                         <StatusBar style="auto" />

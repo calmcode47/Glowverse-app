@@ -1,6 +1,6 @@
 import { client } from "./client";
-import { cacheService } from "../cache.service";
 import type { Product as UIProduct } from "../../data/products";
+import { requestDeduplicator } from "@utils/requestDeduplication";
 
 export type ProductQueryParams = {
   page?: number;
@@ -85,13 +85,12 @@ export async function getProducts(params: ProductQueryParams = {}): Promise<Prod
 }
 
 export async function getProductById(id: string): Promise<UIProduct> {
-  const cached = await cacheService.get<UIProduct>(`product_${id}`);
-  if (cached) return cached;
-  const res = await client.get(`/api/v1/products/${id}`);
-  const data = res.data.product || res.data || {};
-  const mapped = mapApiProduct(data);
-  await cacheService.set(`product_${id}`, mapped);
-  return mapped;
+  return requestDeduplicator.execute(`product:${id}`, async () => {
+    const res = await client.get(`/api/v1/products/${id}`);
+    const data = res.data.product || res.data || {};
+    const mapped = mapApiProduct(data);
+    return mapped;
+  });
 }
 
 export async function searchProducts(query: string, filters?: Omit<ProductQueryParams, "page" | "limit" | "sortBy"> & { sortBy?: ProductQueryParams["sortBy"]; page?: number; limit?: number }): Promise<ProductsResponse> {

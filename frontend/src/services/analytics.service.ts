@@ -16,6 +16,7 @@ import type { Product as UIProduct } from "../data/products";
 import type { Cart, CartItem } from "./api/cart.api";
 import type { Order } from "./api/orders.api";
 import type { Promotion } from "./api/promotions.api";
+import { AnalyticsEventName, type AnalyticsEventParams } from "./analytics/types";
 
 type Properties = Record<string, any>;
 
@@ -25,6 +26,55 @@ interface AnalyticsEvent {
 }
 
 class AnalyticsService {
+  trackEvent<K extends AnalyticsEventName>(eventName: K, params: AnalyticsEventParams[K]): void {
+    const sanitized = this.sanitizeParams(params as any);
+    try {
+      // Firebase
+      Analytics.logEvent(eventName, sanitized as any);
+      // Sentry breadcrumb
+      Sentry.addBreadcrumb?.({
+        category: "analytics",
+        message: eventName,
+        level: "info",
+        data: sanitized
+      });
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(`[Analytics] ${eventName}`, sanitized);
+      }
+    } catch (error) {
+      // eslint-disable-next-line no-console
+      console.error("Analytics error:", error);
+    }
+  }
+
+  private sanitizeParams(params: any): Record<string, any> {
+    const sanitized: Record<string, any> = {};
+    if (!params || typeof params !== "object") return sanitized;
+    for (const [key, value] of Object.entries(params)) {
+      if (value === undefined || value === null) continue;
+      if (this.isPIIField(key)) {
+        sanitized[key] = "[REDACTED]";
+        continue;
+      }
+      if (typeof value === "object" && !Array.isArray(value)) {
+        try {
+          sanitized[key] = JSON.stringify(value);
+        } catch {
+          sanitized[key] = String(value);
+        }
+      } else {
+        sanitized[key] = value;
+      }
+    }
+    return sanitized;
+  }
+
+  private isPIIField(fieldName: string): boolean {
+    const piiFields = ["email", "phone", "address", "credit_card", "password", "ssn"];
+    return piiFields.some((pii) => fieldName.toLowerCase().includes(pii));
+  }
+
   async logEvent(event: AnalyticsEvent): Promise<void> {
     try {
       await Analytics.logEvent(event.name, event.properties as any);
@@ -213,4 +263,3 @@ class AnalyticsService {
 }
 
 export const analytics = new AnalyticsService();
-

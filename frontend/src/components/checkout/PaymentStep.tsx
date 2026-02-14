@@ -4,6 +4,9 @@ import { CardField } from "@stripe/stripe-react-native";
 import { useStripePaymentService } from "../../services/stripe.service";
 import { usePlatformPayments } from "../../services/platformPayments.service";
 import { useTheme } from "../../theme/themeContext";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
+import { usePaymentAnalytics } from "../../hooks/analytics/usePaymentAnalytics";
 
 type Method = "card" | "paypal" | "applepay" | "googlepay";
 
@@ -20,6 +23,7 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
   const methods: Method[] = ["card", "paypal", ...(Platform.OS === "ios" ? ["applepay"] as Method[] : ["googlepay"] as Method[])];
   const stripe = useStripePaymentService();
   const platform = usePlatformPayments();
+  const { trackSelected, trackAdded } = usePaymentAnalytics();
   const [cardValid, setCardValid] = React.useState(false);
   const [processing, setProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
@@ -44,6 +48,7 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
       setError(res.error);
     } else if (res.paymentMethod?.id) {
       onPaymentMethodReady?.(res.paymentMethod.id);
+      trackAdded("card", res.paymentMethod.id);
     }
     setProcessing(false);
   }
@@ -54,6 +59,7 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
     const res = await platform.presentApplePay(cartTotal);
     if (res.status === "succeeded" && res.paymentMethodId) {
       onSelect("applepay");
+      trackSelected("applepay");
       onPaymentMethodReady?.(res.paymentMethodId);
     } else if (res.error) {
       setError(res.error);
@@ -67,6 +73,7 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
     const res = await platform.presentGooglePay(cartTotal);
     if (res.status === "succeeded" && res.paymentMethodId) {
       onSelect("googlepay");
+      trackSelected("googlepay");
       onPaymentMethodReady?.(res.paymentMethodId);
     } else if (res.error) {
       setError(res.error);
@@ -95,7 +102,7 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
       {methods.map((m) => (
         <TouchableOpacity
           key={m}
-          onPress={() => onSelect(m)}
+          onPress={() => { onSelect(m); trackSelected(m); }}
           style={[styles.option, selected === m && { borderColor: theme.colors.accent.emerald }]}
           accessibilityRole="button"
           accessibilityLabel={labelFor(m)}
@@ -107,7 +114,7 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
       {selected === "card" ? (
         <View style={styles.cardSection}>
           <CardField
-            testID="card-field"
+            {...useTestID(TestIDs.CHECKOUT.PAYMENT_CARD_NUMBER)}
             postalCodeEnabled
             cardStyle={{
               backgroundColor: "#FFFFFF",

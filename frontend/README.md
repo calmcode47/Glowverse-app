@@ -16,12 +16,15 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
 | Screens | ✅ 30+ | 17 categories |
 | Navigation | ✅ Done | React Navigation 7 |
 | Theming | ✅ Done | Custom design system (light/dark) |
-| API Integration | ✅ Done | Axios client with auth/refresh |
+| API Integration | ✅ Enhanced | Axios client + auth/refresh + backoff + dedupe |
 | State | ✅ Done | Context + hooks |
-| Analytics | ✅ Done | Firebase Analytics + Sentry breadcrumbs |
+| Analytics | ✅ Extended | Firebase events incl. wishlist/filters/payment/reviews |
 | Offline | ✅ Done | Request queue, optimistic cart, caching |
 | Testing | ✅ Done | Unit + Detox E2E |
 | AR Features | ✅ Done | Virtual try‑on + capture |
+| Performance | ✅ Optimized | Image preloading, FlatList tuning, lazy load |
+| Accessibility | ✅ Improved | Labels, focus mgmt, touch targets |
+| Build & Release | ✅ Configured | EAS profiles, CI for PR/production & budgets |
 
 ---
 
@@ -43,6 +46,7 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
   - Begin checkout and purchase events
   - AR start/complete and analysis start/complete
   - Share, referral, and promo events
+  - New: wishlist add/remove, filter apply/remove/sort, notification received/opened/dismissed, payment method selected/added, review started/submitted
 - Offline capabilities
   - AsyncStorage queue for non‑GET requests while offline
   - Automatic synchronization on reconnect with retry/backoff
@@ -197,6 +201,14 @@ npx eas submit --platform android
 
 > See `eas.json` for build profiles (development, preview, production).
 
+See also: [docs/EAS.md](./docs/EAS.md) for secrets, submit configuration, and CI.
+
+### Useful Scripts
+- Build (development): `npm run build:dev`
+- Build (production): `npm run build:prod`
+- Submit iOS: `npm run submit:ios`
+- Submit Android: `npm run submit:android`
+- Generate API types from OpenAPI (optional): `npm run types:api`
 ---
 
 ## 🔐 Configuration & Environment
@@ -239,6 +251,22 @@ EXPO_PUBLIC_SENTRY_DSN=https://***
   - Service: `src/services/analytics.service.ts`
   - Screen tracking via NavigationContainer
   - Instrumented screens: Product detail, Cart, Checkout, Search, Virtual Try‑On, Auth login
+- Analytics Extension (new)
+  - Event types: `src/services/analytics/types.ts`
+  - Hooks: wishlist, promos, filters, payment, reviews
+  - Components integrated: ProductCard, FavoriteButton, Cart/Checkout, Promotions, Notifications
+- Performance Optimization (new)
+  - Image preloader: [imagePreloader.service.ts](file:///Users/mayank/Glowverse-app/frontend/src/services/imagePreloader.service.ts)
+  - FlatList tuning in Shop and Search lists
+  - Lazy-loading heavy screens in RootNavigator
+  - CI bundle-size budget: [.github/workflows/performance.yml](file:///Users/mayank/Glowverse-app/.github/workflows/performance.yml)
+- Accessibility (new)
+  - Alt text on product images, descriptive labels on cards/buttons
+  - Focus management and error announcements in AddressForm
+- API Reliability (new)
+  - Client: exponential backoff retries, latency analytics, Sentry tagging
+  - Request deduplication for product detail
+  - Health monitor: [apiHealthMonitor.ts](file:///Users/mayank/Glowverse-app/frontend/src/services/apiHealthMonitor.ts)
 - Offline Capabilities
   - Queue: `src/services/offlineQueue.service.ts` with AsyncStorage persistence and NetInfo recovery
   - API client interceptors queue non‑GET requests when offline
@@ -255,18 +283,28 @@ EXPO_PUBLIC_SENTRY_DSN=https://***
 - App Store Readiness
   - app.json finalized for name, identifiers, and permissions
   - Screenshots folder scaffolded: `app-store-assets/`
+  - Icons/splash and screenshot structure documented at repo root
 
 ---
 
 ## 🗺️ Roadmap
 
-- [ ] Complete API integration layer
-- [ ] Broader offline caching for lists and search
-- [ ] Robust conflict resolution UI for failed syncs
-- [ ] Push notifications (Expo Notifications)
-- [ ] More performance profiling and bundle optimization
-- [ ] App Store / Play Store submission automation
+- Reliability & Types
+  - [ ] Adopt generated OpenAPI types across services
+  - [ ] Add Zod response validation on critical endpoints
+- Offline & Caching
+  - [ ] Broader offline caching for lists/search with stale‑while‑revalidate
+  - [ ] Conflict resolution UI for failed syncs
+- Analytics & QA
+  - [ ] Expand E2E to cover deep links, payments edge cases
+  - [ ] Add more analytics assertions and dashboards
+- Accessibility & Performance
+  - [ ] Complete a11y pass on remaining screens
+  - [ ] Add render-time monitors on heavy components
+- Store Readiness
+  - [ ] Finalize store assets and captions; link EAS projectId
+  - [ ] Automate App Store / Play Store submission via CI
 
 ---
 
-*Last Updated: February 14, 2026*
+*Last Updated: February 14, 2026 (post analytics, performance, a11y, API reliability updates)*

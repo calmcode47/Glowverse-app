@@ -4,14 +4,20 @@ import * as SecureStore from "expo-secure-store";
 import { ENV } from "../../config/environment";
 import { config } from "../../constants/config";
 import { handleAPIError } from "@utils/apiHelper";
-import NetInfo from "@react-native-community/netinfo";
-import { offlineQueue } from "../offlineQueue.service";
+import { analytics } from "../analytics.service";
+let Sentry: any = null;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Sentry = require("@sentry/react-native");
+} catch {}
 
 declare module "axios" {
   export interface AxiosRequestConfig {
     retry?: number;
     retryDelayMs?: number;
     _retry?: boolean;
+    __retryCount?: number;
+    __startTimeMs?: number;
   }
 }
 
@@ -86,6 +92,7 @@ async function refreshTokens(): Promise<void> {
 }
 
 client.interceptors.request.use(async (cfg) => {
+  cfg.__startTimeMs = Date.now();
   const token = await getAccessToken();
   const overrideBase = await AsyncStorage.getItem("apiBaseUrl");
   if (overrideBase) {
@@ -99,53 +106,92 @@ client.interceptors.request.use(async (cfg) => {
   }
   cfg.headers = {
     Accept: "application/json",
+    "Content-Type": (cfg.data instanceof FormData) ? "multipart/form-data" : "application/json",
+    "X-Client-Version": "1.0.0",
+    "X-Platform": (typeof navigator !== "undefined" && (navigator as any).product === "ReactNative") ? "react-native" : "web",
     ...(cfg.headers || {})
   } as any;
-  if (cfg.data instanceof FormData) {
-    (cfg.headers as any)["Content-Type"] = "multipart/form-data";
-  }
-  if (cfg.retry === undefined) cfg.retry = 2;
-  if (cfg.retryDelayMs === undefined) cfg.retryDelayMs = 400;
-  try {
-    const state = await NetInfo.fetch();
-    const method = (cfg.method || "get").toLowerCase();
-    if (!state.isConnected && method !== "get") {
-      const base = cfg.baseURL || client.defaults.baseURL || "";
-      const url = (cfg.url || "").startsWith("http") ? (cfg.url as string) : `${base?.replace(/\/$/, "")}${cfg.url?.startsWith("/") ? "" : "/"}${cfg.url}`;
-      await offlineQueue.addToQueue(url as string, method, cfg.data, cfg.headers as Record<string, string>);
-      const err = new Error("OFFLINE_QUEUED");
-      (err as any).__offlineQueued = true;
-      throw err;
-    }
-  } catch {
-    // ignore
+  // Exponential backoff defaults
+  if (cfg.__retryCount === undefined) cfg.__retryCount = 0;
+  if (cfg.retry === undefined) cfg.retry = 3;
+  if (cfg.retryDelayMs === undefined) cfg.retryDelayMs = 1000;
+  if (__DEV__) {
+    // eslint-disable-next-line no-console
+    console.log(`[API Request] ${String(cfg.method || "GET").toUpperCase()} ${cfg.baseURL || ""}${cfg.url}`, {
+      params: cfg.params,
+      data: cfg.data
+    });
   }
   return cfg;
 });
 
 client.interceptors.response.use(
-  (res: AxiosResponse) => res,
+  (res: AxiosResponse) => {
+    const cfg = res.config as AxiosRequestConfig;
+    const latency = cfg.__startTimeMs ? Date.now() - cfg.__startTimeMs : undefined;
+    if (__DEV__) {
+      // eslint-disable-next-line no-console
+      console.log(`[API Response] ${String(res.config.method || "GET").toUpperCase()} ${res.config.url}`, {
+        status: res.status,
+        latency
+      });
+    }
+    if (latency !== undefined) {
+      analytics.logEvent({
+        name: "api_latency",
+        properties: {
+          endpoint: res.config.url,
+          method: res.config.method,
+          status: res.status,
+          latency
+        }
+      });
+    }
+    return res;
+  },
   async (error) => {
-    if (error?.message === "OFFLINE_QUEUED" || error?.__offlineQueued) {
-      return Promise.resolve({
-        data: { queued: true },
-        status: 202,
-        statusText: "Queued for sync",
-        headers: {},
-        config: error.config
-      } as AxiosResponse);
+    if (!error?.response) {
+      const apiError: any = new Error("No internet connection. Please check your network.");
+      apiError.code = "NETWORK_ERROR";
+      apiError.userMessage = "Unable to connect. Check your internet connection.";
+      apiError.retryable = true;
+      apiError.status = 0;
+      analytics.logEvent({
+        name: "api_error",
+        properties: {
+          code: apiError.code,
+          status: apiError.status,
+          endpoint: error.config?.url,
+          method: error.config?.method
+        }
+      });
+      Sentry?.captureException?.(error, {
+        tags: { api_error: true, error_code: apiError.code },
+        extra: { apiError }
+      });
+      return Promise.reject(apiError);
     }
     const cfg = error.config as AxiosRequestConfig | undefined;
     const status = error?.response?.status;
+    const retryableStatuses = [408, 429, 500, 502, 503, 504];
     const shouldRetry =
       cfg &&
       (cfg.retry ?? 0) > 0 &&
-      (!status || [429, 500, 502, 503, 504].includes(status));
+      (!status || retryableStatuses.includes(status));
 
     if (shouldRetry && cfg) {
+      const attempt = cfg.__retryCount ?? 0;
+      const baseDelay = cfg.retryDelayMs ?? 1000;
+      const delay = Math.min(baseDelay * Math.pow(2, attempt), 10000);
+      const jitter = delay * 0.25 * ((Math.random() * 2) - 1);
+      const finalDelay = Math.max(0, Math.round(delay + jitter));
+      cfg.__retryCount = attempt + 1;
       cfg.retry = (cfg.retry ?? 0) - 1;
-      const delay = cfg.retryDelayMs ?? 400;
-      await new Promise((r) => setTimeout(r, delay));
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.log(`[API Retry] attempt ${cfg.__retryCount} in ${finalDelay}ms for ${cfg.url}`);
+      }
+      await new Promise((r) => setTimeout(r, finalDelay));
       return client.request(cfg);
     }
 
@@ -175,6 +221,32 @@ client.interceptors.response.use(
     }
 
     const message = handleAPIError(error);
-    return Promise.reject(new Error(message));
+    const apiError: any = new Error(message);
+    apiError.status = status;
+    apiError.code = error.response?.data?.error_code || `HTTP_${status}`;
+    apiError.userMessage = message;
+    apiError.retryable = retryableStatuses.includes(status);
+    apiError.details = error.response?.data?.details;
+    analytics.logEvent({
+      name: "api_error",
+      properties: {
+        code: apiError.code,
+        status: apiError.status,
+        endpoint: error.config?.url,
+        method: error.config?.method
+      }
+    });
+    Sentry?.captureException?.(error, {
+      tags: { api_error: true, error_code: apiError.code },
+      extra: {
+        apiError,
+        request: {
+          url: error.config?.url,
+          method: error.config?.method,
+          params: error.config?.params
+        }
+      }
+    });
+    return Promise.reject(apiError);
   }
 );

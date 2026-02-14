@@ -1,0 +1,39 @@
+name: Performance Budgets
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+
+jobs:
+  web-bundle-size:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: expo/expo-github-action@v8
+        with:
+          token: ${{ secrets.EXPO_TOKEN }}
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: npm ci
+      - name: Export Web Bundle
+        working-directory: ./frontend
+        run: npx expo export --platform web --clear
+      - name: Check bundle size
+        working-directory: ./frontend
+        run: |
+          if [ -d "dist" ]; then
+            SIZE_KB=$(du -sk dist | cut -f1)
+          elif [ -d "web-build" ]; then
+            SIZE_KB=$(du -sk web-build | cut -f1)
+          else
+            echo "No web build directory found"
+            exit 1
+          fi
+          echo "Web bundle size: ${SIZE_KB} KB"
+          MAX_KB=15000
+          if [ "$SIZE_KB" -gt "$MAX_KB" ]; then
+            echo "Bundle exceeds budget (${MAX_KB} KB)."
+            exit 1
+          fi
+          echo "Bundle within budget."

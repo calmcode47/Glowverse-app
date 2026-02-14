@@ -3,6 +3,8 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView } from "react-nati
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/themeContext";
 import FilterChip from "./FilterChip";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 export type Filters = {
   category?: string;
@@ -22,9 +24,10 @@ export default function FilterBar({ filters, onOpenFilters, onClearAll }: Props)
   const { theme } = useTheme();
   const styles = createStyles(theme);
   const hasAny = Object.values(filters).some((v) => v !== undefined && v !== null && v !== "");
+  const filterBtnTest = useTestID(TestIDs.PRODUCT_LIST.FILTER_BUTTON);
   return (
     <View style={styles.container}>
-      <TouchableOpacity onPress={onOpenFilters} style={styles.primaryBtn}>
+      <TouchableOpacity onPress={onOpenFilters} style={styles.primaryBtn} {...filterBtnTest}>
         <MaterialCommunityIcons name="filter-variant" size={18} color={theme.colors.text.inverse} />
         <Text style={styles.btnText}>Filters</Text>
       </TouchableOpacity>

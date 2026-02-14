@@ -1,7 +1,9 @@
 import React from "react";
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView } from "react-native";
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Modal, ScrollView, AccessibilityInfo } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import type { Address } from "../../services/api/orders.api";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type Draft = Omit<Address, "id" | "isDefault"> & { isDefault?: boolean };
 
@@ -25,9 +27,34 @@ export default function AddressForm({ visible, onClose, onSave }: Props) {
   });
   const [error, setError] = React.useState<string | null>(null);
   const [loading, setLoading] = React.useState(false);
+  const refs = {
+    fullName: React.useRef<TextInput>(null as any),
+    street: React.useRef<TextInput>(null as any),
+    city: React.useRef<TextInput>(null as any),
+    state: React.useRef<TextInput>(null as any),
+    postalCode: React.useRef<TextInput>(null as any),
+    country: React.useRef<TextInput>(null as any),
+    phone: React.useRef<TextInput>(null as any)
+  };
   const validate = () => {
     if (!draft.fullName || !draft.street || !draft.city || !draft.state || !draft.postalCode || !draft.country) {
+      const errors: Record<string, string> = {};
+      if (!draft.fullName) errors.fullName = "Full name is required";
+      if (!draft.street) errors.street = "Street is required";
+      if (!draft.city) errors.city = "City is required";
+      if (!draft.state) errors.state = "State is required";
+      if (!draft.postalCode) errors.postalCode = "Postal code is required";
+      if (!draft.country) errors.country = "Country is required";
+      const firstKey = Object.keys(errors)[0] as keyof typeof refs;
       setError("All fields are required");
+      try {
+        // @ts-ignore
+        refs[firstKey]?.current?.focus?.();
+      } catch {}
+      try {
+        const fieldLabel = String(firstKey).replace(/([A-Z])/g, " $1");
+        AccessibilityInfo.announceForAccessibility?.(`Error in ${fieldLabel}: ${errors[firstKey as keyof typeof errors]}`);
+      } catch {}
       return false;
     }
     return true;
@@ -38,13 +65,13 @@ export default function AddressForm({ visible, onClose, onSave }: Props) {
         <View style={styles.sheet}>
           <Text style={styles.title}>Add Address</Text>
           <ScrollView contentContainerStyle={{ gap: 10 }} showsVerticalScrollIndicator={false}>
-            <TextInput style={styles.input} placeholder="Full Name" value={draft.fullName} onChangeText={(t) => setDraft({ ...draft, fullName: t })} />
-            <TextInput style={styles.input} placeholder="Street Address" value={draft.street} onChangeText={(t) => setDraft({ ...draft, street: t })} />
-            <TextInput style={styles.input} placeholder="City" value={draft.city} onChangeText={(t) => setDraft({ ...draft, city: t })} />
-            <TextInput style={styles.input} placeholder="State/Province" value={draft.state} onChangeText={(t) => setDraft({ ...draft, state: t })} />
-            <TextInput style={styles.input} placeholder="Postal Code" value={draft.postalCode} onChangeText={(t) => setDraft({ ...draft, postalCode: t })} />
-            <TextInput style={styles.input} placeholder="Country" value={draft.country} onChangeText={(t) => setDraft({ ...draft, country: t })} />
-            <TextInput style={styles.input} placeholder="Phone Number" value={draft.phone} onChangeText={(t) => setDraft({ ...draft, phone: t })} />
+            <TextInput ref={refs.fullName} style={styles.input} placeholder="Full Name" value={draft.fullName} onChangeText={(t) => setDraft({ ...draft, fullName: t })} {...useTestID(TestIDs.CHECKOUT.SHIPPING_NAME_INPUT)} />
+            <TextInput ref={refs.street} style={styles.input} placeholder="Street Address" value={draft.street} onChangeText={(t) => setDraft({ ...draft, street: t })} />
+            <TextInput ref={refs.city} style={styles.input} placeholder="City" value={draft.city} onChangeText={(t) => setDraft({ ...draft, city: t })} />
+            <TextInput ref={refs.state} style={styles.input} placeholder="State/Province" value={draft.state} onChangeText={(t) => setDraft({ ...draft, state: t })} />
+            <TextInput ref={refs.postalCode} style={styles.input} placeholder="Postal Code" value={draft.postalCode} onChangeText={(t) => setDraft({ ...draft, postalCode: t })} />
+            <TextInput ref={refs.country} style={styles.input} placeholder="Country" value={draft.country} onChangeText={(t) => setDraft({ ...draft, country: t })} />
+            <TextInput ref={refs.phone} style={styles.input} placeholder="Phone Number" value={draft.phone} onChangeText={(t) => setDraft({ ...draft, phone: t })} />
             {error ? <Text style={{ color: theme.colors.error }}>{error}</Text> : null}
           </ScrollView>
           <View style={styles.actions}>

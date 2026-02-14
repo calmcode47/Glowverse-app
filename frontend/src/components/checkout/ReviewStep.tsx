@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TouchableOpacity, Image, ScrollView, ActivityIn
 import { useTheme } from "../../theme/themeContext";
 import type { Cart } from "../../services/api/cart.api";
 import type { Address } from "../../services/api/orders.api";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type Props = {
   cart: Cart;
@@ -78,11 +80,12 @@ export default function ReviewStep({ cart, address, paymentMethod, termsAccepted
         <View style={[styles.checkbox, termsAccepted && { backgroundColor: theme.colors.accent.emerald }]} />
         <Text style={styles.termsText}>I agree to the Terms and Privacy Policy</Text>
       </TouchableOpacity>
-      {error ? <Text style={{ color: theme.colors.error }}>{error}</Text> : null}
+      {error ? <Text style={{ color: theme.colors.error }} {...useTestID(TestIDs.COMMON.ERROR_MESSAGE)}>{error}</Text> : null}
       <TouchableOpacity
         onPress={onPlaceOrder}
         disabled={!termsAccepted || placing}
         style={[styles.placeBtn, (!termsAccepted || placing) && { opacity: 0.6 }]}
+        {...useTestID(TestIDs.CHECKOUT.PLACE_ORDER_BUTTON)}
       >
         {placing ? <ActivityIndicator color={theme.colors.text.inverse} /> : <Text style={styles.placeText}>Place Order</Text>}
       </TouchableOpacity>

@@ -14,6 +14,12 @@ import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../../context/CartContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { analytics } from "../../services/analytics.service";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
+import { stripeErrorMapper } from "../../services/payments/stripeErrorMapper";
+import { PaymentRecoveryManager } from "../../services/payments/paymentRecoveryManager";
+import { PaymentIdempotencyManager } from "../../services/payments/idempotencyManager";
+import { PaymentErrorType } from "../../services/payments/paymentErrors";
 
 export default function CheckoutScreen() {
   const { theme } = useTheme();
@@ -62,34 +68,75 @@ export default function CheckoutScreen() {
     try {
       await analytics.logBeginCheckout(cart);
       let paymentIntentId: string | undefined = undefined;
+      const amountCents = Math.round(cart.total * 100);
+      const idempotency = new PaymentIdempotencyManager();
       if (paymentMethod === "card") {
         if (!paymentMethodId) throw new Error("Please provide a valid payment method");
-        const cartTotal = Math.round(cart.total * 100);
-        const intent = await createPaymentIntent({ amount: cartTotal, currency: "usd", metadata: { cartId: cart.id } });
+        const intent = await createPaymentIntent({ amount: amountCents, currency: "usd", metadata: { cartId: cart.id } });
         const clientSecret = intent.clientSecret;
-        const res = await confirmPayment(clientSecret, { paymentMethodType: "Card", paymentMethodData: { paymentMethodId } });
-        if (res?.error) throw new Error(res.error.message || "Payment failed");
-        if (res?.paymentIntent?.status === "requires_action") {
-          const next = await handleNextAction(clientSecret);
-          if (next?.error) throw new Error(next.error.message || "Authentication failed");
-          if (next?.paymentIntent?.status !== "succeeded") throw new Error("Authentication incomplete");
-          paymentIntentId = next?.paymentIntent?.id;
-        } else {
-          paymentIntentId = res?.paymentIntent?.id;
-        }
+        const process = async () => {
+          const res = await confirmPayment(clientSecret, { paymentMethodType: "Card", paymentMethodData: { paymentMethodId } });
+          if (res?.error) {
+            const mapped = stripeErrorMapper({ code: res?.error?.code, message: res?.error?.message }, { amount: amountCents, currency: "usd", transactionId: paymentIntentId });
+            const mgr = new PaymentRecoveryManager(async () => {
+              await confirmPayment(clientSecret, { paymentMethodType: "Card", paymentMethodData: { paymentMethodId } });
+            });
+            await mgr.handlePaymentError(mapped, clientSecret, navigation);
+            throw new Error(mapped.userMessage);
+          }
+          if (res?.paymentIntent?.status === "requires_action") {
+            const next = await handleNextAction(clientSecret);
+            if ((next as any)?.error) {
+              const mapped = stripeErrorMapper({ code: "three_d_secure_authentication_failed", message: (next as any).error?.message }, { amount: amountCents, currency: "usd", transactionId: paymentIntentId });
+              const mgr = new PaymentRecoveryManager(async () => {
+                await handleNextAction(clientSecret);
+              });
+              await mgr.handlePaymentError(mapped, clientSecret, navigation);
+              throw new Error(mapped.userMessage);
+            }
+            if ((next as any)?.paymentIntent?.status !== "succeeded") {
+              const mapped = stripeErrorMapper({ code: "three_d_secure_authentication_failed", message: "Authentication incomplete" }, { amount: amountCents, currency: "usd", transactionId: paymentIntentId });
+              const mgr = new PaymentRecoveryManager(async () => {
+                await handleNextAction(clientSecret);
+              });
+              await mgr.handlePaymentError(mapped, clientSecret, navigation);
+              throw new Error(mapped.userMessage);
+            }
+            paymentIntentId = (next as any)?.paymentIntent?.id;
+          } else {
+            paymentIntentId = res?.paymentIntent?.id;
+          }
+          return true;
+        };
+        await idempotency.processPaymentSafely(`checkout:${cart.id}:${amountCents}:${shippingId}:${paymentMethodId}`, async () => {
+          await process();
+          return { status: "succeeded", paymentIntentId } as any;
+        });
       } else if (paymentMethod === "applepay") {
-        const cartTotal = Math.round(cart.total * 100);
-        const intent = await createPaymentIntent({ amount: cartTotal, currency: "usd", metadata: { cartId: cart.id, platform: "applepay" } });
+        const intent = await createPaymentIntent({ amount: amountCents, currency: "usd", metadata: { cartId: cart.id, platform: "applepay" } });
         const clientSecret = intent.clientSecret;
         const cap = await confirmApplePayPayment(clientSecret);
-        if ((cap as any)?.error) throw new Error((cap as any).error.message || "Apple Pay confirmation failed");
+        if ((cap as any)?.error) {
+          const mapped = stripeErrorMapper({ code: "processing_error", message: (cap as any).error?.message }, { amount: amountCents, currency: "usd" });
+          const mgr = new PaymentRecoveryManager(async () => {
+            await confirmApplePayPayment(clientSecret);
+          });
+          await mgr.handlePaymentError(mapped, clientSecret, navigation);
+          throw new Error(mapped.userMessage);
+        }
         paymentIntentId = (cap as any)?.paymentIntent?.id;
       } else if (paymentMethod === "googlepay") {
-        const cartTotal = Math.round(cart.total * 100);
-        const intent = await createPaymentIntent({ amount: cartTotal, currency: "usd", metadata: { cartId: cart.id, platform: "googlepay" } });
+        const intent = await createPaymentIntent({ amount: amountCents, currency: "usd", metadata: { cartId: cart.id, platform: "googlepay" } });
         const clientSecret = intent.clientSecret;
         const cgp = await confirmGooglePayPayment(clientSecret);
-        if ((cgp as any)?.error) throw new Error((cgp as any).error.message || "Google Pay confirmation failed");
+        if ((cgp as any)?.error) {
+          const mapped = stripeErrorMapper({ code: "processing_error", message: (cgp as any).error?.message }, { amount: amountCents, currency: "usd" });
+          const mgr = new PaymentRecoveryManager(async () => {
+            await confirmGooglePayPayment(clientSecret);
+          });
+          await mgr.handlePaymentError(mapped, clientSecret, navigation);
+          throw new Error(mapped.userMessage);
+        }
         paymentIntentId = (cgp as any)?.paymentIntent?.id;
       }
       const items = cart.items.map((it: CartAPI.CartItem) => ({ productId: it.productId, variantId: it.variantId, quantity: it.quantity }));
@@ -114,7 +161,7 @@ export default function CheckoutScreen() {
   };
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...useTestID(TestIDs.CHECKOUT.SCREEN)}>
       <ProfessionalBackground variant="subtle" />
       <View style={styles.header}>
         <Text style={[styles.title, { color: theme.colors.text.primary }]}>Checkout</Text>

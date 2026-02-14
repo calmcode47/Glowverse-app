@@ -52,6 +52,15 @@ jest.mock("expo-secure-store", () => {
   };
 });
 
+jest.mock("expo-firebase-analytics", () => {
+  return {
+    __esModule: true,
+    logEvent: jest.fn(async () => {}),
+    setUserId: jest.fn(async () => {}),
+    setUserProperty: jest.fn(async () => {})
+  };
+});
+
 jest.mock("@expo/vector-icons", () => {
   const React = require("react");
   const { Text } = require("react-native");
@@ -59,13 +68,7 @@ jest.mock("@expo/vector-icons", () => {
   return { MaterialCommunityIcons: Icon, Ionicons: Icon, Feather: Icon, FontAwesome: Icon };
 }, { virtual: true });
 
-jest.mock("@react-native-community/netinfo", () => ({
-  __esModule: true,
-  default: {
-    addEventListener: jest.fn(() => () => {}),
-    fetch: jest.fn(async () => ({ isConnected: true }))
-  }
-}));
+ 
 
 jest.mock("@services/api/client", () => {
   return {

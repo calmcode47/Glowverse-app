@@ -7,19 +7,13 @@ import OnboardingScreen from "@screens/auth/OnboardingScreen";
 import LoginScreen from "@screens/auth/LoginScreen";
 import RegisterScreen from "@screens/auth/RegisterScreen";
 import TutorialScreen from "@screens/onboarding/TutorialScreen";
-import ProductDetailScreen from "@screens/shop/ProductDetailScreen";
-import CategoryScreen from "@screens/shop/CategoryScreen";
 import HistoryScreen from "@screens/history/HistoryScreen";
 import AboutScreen from "@screens/profile/AboutScreen";
-import CartScreen from "../screens/shop/CartScreen";
-import SearchScreen from "../screens/search/SearchScreen";
-import TryOnHistoryScreen from "@screens/ar/TryOnHistoryScreen";
 import { ActivityIndicator } from "react-native-paper";
 import HeaderRight from "@components/navigation/HeaderRight";
 import BackButton from "@components/navigation/BackButton";
 import type { RootStackParamList } from "./types";
 import { theme as appTheme } from "@constants/theme";
-import CheckoutScreen from "@screens/shop/CheckoutScreen";
 import OrderConfirmationScreen from "@screens/shop/OrderConfirmationScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import AddressesScreen from "@screens/profile/AddressesScreen";
@@ -29,6 +23,13 @@ import React, { Suspense } from "react";
 import LazyScreenLoading from "@components/loading/LazyScreenLoading";
 import LazyLoadErrorBoundary from "@components/error/LazyLoadErrorBoundary";
 import { lazyLoad } from "@utils/lazyLoad";
+import PaymentNetworkErrorScreen from "@screens/payments/PaymentNetworkErrorScreen";
+import PaymentDeclinedScreen from "@screens/payments/PaymentDeclinedScreen";
+import PaymentProcessingErrorScreen from "@screens/payments/PaymentProcessingErrorScreen";
+import Payment3DSErrorScreen from "@screens/payments/Payment3DSErrorScreen";
+import PaymentFraudScreen from "@screens/payments/PaymentFraudScreen";
+import PaymentTimeoutScreen from "@screens/payments/PaymentTimeoutScreen";
+import PaymentGenericErrorScreen from "@screens/payments/PaymentGenericErrorScreen";
 
 const OrderHistoryScreen = lazyLoad(() => import("@screens/profile/OrderHistoryScreen"));
 const OrderDetailScreen = lazyLoad(() => import("@screens/profile/OrderDetailScreen"));
@@ -41,6 +42,12 @@ const ReferralScreen = lazyLoad(() => import("@screens/profile/ReferralScreen"))
 const VirtualTryOnScreen = lazyLoad(() => import("@screens/ar/VirtualTryOnScreen"));
 const SkinAnalysisScreen = lazyLoad(() => import("@screens/analysis/SkinAnalysisScreen"));
 const AnalysisProcessingScreen = lazyLoad(() => import("@screens/analysis/AnalysisProcessingScreen"));
+const ProductDetailScreen = lazyLoad(() => import("@screens/shop/ProductDetailScreen"));
+const CartScreen = lazyLoad(() => import("@screens/shop/CartScreen"));
+const SearchScreen = lazyLoad(() => import("@screens/search/SearchScreen"));
+const CheckoutScreen = lazyLoad(() => import("@screens/shop/CheckoutScreen"));
+const CategoryScreen = lazyLoad(() => import("@screens/shop/CategoryScreen"));
+const TryOnHistoryScreen = lazyLoad(() => import("@screens/ar/TryOnHistoryScreen"));
 
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -178,6 +185,41 @@ export default function RootNavigator() {
           cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
           gestureEnabled: true
         }}
+      />
+      <Stack.Screen
+        name="PaymentNetworkError"
+        component={PaymentNetworkErrorScreen}
+        options={{ title: "Network Error" }}
+      />
+      <Stack.Screen
+        name="PaymentDeclined"
+        component={PaymentDeclinedScreen}
+        options={{ title: "Payment Declined" }}
+      />
+      <Stack.Screen
+        name="PaymentProcessingError"
+        component={PaymentProcessingErrorScreen}
+        options={{ title: "Processing Error" }}
+      />
+      <Stack.Screen
+        name="Payment3DSError"
+        component={Payment3DSErrorScreen}
+        options={{ title: "Authentication Error" }}
+      />
+      <Stack.Screen
+        name="PaymentFraud"
+        component={PaymentFraudScreen}
+        options={{ title: "Security Check" }}
+      />
+      <Stack.Screen
+        name="PaymentTimeout"
+        component={PaymentTimeoutScreen}
+        options={{ title: "Timeout" }}
+      />
+      <Stack.Screen
+        name="PaymentGenericError"
+        component={PaymentGenericErrorScreen}
+        options={{ title: "Payment Error" }}
       />
       <Stack.Screen
         name="OrderConfirmation"

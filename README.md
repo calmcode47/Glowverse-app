@@ -18,7 +18,7 @@
 | **Database** | ✅ Complete | 100% | 25+ Prisma models, seeded data |
 | **CI/CD Pipeline** | ✅ Complete | 100% | 6 GitHub Actions workflows |
 | **Infrastructure** | ✅ Complete | 95% | Docker, security, monitoring, caching |
-| **Frontend UI** | ✅ Mostly Complete | 80% | AR try‑on, analysis, cart/checkout, offline, analytics |
+| **Frontend UI** | ✅ Mostly Complete | 92% | AR try‑on, analysis, cart/checkout, offline, analytics, EAS & store assets |
 | **Testing** | ⚠️ Partial | 40% | 14 test suites, 4 service specs |
 | **Documentation** | ✅ Complete | 98% | 21 docs, runbooks, deployment guides |
 
@@ -157,7 +157,7 @@ npm run android  # Android emulator
 | ✨ **Animations & UX** | Parallax, reveals, micro‑interactions |
 | 🎭 **Design System** | Light/dark themes, tokens, consistent UI |
 
-#### Frontend Completion (≈ 80%)
+#### Frontend Completion (≈ 92%)
 - Implemented
   - Authentication with token refresh; secure token storage
   - Product catalog, detail pages with galleries and variants
@@ -167,13 +167,16 @@ npm run android  # Android emulator
   - AI skin analysis flow and results
   - Search with filters; favorites and promotions
   - Offline request queue, optimistic cart, product caching
-  - Analytics: view_item, add/remove cart, begin_checkout, purchase, search, try‑on and analysis events; screen view auto‑tracking
-  - Detox E2E suites for shopping, profile/orders, AR/analysis
+  - Analytics (extended): wishlist add/remove, filter apply/remove/sort, notification received/opened/dismissed, promo viewed/copied/applied/failed, payment selected/added, review started/submitted; plus view_item, add/remove cart, begin_checkout, purchase, search, try‑on and analysis, screen views
+  - Performance: image preloading, FlatList tuning, lazy-loaded screens, CI bundle-size budgets
+  - Accessibility: alt text, richer labels, focus management and error announcements, touch-target enforcement
+  - Build & Release: EAS profiles (dev/preview/prod), PR checks, production auto-submit workflows, store asset scaffolding
 - Remaining
   - Broader offline caching (lists/search), conflict‑resolution UI
-  - Final store assets/screenshots; EAS project linking
-  - Expand analytics (wishlist, filters, notifications, referral)
-  - Performance/a11y passes and additional E2E selectors
+  - Finalize and upload store screenshots & icons; set `extra.eas.projectId`
+  - Adopt OpenAPI types across API layer and add Zod response validation
+  - Expand E2E to deep links and edge‑case payment error screens
+  - A11y completion pass for remaining screens and contrast audits
 
 ---
 
@@ -348,7 +351,7 @@ docker-compose -f docker-compose.production.yml up -d
 
 ### Frontend
 - [Frontend README](frontend/README.md) — Architecture, features, testing
-- [Project Report](project_report.md) — End‑to‑end features, backlog, scoring
+- [Project Report](project_report.md) — End‑to‑end features, utilities, and backlog
 
 ---
 

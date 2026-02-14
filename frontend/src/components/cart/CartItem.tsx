@@ -3,6 +3,8 @@ import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } fr
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/themeContext";
 import type { CartItem as CI } from "../../services/api/cart.api";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type Props = {
   item: CI;
@@ -18,7 +20,7 @@ export default function CartItem({ item, onIncrease, onDecrease, onRemove, updat
   const outOfStock = item.product ? item.product.inStock === false : false;
   const lowStock = (item.product as any)?.stock && (item.product as any).stock < 10;
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...useTestID(TestIDs.CART.ITEM(item.id))}>
       <View style={styles.row}>
         <View style={styles.imageWrap}>
           {item.product.image ? <Image source={{ uri: item.product.image }} style={styles.image} /> : <View style={[styles.image, styles.placeholder]} />}

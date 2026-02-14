@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, TextInput, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import type { AppliedPromo } from "../../services/api/cart.api";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type Props = {
   applied?: AppliedPromo | null;
@@ -16,6 +18,7 @@ export default function PromoCodeInput({ applied, onApply, onRemove }: Props) {
   const [code, setCode] = React.useState("");
   const [loading, setLoading] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const inputTest = useTestID(TestIDs.CART.PROMO_CODE_INPUT);
   return (
     <View style={styles.container}>
       <TouchableOpacity onPress={() => setOpen(!open)} style={styles.toggle}>
@@ -50,6 +53,7 @@ export default function PromoCodeInput({ applied, onApply, onRemove }: Props) {
               value={code}
               onChangeText={setCode}
               style={styles.input}
+              {...inputTest}
             />
             <TouchableOpacity
               onPress={async () => {

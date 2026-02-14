@@ -6,6 +6,8 @@ import { client } from "../services/api/client";
 import * as Notifications from "expo-notifications";
 import { useAuth } from "./AuthContext";
 import { deepLinkingService } from "../services/deepLinking.service";
+import { analytics } from "../services/analytics.service";
+import { AnalyticsEventName } from "../services/analytics/types";
 
 export type AppNotification = {
   id: string;
@@ -107,6 +109,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     try {
       await client.delete(`/api/v1/notifications/${encodeURIComponent(id)}`);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
+      analytics.trackEvent(AnalyticsEventName.NOTIFICATION_DISMISSED, { notification_id: id });
     } catch {}
   }
 

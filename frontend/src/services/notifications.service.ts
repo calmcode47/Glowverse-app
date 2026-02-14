@@ -2,6 +2,8 @@ import * as Notifications from "expo-notifications";
 import * as Device from "expo-device";
 import { Platform } from "react-native";
 import Constants from "expo-constants";
+import { analytics } from "./analytics.service";
+import { AnalyticsEventName } from "./analytics/types";
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -59,11 +61,30 @@ export class PushNotificationService {
   }
 
   handleNotificationReceived(callback: (notification: Notifications.Notification) => void): void {
-    this.notificationListener = Notifications.addNotificationReceivedListener(callback);
+    this.notificationListener = Notifications.addNotificationReceivedListener((n) => {
+      try {
+        const data: any = n.request?.content?.data || {};
+        analytics.trackEvent(AnalyticsEventName.NOTIFICATION_RECEIVED, {
+          notification_id: String(n.request.identifier || ""),
+          notification_type: String(data.type || "")
+        });
+      } catch {}
+      callback(n);
+    });
   }
 
   handleNotificationTapped(callback: (response: Notifications.NotificationResponse) => void): void {
-    this.responseListener = Notifications.addNotificationResponseReceivedListener(callback);
+    this.responseListener = Notifications.addNotificationResponseReceivedListener((r) => {
+      try {
+        const n = r.notification;
+        const data: any = n.request?.content?.data || {};
+        analytics.trackEvent(AnalyticsEventName.NOTIFICATION_OPENED, {
+          notification_id: String(n.request.identifier || ""),
+          notification_type: String(data.type || "")
+        });
+      } catch {}
+      callback(r);
+    });
   }
 
   async setBadgeCount(count: number): Promise<void> {

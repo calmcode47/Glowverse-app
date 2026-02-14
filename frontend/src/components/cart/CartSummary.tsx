@@ -2,6 +2,8 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import type { Cart } from "../../services/api/cart.api";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type Props = {
   cart: Cart;
@@ -13,6 +15,7 @@ type Props = {
 export default function CartSummary({ cart, outOfStock, onRemoveUnavailable, onCheckout }: Props) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
+  const checkoutTest = useTestID(TestIDs.CART.CHECKOUT_BUTTON);
   return (
     <View style={styles.container}>
       <View style={styles.row}>
@@ -43,7 +46,7 @@ export default function CartSummary({ cart, outOfStock, onRemoveUnavailable, onC
           <Text style={styles.warnText}>Remove Unavailable Items</Text>
         </TouchableOpacity>
       ) : null}
-      <TouchableOpacity disabled={outOfStock} onPress={onCheckout} style={[styles.checkout, outOfStock && { opacity: 0.5 }]}>
+      <TouchableOpacity disabled={outOfStock} onPress={onCheckout} style={[styles.checkout, outOfStock && { opacity: 0.5 }]} {...checkoutTest}>
         <Text style={styles.checkoutText}>Checkout</Text>
       </TouchableOpacity>
     </View>

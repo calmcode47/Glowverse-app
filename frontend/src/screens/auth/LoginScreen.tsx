@@ -27,6 +27,8 @@ import { StackNavigationProp } from '@react-navigation/stack';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
 import ScrollReveal from '../../components/animations/ScrollReveal';
 import Biometrics from "../../services/biometrics.service";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type LoginScreenProps = {
     navigation: StackNavigationProp<any>;
@@ -152,6 +154,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
     return (
         <KeyboardAvoidingView
             style={styles.container}
+            {...useTestID(TestIDs.LOGIN.SCREEN)}
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         >
             <ProfessionalBackground variant="subtle" />
@@ -204,6 +207,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                                     autoComplete="email"
                                     onFocus={handleEmailFocus}
                                     onBlur={handleEmailBlur}
+                                    {...useTestID(TestIDs.LOGIN.EMAIL_INPUT)}
                                 />
                             </Animated.View>
                         </View>
@@ -229,6 +233,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                                     autoComplete="password"
                                     onFocus={handlePasswordFocus}
                                     onBlur={handlePasswordBlur}
+                                    {...useTestID(TestIDs.LOGIN.PASSWORD_INPUT)}
                                 />
                                 <TouchableOpacity
                                     onPress={() => setShowPassword(!showPassword)}
@@ -244,7 +249,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                         </View>
 
                         {/* Forgot Password */}
-                        <TouchableOpacity style={styles.forgotPassword}>
+                        <TouchableOpacity style={styles.forgotPassword} {...useTestID(TestIDs.LOGIN.FORGOT_PASSWORD)}>
                             <Text style={styles.forgotPasswordText}>Forgot Password?</Text>
                         </TouchableOpacity>
                         <View style={{ flexDirection: "row", alignItems: "center", marginBottom: 12 }}>
@@ -264,6 +269,7 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                                 style={styles.loginButton}
                                 onPress={handleLogin}
                                 disabled={isLoading}
+                                {...useTestID(TestIDs.LOGIN.SUBMIT_BUTTON)}
                             >
                                 <LinearGradient
                                     colors={theme.colors.gradients.primary}

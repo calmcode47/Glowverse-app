@@ -9,6 +9,8 @@ import { useCart } from "../../context/CartContext";
 import QuickVariantModal from "./QuickVariantModal";
 import OptimizedImage from "../common/OptimizedImage";
 import { a11y, announce, haptic, touchTarget } from "../../utils/a11y";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
 
 type Props = {
   product: Product;
@@ -25,6 +27,7 @@ function ProductCard({ product, onPress, onAddedToCart }: Props) {
   const lowStock = product.inStock && product.features ? false : false;
   const outOfStock = !product.inStock;
   const styles = createStyles(theme);
+  const cardTest = useTestID(TestIDs.PRODUCT_LIST.PRODUCT_CARD(product.id));
 
   const addToCart = async () => {
     try {
@@ -45,12 +48,12 @@ function ProductCard({ product, onPress, onAddedToCart }: Props) {
       style={styles.card}
       onPress={onPress}
       disabled={adding}
-      testID="product-card"
-      {...a11y(`${product.name}, ${product.brand}`, { hint: "Opens product details", role: "button", disabled: adding })}
+      {...cardTest}
+      {...a11y(`${product.name}, ${product.rating?.toFixed?.(1) ?? product.rating} stars, $${product.price?.toFixed?.(2) ?? product.price}`, { hint: "Opens product details", role: "button", disabled: adding })}
     >
       <View style={styles.imageWrap}>
         {product.image ? (
-          <OptimizedImage uri={product.image} variant="thumb" />
+          <OptimizedImage uri={product.image} variant="thumb" alt={`${product.name} product image`} {...useTestID(TestIDs.PRODUCT_LIST.PRODUCT_CARD_IMAGE(product.id))} />
         ) : (
           <View style={[styles.image, styles.imagePlaceholder]} />
         )}
@@ -102,7 +105,7 @@ function ProductCard({ product, onPress, onAddedToCart }: Props) {
       </View>
       <View style={styles.actions}>
         <View style={styles.iconBtn}>
-          <FavoriteButton productId={product.id} size={20} />
+          <FavoriteButton productId={product.id} productName={product.name} price={product.price} size={20} source="product_list" />
         </View>
       </View>
       <QuickVariantModal

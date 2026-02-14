@@ -14,6 +14,8 @@ import ProductSkeleton from "../../components/shop/ProductSkeleton";
 import FilterBar, { Filters } from "../../components/shop/FilterBar";
 import FilterModal from "../../components/shop/FilterModal";
 import { focusManagement } from "../../utils/focusManagement";
+import { useFilterAnalytics } from "../../hooks/analytics/useFilterAnalytics";
+import { imagePreloader } from "../../services/imagePreloader.service";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 const GAP = 12;
@@ -25,6 +27,8 @@ export default function ShopScreen() {
   const { theme, isDark } = useTheme();
   const insets = useSafeAreaInsets();
   const styles = createStyles(theme, isDark, insets);
+  const { trackApply, trackRemove, trackSort } = useFilterAnalytics();
+  const prevFiltersRef = React.useRef<Filters>({});
 
   const [items, setItems] = React.useState<Product[]>([]);
   const [page, setPage] = React.useState(1);
@@ -60,6 +64,32 @@ export default function ShopScreen() {
         setItems(res.products);
       } else {
         setItems((prev) => [...prev, ...res.products]);
+      }
+      if (reset) {
+        const prev = prevFiltersRef.current || {};
+        const curr = filters;
+        const count = res.products.length;
+        if (prev.category !== curr.category) {
+          if (curr.category) trackApply("category", curr.category, count);
+          else if (prev.category) trackRemove("category", prev.category, count);
+        }
+        if (prev.brand !== curr.brand) {
+          if (curr.brand) trackApply("brand", curr.brand, count);
+          else if (prev.brand) trackRemove("brand", prev.brand, count);
+        }
+        if ((prev.minPrice ?? undefined) !== (curr.minPrice ?? undefined) || (prev.maxPrice ?? undefined) !== (curr.maxPrice ?? undefined)) {
+          const label = `${curr.minPrice ?? ""}-${curr.maxPrice ?? ""}` || "range";
+          if (curr.minPrice !== undefined || curr.maxPrice !== undefined) {
+            trackApply("price", label, count);
+          } else if (prev.minPrice !== undefined || prev.maxPrice !== undefined) {
+            const prevLabel = `${prev.minPrice ?? ""}-${prev.maxPrice ?? ""}` || "range";
+            trackRemove("price", prevLabel, count);
+          }
+        }
+        if (prev.sortBy !== curr.sortBy && curr.sortBy) {
+          trackSort(curr.sortBy, count);
+        }
+        prevFiltersRef.current = { ...filters };
       }
     } catch (e: any) {
       setError(e?.message || "Failed to load products");
@@ -116,6 +146,16 @@ export default function ShopScreen() {
     const length = CARD_WIDTH + GAP + 12;
     return { length, offset: length * index, index };
   }, []);
+
+  const onViewableItemsChanged = React.useRef(({ viewableItems }: { viewableItems: Array<{ index: number | null }> }) => {
+    if (!Array.isArray(viewableItems) || viewableItems.length === 0) return;
+    const indices = viewableItems.map((v) => (typeof v.index === "number" ? v.index : -1)).filter((i) => i >= 0);
+    if (indices.length === 0) return;
+    const start = Math.min(...indices);
+    const end = Math.max(...indices);
+    imagePreloader.preloadForList(items as any, { start, end }, 2);
+  }).current;
+  const viewabilityConfig = React.useRef({ minimumViewTime: 50, viewAreaCoveragePercentThreshold: 20 }).current;
 
   return (
     <View style={styles.container}>
@@ -182,8 +222,11 @@ export default function ShopScreen() {
           getItemLayout={getItemLayout}
           removeClippedSubviews
           maxToRenderPerBatch={10}
-          windowSize={10}
-          updateCellsBatchingPeriod={100}
+          initialNumToRender={8}
+          windowSize={5}
+          updateCellsBatchingPeriod={50}
+          onViewableItemsChanged={onViewableItemsChanged}
+          viewabilityConfig={viewabilityConfig}
           onEndReachedThreshold={0.2}
           onEndReached={loadMore}
           ListFooterComponent={

@@ -11,11 +11,13 @@ import EmptyCart from "../../components/cart/EmptyCart";
 import PromoCodeInput from "../../components/cart/PromoCodeInput";
 import { useCart } from "../../context/CartContext";
 import { analytics } from "../../services/analytics.service";
+import { usePromoAnalytics } from "../../hooks/analytics/usePromoAnalytics";
 
 export default function CartScreen() {
   const { theme } = useTheme();
   const navigation = useNavigation();
   const { setCount } = useCart();
+  const { trackPromoApplied, trackPromoFailed } = usePromoAnalytics();
   const [cart, setCart] = React.useState<CartAPI.Cart | null>(null);
   const [loading, setLoading] = React.useState(true);
   const [refreshing, setRefreshing] = React.useState(false);
@@ -130,9 +132,15 @@ export default function CartScreen() {
   };
 
   const applyPromo = async (code: string) => {
-    await CartAPI.applyPromoCode(code);
-    const c = await CartAPI.getCart();
-    setCart(c);
+    try {
+      const applied = await CartAPI.applyPromoCode(code);
+      const c = await CartAPI.getCart();
+      setCart(c);
+      trackPromoApplied(applied.code, applied.discountType === "fixed" ? "fixed" : "percentage", applied.discountValue, c.total);
+    } catch (e: any) {
+      trackPromoFailed(code, e?.message);
+      throw e;
+    }
   };
 
   const removePromo = async () => {

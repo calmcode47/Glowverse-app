@@ -13,6 +13,9 @@ import FavoriteButton from "../../components/common/FavoriteButton";
 import OptimizedImage from "../../components/common/OptimizedImage";
 import { getCloudinaryUrl } from "../../utils/cloudinaryTransform";
 import { usePageAnnouncement } from "../../hooks/usePageAnnouncement";
+import { TestIDs } from "../../constants/testIDs";
+import { useTestID } from "../../hooks/useTestID";
+import { useReviewAnalytics } from "../../hooks/analytics/useReviewAnalytics";
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
@@ -51,6 +54,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   const [showReviewForm, setShowReviewForm] = useState(false);
   const [reviewRating, setReviewRating] = useState(5);
   const [reviewText, setReviewText] = useState('');
+  const { trackStarted, trackSubmitted } = useReviewAnalytics();
 
   React.useEffect(() => {
     if (!productId || passedProduct) return;
@@ -83,7 +87,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
   usePageAnnouncement("Product Details", product ? `${product.name} product details` : "Product details");
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...useTestID(TestIDs.PRODUCT_DETAIL.SCREEN)}>
       <ProfessionalBackground variant="subtle" />
 
       <ScrollView
@@ -163,7 +167,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
           {/* Favorite & Back Buttons */}
           <View style={styles.favoriteButton}>
-            <FavoriteButton productId={product.id} size={24} />
+            <FavoriteButton productId={product.id} productName={product.name} price={product.price} size={24} source="product_detail" />
           </View>
 
           <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
@@ -176,7 +180,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           <View style={styles.header}>
             <View style={{ flex: 1 }}>
               <Text style={styles.brand}>{product.brand}</Text>
-              <Text style={styles.productName}>{product.name}</Text>
+              <Text style={styles.productName} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_NAME)}>{product.name}</Text>
             </View>
             <TouchableOpacity style={styles.shareButton}>
               <MaterialCommunityIcons name="share-variant-outline" size={22} color={theme.colors.text.primary} />
@@ -200,7 +204,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
 
           {/* Price */}
           <View style={styles.priceContainer}>
-            <Text style={styles.price}>${product.price.toFixed(2)}</Text>
+            <Text style={styles.price} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_PRICE)}>${product.price.toFixed(2)}</Text>
             {product.originalPrice && (
               <>
                 <Text style={styles.originalPrice}>${product.originalPrice.toFixed(2)}</Text>
@@ -294,7 +298,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           <View style={styles.section}>
             <TouchableOpacity
               style={styles.writeReviewButton}
-              onPress={() => setShowReviewForm(!showReviewForm)}
+              onPress={() => { const next = !showReviewForm; setShowReviewForm(next); if (next && product) trackStarted(product.id, product.name); }}
             >
               <MaterialCommunityIcons name="pencil" size={20} color={theme.colors.accent.emerald} />
               <Text style={styles.writeReviewButtonText}>Write a Review</Text>
@@ -340,6 +344,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                     setShowReviewForm(false);
                     setReviewText('');
                     setReviewRating(5);
+                    if (product) trackSubmitted(product.id, reviewRating, reviewText.length);
                   }}
                 >
                   <LinearGradient
@@ -406,6 +411,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                 }
               } catch {}
             }}
+            {...useTestID(TestIDs.PRODUCT_DETAIL.ADD_TO_CART_BUTTON)}
           >
             <LinearGradient colors={theme.colors.gradients.primary} style={styles.addToCartGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
               <MaterialCommunityIcons name="cart-plus" size={20} color={theme.colors.text.inverse} />

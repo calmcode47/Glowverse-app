@@ -16,6 +16,8 @@ import ScrollReveal from '../../components/animations/ScrollReveal';
 import ProfileHeader from '../../components/profile/ProfileHeader';
 import * as UserAPI from '../../services/api/user.api';
 import { useAuth } from '../../context/AuthContext';
+import { TestIDs } from '../../constants/testIDs';
+import { useTestID } from '../../hooks/useTestID';
 
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
@@ -41,7 +43,7 @@ export default function ProfileScreen() {
   const styles = createStyles(theme, isDark);
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} {...useTestID(TestIDs.PROFILE.SCREEN)}>
       <ProfessionalBackground variant="subtle" />
 
       <ScrollView
@@ -159,6 +161,7 @@ export default function ProfileScreen() {
               { text: 'Cancel', style: 'cancel' },
               { text: 'Logout', style: 'destructive' }
             ])}
+            {...useTestID(TestIDs.PROFILE.LOGOUT_BUTTON)}
           >
             <MaterialCommunityIcons name="logout" size={20} color={theme.colors.error} />
             <Text style={styles.logoutText}>Sign Out</Text>
