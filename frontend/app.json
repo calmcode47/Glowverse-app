@@ -12,6 +12,10 @@
     },
     "splash": {
       "image": "./assets/splash-icon.png",
+      "dark": {
+        "image": "./assets/splash-icon-dark.png",
+        "backgroundColor": "#0D1117"
+      },
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },

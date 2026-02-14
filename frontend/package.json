@@ -7,7 +7,19 @@
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
-    "types:api": "openapi-typescript https://api.glowverse.com/openapi.json -o src/types/api.ts || echo 'Skip types generation'",
+    "types:api": "openapi-typescript https://api.glowverse.com/openapi.json -o src/types/api.ts",
+    "types:generate": "openapi-typescript http://localhost:3000/api/openapi.json -o src/types/api-generated.ts",
+    "types:generate:prod": "openapi-typescript https://api.glowverse.com/api/openapi.json -o src/types/api-generated.ts",
+    "types:watch": "npm run types:generate -- --watch",
+    "types:check": "tsc --noEmit && npm run types:generate && tsc --noEmit",
+    "audit:contrast": "node scripts/auditContrast.js",
+    "assets:optimize": "node scripts/optimizeAssets.js",
+    "assets:verify": "node scripts/checkImages.js",
+    "screenshots:verify": "node scripts/checkScreenshots.js",
+    "eas:verify": "node scripts/verifyEas.js",
+    "screenshots:prepare": "node scripts/prepareScreenshotDirs.js",
+    "audit:api": "node scripts/auditApiCoverage.js",
+    "test:integration": "RUN_INTEGRATION=true jest src/services/api/__tests__/integration.test.ts -i",
     "build:dev": "eas build --profile development --platform all",
     "build:prod": "eas build --profile production --platform all",
     "submit:ios": "eas submit --platform ios --profile production",
@@ -59,7 +71,8 @@
     "react-native-screens": "~4.16.0",
     "react-native-svg": "15.12.1",
     "react-native-web": "^0.21.0",
-    "react-native-worklets": "0.5.1"
+    "react-native-worklets": "0.5.1",
+    "zod": "^3.25.76"
   },
   "devDependencies": {
     "@testing-library/jest-native": "^5.4.3",
@@ -71,6 +84,8 @@
     "detox": "^20.17.0",
     "jest": "^29.7.0",
     "jest-expo": "^54.0.17",
+    "openapi-typescript": "^7.13.0",
+    "sharp": "^0.33.5",
     "typescript": "~5.9.2"
   },
   "private": true

@@ -23,6 +23,10 @@ import { usePreloadScreens } from "./src/hooks/usePreloadScreens";
 import { InteractionManager } from "react-native";
 import { memoryUsageMonitor } from "./src/utils/performance";
 import { apiHealthMonitor } from "./src/services/apiHealthMonitor";
+import ConflictIndicator from "./src/components/conflicts/ConflictIndicator";
+import ConflictHost from "./src/components/conflicts/ConflictHost";
+import { conflictQueue } from "./src/services/conflictQueue.service";
+import { offlineQueue } from "./src/services/offlineQueue.service";
  
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
@@ -50,6 +54,14 @@ export default function App() {
       }
     })();
   }, []);
+  React.useEffect(() => {
+    conflictQueue.loadConflicts().catch(() => {});
+  }, []);
+  React.useEffect(() => {
+    if (connected) {
+      offlineQueue.processQueue().catch(() => {});
+    }
+  }, [connected]);
   React.useEffect(() => {
     try {
       const dsn = ENV.sentryDSN;
@@ -146,6 +158,8 @@ export default function App() {
                         }}
                       >
                         <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
+                        <ConflictIndicator />
+                        <ConflictHost />
                         <RootNavigator />
                         <StatusBar style="auto" />
                       </NavigationContainer>

@@ -3,6 +3,7 @@ import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from "react-na
 import { useTheme } from "../../theme/themeContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TransactionReference from "../../components/checkout/TransactionReference";
+import { useTestID } from "../../hooks/useTestID";
 
 export default function Payment3DSErrorScreen({ route }: any) {
   const { theme } = useTheme();
@@ -11,7 +12,7 @@ export default function Payment3DSErrorScreen({ route }: any) {
   const onRetry = route?.params?.onRetry || (() => {});
   const onChangeMethod = route?.params?.onChangeMethod || (() => {});
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} {...useTestID("payment3DSErrorScreen")}>
       <MaterialCommunityIcons name="shield-alert-outline" size={64} color={theme.colors.error} />
       <Text style={styles.title}>Authentication Failed</Text>
       <Text style={styles.message}>{error?.userMessage || "3D Secure authentication failed."}</Text>

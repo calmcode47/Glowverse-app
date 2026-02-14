@@ -10,11 +10,12 @@ export const lightTheme = {
             overlay: 'rgba(249, 250, 251, 0.95)',
         },
         text: {
-            primary: '#111827',
-            secondary: '#6B7280',
+            primary: '#1A1A1A',
+            secondary: '#5A5A5A',
             tertiary: '#9CA3AF',
             inverse: '#FFFFFF',
             muted: '#D1D5DB',
+            link: '#0056B3',
         },
         border: {
             light: '#E5E7EB',
@@ -39,7 +40,7 @@ export const lightTheme = {
         // Semantic colors
         success: '#10B981',
         warning: '#F59E0B',
-        error: '#EF4444',
+        error: '#C41E3A',
         info: '#3B82F6',
 
         // Category colors (refined)

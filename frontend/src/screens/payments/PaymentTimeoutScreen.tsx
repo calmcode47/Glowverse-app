@@ -3,6 +3,7 @@ import { SafeAreaView, View, Text, StyleSheet, TouchableOpacity } from "react-na
 import { useTheme } from "../../theme/themeContext";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import TransactionReference from "../../components/checkout/TransactionReference";
+import { useTestID } from "../../hooks/useTestID";
 
 export default function PaymentTimeoutScreen({ route }: any) {
   const { theme } = useTheme();
@@ -11,7 +12,7 @@ export default function PaymentTimeoutScreen({ route }: any) {
   const onRetry = route?.params?.onRetry || (() => {});
   const onContactSupport = route?.params?.onContactSupport || (() => {});
   return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={styles.container} {...useTestID("paymentTimeoutScreen")}>
       <MaterialCommunityIcons name="clock-outline" size={64} color={theme.colors.error} />
       <Text style={styles.title}>Payment Timed Out</Text>
       <Text style={styles.message}>{error?.userMessage || "Payment timed out. We will check the status and retry."}</Text>

@@ -115,7 +115,11 @@ export default function DiscoverProductCard({
                        - Overflow HIDDEN (Clips image/content)
                        - Background White
                     */}
-                    <View style={styles.contentLayer}>
+                    <View
+                      style={styles.contentLayer}
+                      accessible
+                      accessibilityLabel={`${product.name}, ${product.rating} stars, $${product.price.toFixed(2)}`}
+                    >
                         {/* Product Image with Parallax & Fallback */}
                         <View style={styles.imageContainer}>
                             {product.image && !imageError ? (
@@ -126,6 +130,7 @@ export default function DiscoverProductCard({
                                     height={Math.round(cardHeight * 0.65)}
                                     resizeMode="cover"
                                     priority="normal"
+                                    alt={`${product.name} product image`}
                                   />
                                 </Animated.View>
                             ) : (
@@ -154,6 +159,10 @@ export default function DiscoverProductCard({
                                     style={styles.favoriteButton}
                                     onPress={() => setIsFavorite(!isFavorite)}
                                     activeOpacity={0.8}
+                                    accessible
+                                    accessibilityRole="button"
+                                    accessibilityLabel={isFavorite ? "Remove from favorites" : "Add to favorites"}
+                                    accessibilityHint={isFavorite ? "Double tap to remove this product from favorites" : "Double tap to save this product to favorites"}
                                 >
                                     <MaterialCommunityIcons
                                         name={isFavorite ? 'heart' : 'heart-outline'}

@@ -113,6 +113,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           </View>
         ) : null}
         {product ? (
+        <>
         {/* Image Gallery */}
         <View style={styles.imageGallery}>
           <ScrollView
@@ -133,6 +134,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                   height={Math.round(SCREEN_WIDTH)}
                   resizeMode="contain"
                   priority={idx === 0 ? 'high' : 'normal'}
+                  alt={`${product.name} product image`}
                 />
               </View>
             )) : (
@@ -182,7 +184,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
               <Text style={styles.brand}>{product.brand}</Text>
               <Text style={styles.productName} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_NAME)}>{product.name}</Text>
             </View>
-            <TouchableOpacity style={styles.shareButton}>
+            <TouchableOpacity style={styles.shareButton} accessible accessibilityRole="button" accessibilityLabel="Share product" accessibilityHint="Double tap to share this product">
               <MaterialCommunityIcons name="share-variant-outline" size={22} color={theme.colors.text.primary} />
             </TouchableOpacity>
           </View>
@@ -360,6 +362,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
             )}
           </View>
         </View>
+        </>
         ) : null}
 
         <View style={{ height: 120 }} />
@@ -411,6 +414,10 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                 }
               } catch {}
             }}
+            accessible
+            accessibilityRole="button"
+            accessibilityLabel="Add to cart"
+            accessibilityHint="Adds this product to your shopping cart"
             {...useTestID(TestIDs.PRODUCT_DETAIL.ADD_TO_CART_BUTTON)}
           >
             <LinearGradient colors={theme.colors.gradients.primary} style={styles.addToCartGradient} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }}>
@@ -440,7 +447,7 @@ const createStyles = (theme: any, isDark: boolean) =>
     header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: theme.spacing.md },
     brand: { fontSize: theme.typography.sizes.sm, color: theme.colors.text.tertiary, fontWeight: theme.typography.weights.medium, marginBottom: 4 },
     productName: { fontSize: theme.typography.sizes['2xl'], fontWeight: theme.typography.weights.bold, color: theme.colors.text.primary, lineHeight: 32 },
-    shareButton: { width: 40, height: 40, borderRadius: theme.radius.md, backgroundColor: theme.colors.background.elevated, borderWidth: 1, borderColor: theme.colors.border.light, alignItems: 'center', justifyContent: 'center' },
+    shareButton: { width: 44, height: 44, borderRadius: theme.radius.md, backgroundColor: theme.colors.background.elevated, borderWidth: 1, borderColor: theme.colors.border.light, alignItems: 'center', justifyContent: 'center' },
     statsRow: { flexDirection: 'row', alignItems: 'center', gap: theme.spacing.md, marginBottom: theme.spacing.lg },
     ratingContainer: { flexDirection: 'row', alignItems: 'center', gap: 4 },
     ratingText: { fontSize: theme.typography.sizes.base, fontWeight: theme.typography.weights.semibold, color: theme.colors.text.primary },

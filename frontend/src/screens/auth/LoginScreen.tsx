@@ -207,6 +207,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                                     autoComplete="email"
                                     onFocus={handleEmailFocus}
                                     onBlur={handleEmailBlur}
+                                    accessible
+                                    accessibilityLabel="Email address"
+                                    accessibilityHint="Enter your email"
                                     {...useTestID(TestIDs.LOGIN.EMAIL_INPUT)}
                                 />
                             </Animated.View>
@@ -233,6 +236,9 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                                     autoComplete="password"
                                     onFocus={handlePasswordFocus}
                                     onBlur={handlePasswordBlur}
+                                    accessible
+                                    accessibilityLabel="Password"
+                                    accessibilityHint="Enter your password"
                                     {...useTestID(TestIDs.LOGIN.PASSWORD_INPUT)}
                                 />
                                 <TouchableOpacity
