@@ -187,7 +187,7 @@ export default function CartScreen() {
         <View style={{ width: 40 }} />
       </View>
       {!cart || cart.items.length === 0 ? (
-        <EmptyCart onBrowse={() => navigation.navigate("ShopTab" as any)} />
+        <EmptyCart onBrowse={() => (navigation as any).navigate("MainTabs", { screen: "ShopTab" })} />
       ) : (
         <>
           <FlatList

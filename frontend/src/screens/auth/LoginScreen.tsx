@@ -113,8 +113,14 @@ export default function LoginScreen({ navigation }: LoginScreenProps) {
                 return;
             }
             await login(email.trim(), password);
+            navigation.reset({ index: 0, routes: [{ name: "MainTabs" as any }] });
         } catch (err: any) {
-            const msg = err?.message || "Login failed. Please try again.";
+            let msg = "Login failed. Please try again.";
+            const status = err?.response?.status;
+            if (status === 401) msg = "Invalid email or password";
+            else if (status === 429) msg = "Too many attempts. Please try again later.";
+            else if (err?.response?.data?.message) msg = String(err.response.data.message);
+            else if (err?.message?.includes?.("Network Error")) msg = "Cannot reach server. Check your connection.";
             setError(msg);
         } finally {
             setIsLoading(false);

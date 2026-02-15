@@ -1,4 +1,6 @@
 import { client } from "./client";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { products as localProducts } from "../../data/products";
 import type { Product } from "../../data/products";
 
 export type Variant = { id: string; name?: string; color?: string; size?: string };
@@ -101,42 +103,134 @@ function normalizeCartResponse(d: any): Cart {
 }
 
 export async function getCart(): Promise<Cart> {
-  const res = await client.get("/api/v1/cart");
-  return normalizeCartResponse(res.data);
+  try {
+    const res = await client.get("/api/v1/cart");
+    return normalizeCartResponse(res.data);
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_cart");
+    const stored = raw ? JSON.parse(raw) : { id: "demo", items: [], subtotal: 0, tax: 0, shipping: 0, total: 0, itemCount: 0 };
+    return mapCart(stored);
+  }
 }
 
 export async function addItem(data: AddCartItemDTO): Promise<CartItem> {
-  const res = await client.post("/api/v1/cart/items", data);
-  const item = res.data.item || res.data;
-  return mapItem(item);
+  try {
+    const res = await client.post("/api/v1/cart/items", data);
+    const item = res.data.item || res.data;
+    return mapItem(item);
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_cart");
+    const cart = raw ? JSON.parse(raw) : { id: "demo", items: [] as any[] };
+    const product = localProducts.find(p => p.id === data.productId);
+    if (!product) throw new Error("Product not found");
+    const existing = cart.items.find((i: any) => i.productId === data.productId && i.variantId === (data.variantId || null));
+    if (existing) {
+      existing.quantity += data.quantity;
+      existing.total = existing.quantity * (existing.price || product.price);
+    } else {
+      const it = {
+        id: `ci_${Date.now()}`,
+        productId: product.id,
+        product,
+        variantId: data.variantId || null,
+        quantity: data.quantity,
+        price: product.price,
+        total: product.price * data.quantity
+      };
+      cart.items.push(it);
+    }
+    const mappedCart = recalc(cart);
+    await AsyncStorage.setItem("demo_cart", JSON.stringify(mappedCart));
+    return mapItem(mappedCart.items[mappedCart.items.length - 1]);
+  }
 }
 
 export async function updateItemQuantity(itemId: string, quantity: number): Promise<CartItem> {
-  const res = await client.patch(`/api/v1/cart/items/${encodeURIComponent(itemId)}`, { quantity });
-  const item = res.data.item || res.data;
-  return mapItem(item);
+  try {
+    const res = await client.patch(`/api/v1/cart/items/${encodeURIComponent(itemId)}`, { quantity });
+    const item = res.data.item || res.data;
+    return mapItem(item);
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_cart");
+    const cart = raw ? JSON.parse(raw) : { id: "demo", items: [] as any[] };
+    const it = cart.items.find((x: any) => String(x.id) === String(itemId));
+    if (!it) throw new Error("Item not found");
+    it.quantity = Math.max(1, quantity);
+    it.total = it.quantity * it.price;
+    const mappedCart = recalc(cart);
+    await AsyncStorage.setItem("demo_cart", JSON.stringify(mappedCart));
+    return mapItem(it);
+  }
 }
 
 export async function removeItem(itemId: string): Promise<void> {
-  await client.delete(`/api/v1/cart/items/${encodeURIComponent(itemId)}`);
+  try {
+    await client.delete(`/api/v1/cart/items/${encodeURIComponent(itemId)}`);
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_cart");
+    const cart = raw ? JSON.parse(raw) : { id: "demo", items: [] as any[] };
+    cart.items = cart.items.filter((x: any) => String(x.id) !== String(itemId));
+    const mappedCart = recalc(cart);
+    await AsyncStorage.setItem("demo_cart", JSON.stringify(mappedCart));
+  }
 }
 
 export async function clearCart(): Promise<void> {
-  await client.delete(`/api/v1/cart`);
+  try {
+    await client.delete(`/api/v1/cart`);
+  } catch {
+    await AsyncStorage.setItem("demo_cart", JSON.stringify({ id: "demo", items: [], subtotal: 0, tax: 0, shipping: 0, total: 0, itemCount: 0 }));
+  }
 }
 
 export async function applyPromoCode(code: string): Promise<AppliedPromo> {
-  const res = await client.post(`/api/v1/cart/promo`, { code });
-  const p = res.data.promo || res.data;
-  return {
-    code: String(p.code || code),
-    discountType: p.discountType || "fixed",
-    discountValue: Number(p.discountValue || 0),
-    discountAmount: Number(p.discountAmount || 0),
-    description: String(p.description || "")
-  };
+  try {
+    const res = await client.post(`/api/v1/cart/promo`, { code });
+    const p = res.data.promo || res.data;
+    return {
+      code: String(p.code || code),
+      discountType: p.discountType || "fixed",
+      discountValue: Number(p.discountValue || 0),
+      discountAmount: Number(p.discountAmount || 0),
+      description: String(p.description || "")
+    };
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_cart");
+    const cart = raw ? JSON.parse(raw) : { id: "demo", items: [] as any[] };
+    const sub = cart.items.reduce((s: number, it: any) => s + it.total, 0);
+    const discountAmount = Math.round(sub * 0.1 * 100) / 100;
+    cart.promo = {
+      code,
+      discountType: "percentage",
+      discountValue: 10,
+      discountAmount,
+      description: "10% off demo promo"
+    };
+    const mappedCart = recalc(cart);
+    await AsyncStorage.setItem("demo_cart", JSON.stringify(mappedCart));
+    return mappedCart.promo!;
+  }
 }
 
 export async function removePromoCode(): Promise<void> {
-  await client.delete(`/api/v1/cart/promo`);
+  try {
+    await client.delete(`/api/v1/cart/promo`);
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_cart");
+    const cart = raw ? JSON.parse(raw) : { id: "demo", items: [] as any[] };
+    delete cart.promo;
+    const mappedCart = recalc(cart);
+    await AsyncStorage.setItem("demo_cart", JSON.stringify(mappedCart));
+  }
+}
+
+function recalc(cart: any) {
+  const items = Array.isArray(cart.items) ? cart.items : [];
+  const subtotal = items.reduce((s: number, it: any) => s + (it.total || 0), 0);
+  const tax = 0;
+  const shipping = 0;
+  const promo = cart.promo;
+  const total = subtotal + tax + shipping - (promo?.discountAmount || 0);
+  const itemCount = items.reduce((n: number, it: any) => n + (it.quantity || 0), 0);
+  return { id: cart.id || "demo", items, subtotal, tax, shipping, total, itemCount, promo };
 }

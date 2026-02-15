@@ -15,6 +15,7 @@ import ProfessionalBackground from '../../components/animated/ProfessionalBackgr
 import ScrollReveal from '../../components/animations/ScrollReveal';
 import ProfileHeader from '../../components/profile/ProfileHeader';
 import * as UserAPI from '../../services/api/user.api';
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useAuth } from '../../context/AuthContext';
 import { TestIDs } from '../../constants/testIDs';
 import { useTestID } from '../../hooks/useTestID';
@@ -22,7 +23,7 @@ import { useTestID } from '../../hooks/useTestID';
 export default function ProfileScreen() {
   const { theme, isDark, toggleTheme } = useTheme();
   const navigation = useNavigation<any>();
-  const { user: authUser } = useAuth();
+  const { user: authUser, isAuthenticated, logout } = useAuth() as any;
   const [user, setUser] = React.useState<{ name?: string; email?: string; avatar?: string; createdAt?: string } | null>(null);
   const [stats, setStats] = React.useState<{ orders: number; wishlist: number; reviews: number }>({ orders: 0, wishlist: 0, reviews: 0 });
   const [loading, setLoading] = React.useState(true);
@@ -34,6 +35,13 @@ export default function ProfileScreen() {
         setUser(me.user as any);
         const s = await UserAPI.getStats();
         setStats({ orders: s.totals?.orders || 0, wishlist: s.favorites || 0, reviews: s.totals?.reviews || 0 });
+      } catch {
+        const localRaw = await AsyncStorage.getItem("demo_user");
+        if (localRaw) {
+          const u = JSON.parse(localRaw);
+          setUser(u);
+        }
+        setStats({ orders: 0, wishlist: 0, reviews: 0 });
       } finally {
         setLoading(false);
       }
@@ -53,7 +61,14 @@ export default function ProfileScreen() {
       >
         {/* Profile Header */}
         <ScrollReveal delay={0}>
-          <ProfileHeader user={user ? { ...user, level: (user as any).level || "Bronze", points: (user as any).points || 0 } as any : { name: "", email: "", avatar: null, level: "Bronze", points: 0 }} onEditAvatar={() => navigation.navigate('EditProfile')} />
+          <ProfileHeader
+            user={
+              user
+                ? { ...user, level: (user as any).level || "Bronze", points: (user as any).points || 0 } as any
+                : { name: "Guest User", email: "guest@glowverse.app", avatar: null, level: "Bronze", points: 0 }
+            }
+            onEditAvatar={() => navigation.navigate('EditProfile')}
+          />
         </ScrollReveal>
 
         {/* Stats Row */}
@@ -86,6 +101,16 @@ export default function ProfileScreen() {
         {/* Account Section */}
         <ScrollReveal delay={200}>
           <Text style={styles.sectionTitle}>Account & Beauty Profile</Text>
+          {!isAuthenticated ? (
+            <View style={styles.authRow}>
+              <TouchableOpacity onPress={() => navigation.navigate('Login')} style={styles.authPrimaryBtn} activeOpacity={0.85}>
+                <Text style={styles.authPrimaryText}>Sign In</Text>
+              </TouchableOpacity>
+              <TouchableOpacity onPress={() => navigation.navigate('SignUp')} style={styles.authSecondaryBtn} activeOpacity={0.85}>
+                <Text style={styles.authSecondaryText}>Sign Up</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
           <View style={styles.menuSection}>
             <MenuItem icon="account-edit" label="Edit Personal Info" onPress={() => navigation.navigate('EditProfile')} styles={styles} />
             <MenuItem icon="home-city" label="Addresses" onPress={() => navigation.navigate('Addresses')} styles={styles} />
@@ -100,7 +125,7 @@ export default function ProfileScreen() {
               icon="wallet-membership"
               label="Elite Rewards"
               badge="Active"
-              onPress={() => { }}
+              onPress={() => navigation.navigate('Promotions')}
               styles={styles}
             />
           </View>
@@ -160,19 +185,21 @@ export default function ProfileScreen() {
         </ScrollReveal>
 
         {/* Logout */}
-        <ScrollReveal delay={500}>
-          <TouchableOpacity
-            style={styles.logoutButton}
-            onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
-              { text: 'Cancel', style: 'cancel' },
-              { text: 'Logout', style: 'destructive' }
-            ])}
-            {...useTestID(TestIDs.PROFILE.LOGOUT_BUTTON)}
-          >
-            <MaterialCommunityIcons name="logout" size={20} color={theme.colors.error} />
-            <Text style={styles.logoutText}>Sign Out</Text>
-          </TouchableOpacity>
-        </ScrollReveal>
+        {isAuthenticated ? (
+          <ScrollReveal delay={500}>
+            <TouchableOpacity
+              style={styles.logoutButton}
+              onPress={() => Alert.alert('Logout', 'Are you sure you want to logout?', [
+                { text: 'Cancel', style: 'cancel' },
+                { text: 'Logout', style: 'destructive', onPress: async () => { try { await logout?.(); } catch {} } }
+              ])}
+              {...useTestID(TestIDs.PROFILE.LOGOUT_BUTTON)}
+            >
+              <MaterialCommunityIcons name="logout" size={20} color={theme.colors.error} />
+              <Text style={styles.logoutText}>Sign Out</Text>
+            </TouchableOpacity>
+          </ScrollReveal>
+        ) : null}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -224,6 +251,40 @@ const createStyles = (theme: any, isDark: boolean) =>
       paddingHorizontal: theme.spacing.lg,
       marginBottom: theme.spacing.md,
       marginTop: theme.spacing.base,
+    },
+    authRow: {
+      flexDirection: "row",
+      paddingHorizontal: theme.spacing.lg,
+      gap: 10,
+      marginBottom: theme.spacing.md,
+    },
+    authPrimaryBtn: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: theme.radius.md,
+      backgroundColor: theme.colors.accent.emerald,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    authPrimaryText: {
+      color: theme.colors.text.inverse,
+      fontWeight: "800",
+      fontSize: theme.typography.sizes.sm,
+    },
+    authSecondaryBtn: {
+      flex: 1,
+      paddingVertical: 10,
+      borderRadius: theme.radius.md,
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+      backgroundColor: theme.colors.background.elevated,
+      alignItems: "center",
+      justifyContent: "center",
+    },
+    authSecondaryText: {
+      color: theme.colors.text.primary,
+      fontWeight: "800",
+      fontSize: theme.typography.sizes.sm,
     },
     menuSection: {
       paddingHorizontal: theme.spacing.lg,

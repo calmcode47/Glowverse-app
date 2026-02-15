@@ -1,5 +1,5 @@
 import { Product } from "../data/products";
-import { NavigatorScreenParams } from "@react-navigation/native";
+// Use any to avoid version-specific NavigatorScreenParams typing
 
 export type RootTabParamList = {
   HomeTab: undefined;
@@ -13,7 +13,7 @@ export type RootStackParamList = {
   Onboarding: undefined;
   Login: undefined;
   SignUp: undefined;
-  MainTabs: NavigatorScreenParams<RootTabParamList>;
+  MainTabs: any;
   ProductDetail: { productId?: string; product?: Product };
   Category: { categoryId?: string; categoryName?: string };
   Processing: { analysisId?: string; tryOnId?: string; imageUri?: string };
@@ -40,6 +40,8 @@ export type RootStackParamList = {
   ARTryOn: { productId: string };
   FitnessDashboard: undefined;
   NotificationPreferences: undefined;
+  TipsDetail: { title: string; body: string };
+  EliteAccess: undefined;
   PaymentNetworkError: undefined;
   PaymentDeclined: { reason?: string };
   PaymentProcessingError: { error?: string };
@@ -55,6 +57,9 @@ export type RootStackParamList = {
   Addresses: undefined;
   EditAddress: { address?: any };
   Promotions: { code?: string };
+  HistoryDashboard: undefined;
+  FitnessActivityDetail: { id: string };
+  ARSessionDetail: { id: string };
 };
 
 declare global {

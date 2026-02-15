@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, TouchableOpacity, StyleSheet, FlatList, Dimensions, RefreshControl } from "react-native";
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, RefreshControl } from "react-native";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useNavigation, useRoute } from "@react-navigation/native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -9,17 +9,38 @@ import type { StackNavigationProp } from "@react-navigation/stack";
 import type { RootStackParamList } from "../../navigation/types";
 import type { Product } from "../../data/products";
 import * as ProductsAPI from "../../services/api/products.api";
-import ProductCard from "../../components/shop/ProductCard";
 import ProductSkeleton from "../../components/shop/ProductSkeleton";
+import ShopHeroCard from "../../components/shop/ShopHeroCard";
 import FilterBar, { Filters } from "../../components/shop/FilterBar";
 import FilterModal from "../../components/shop/FilterModal";
 import { focusManagement } from "../../utils/focusManagement";
 import { useFilterAnalytics } from "../../hooks/analytics/useFilterAnalytics";
 import { imagePreloader } from "../../services/imagePreloader.service";
+import Animated, { useSharedValue, useAnimatedScrollHandler, useAnimatedStyle, interpolate, Extrapolate } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const GAP = 12;
-const CARD_WIDTH = (SCREEN_WIDTH - 16 * 2 - GAP) / 2;
+const GAP = 16;
+const CARD_WIDTH = Math.round(SCREEN_WIDTH * 0.92);
+
+function CarouselItem({ item, index, cardWidth, scrollX, onPress }: { item: Product; index: number; cardWidth: number; scrollX: any; onPress: () => void }) {
+  const animatedStyle = useAnimatedStyle(() => {
+    const interval = cardWidth + GAP;
+    const center = index * interval;
+    const n = (scrollX.value - center) / interval;
+    const absN = Math.min(Math.abs(n), 1);
+    const scale = interpolate(absN, [0, 1], [1, 0.94], Extrapolate.CLAMP);
+    const translateY = interpolate(absN, [0, 1], [-10, 0], Extrapolate.CLAMP);
+    const translateX = interpolate(n, [-1, 0, 1], [24, 0, -24], Extrapolate.CLAMP);
+    const rotate = interpolate(n, [-1, 0, 1], [4.5, 0, -4.5], Extrapolate.CLAMP);
+    const opacity = interpolate(absN, [0, 1], [1, 0.9], Extrapolate.CLAMP);
+    return { transform: [{ translateX }, { translateY }, { rotateZ: `${rotate}deg` }, { scale }], opacity };
+  });
+  return (
+    <Animated.View style={[{ width: cardWidth, paddingVertical: 10, minHeight: Math.round(cardWidth * 1.18) }, animatedStyle]}>
+      <ShopHeroCard product={item} onPress={onPress} width={cardWidth} scrollX={scrollX} index={index} gap={GAP} />
+    </Animated.View>
+  );
+}
 
 export default function ShopScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
@@ -29,6 +50,13 @@ export default function ShopScreen() {
   const styles = createStyles(theme, isDark, insets);
   const { trackApply, trackRemove, trackSort } = useFilterAnalytics();
   const prevFiltersRef = React.useRef<Filters>({});
+  // Horizontal swipe animation state
+  const scrollX = useSharedValue(0);
+  const onScroll = useAnimatedScrollHandler({
+    onScroll: (e) => {
+      scrollX.value = e.contentOffset.x;
+    }
+  });
 
   const [items, setItems] = React.useState<Product[]>([]);
   const [page, setPage] = React.useState(1);
@@ -138,17 +166,18 @@ export default function ShopScreen() {
     if (page > 1) load(false);
   }, [page]);
 
-  const renderItem = React.useCallback(({ item }: { item: Product }) => (
-    <View style={{ width: CARD_WIDTH }}>
-      <ProductCard
-        product={item}
-        onPress={() => navigation.navigate("ProductDetail", { productId: item.id, product: item })}
-      />
-    </View>
+  const renderCarouselItem = React.useCallback(({ item, index }: { item: Product; index: number }) => (
+    <CarouselItem
+      item={item}
+      index={index}
+      cardWidth={CARD_WIDTH}
+      scrollX={scrollX}
+      onPress={() => navigation.navigate("ProductDetail", { productId: item.id, product: item })}
+    />
   ), [navigation]);
   const keyExtractor = React.useCallback((item: Product) => item.id, []);
   const getItemLayout = React.useCallback((data: Product[] | null | undefined, index: number) => {
-    const length = CARD_WIDTH + GAP + 12;
+    const length = CARD_WIDTH + GAP;
     return { length, offset: length * index, index };
   }, []);
 
@@ -216,26 +245,27 @@ export default function ShopScreen() {
           </TouchableOpacity>
         </View>
       ) : (
-        <FlatList
+        <Animated.FlatList
           data={items}
           keyExtractor={keyExtractor}
-          numColumns={2}
-          columnWrapperStyle={{ gap: GAP, paddingHorizontal: 16, marginBottom: 12 }}
-          contentContainerStyle={{ paddingBottom: 20 }}
-          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
-          renderItem={renderItem}
-          getItemLayout={getItemLayout as any}
-          removeClippedSubviews
-          maxToRenderPerBatch={10}
-          initialNumToRender={8}
+          horizontal
+          pagingEnabled
+          decelerationRate="fast"
+          snapToInterval={CARD_WIDTH + GAP}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 20 }}
+          removeClippedSubviews={false}
+          initialNumToRender={4}
           windowSize={5}
-          updateCellsBatchingPeriod={50}
-          onViewableItemsChanged={onViewableItemsChanged}
-          viewabilityConfig={viewabilityConfig}
-          onEndReachedThreshold={0.2}
+          onScroll={onScroll}
+          scrollEventThrottle={16}
+          ItemSeparatorComponent={() => <View style={{ width: GAP }} />}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+          renderItem={renderCarouselItem}
+          onEndReachedThreshold={0.4}
           onEndReached={loadMore}
           ListFooterComponent={
-            loadingMore ? <View style={{ paddingVertical: 16, alignItems: "center" }}><Text style={{ color: theme.colors.text.tertiary }}>Loading...</Text></View> : null
+            loadingMore ? <View style={{ width: CARD_WIDTH, alignItems: "center", justifyContent: "center", paddingVertical: 8 }}><Text style={{ color: theme.colors.text.tertiary }}>Loading...</Text></View> : null
           }
         />
       )}
@@ -248,7 +278,7 @@ const createStyles = (theme: any, isDark: boolean, insets: any) =>
     container: {
       flex: 1,
       backgroundColor: theme.colors.background.primary,
-      paddingTop: insets.top,
+      paddingTop: Math.max(insets.top - 10, 8),
       paddingBottom: insets.bottom
     },
     header: {
@@ -256,21 +286,22 @@ const createStyles = (theme: any, isDark: boolean, insets: any) =>
       justifyContent: "space-between",
       alignItems: "center",
       paddingHorizontal: 16,
-      paddingBottom: 8
+      paddingBottom: 0,
+      marginBottom: 2
     },
     headerTitle: {
-      fontSize: 28,
+      fontSize: 26,
       fontWeight: "700",
       color: theme.colors.text.primary
     },
     headerIcons: {
       flexDirection: "row",
-      gap: 12
+      gap: 10
     },
     iconButton: {
-      width: 44,
-      height: 44,
-      borderRadius: 22,
+      width: 34,
+      height: 34,
+      borderRadius: 17,
       backgroundColor: theme.colors.background.elevated,
       alignItems: "center",
       justifyContent: "center",

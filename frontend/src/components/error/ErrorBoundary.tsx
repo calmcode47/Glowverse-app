@@ -23,7 +23,7 @@ export default class ErrorBoundary extends React.Component<{ children: React.Rea
       }).catch(() => {});
     } catch {}
     try {
-      const g: any = global as any;
+      const g: any = globalThis as any;
       if (g.Sentry && typeof g.Sentry.captureException === "function") {
         g.Sentry.captureException(error);
       }
@@ -43,14 +43,30 @@ export default class ErrorBoundary extends React.Component<{ children: React.Rea
 }
 
 function Fallback({ onRestart, onReport }: { onRestart: () => void; onReport: () => void }) {
-  const { theme } = useTheme();
-  const styles = createStyles(theme);
+  let themeColors: any = {
+    background: "#0D1117",
+    textPrimary: "#E6EDF3",
+    textInverse: "#0D1117",
+    accent: "#10B981",
+    borderLight: "#30363D"
+  };
+  try {
+    const { theme } = useTheme();
+    themeColors = {
+      background: theme.colors.background?.primary || themeColors.background,
+      textPrimary: theme.colors.text?.primary || themeColors.textPrimary,
+      textInverse: theme.colors.text?.inverse || themeColors.textInverse,
+      accent: theme.colors.accent?.emerald || themeColors.accent,
+      borderLight: theme.colors.border?.light || themeColors.borderLight
+    };
+  } catch {}
+  const styles = createStyles(themeColors);
   return (
     <View style={styles.container}>
-      <MaterialCommunityIcons name="alert-circle-outline" size={56} color={theme.colors.accent.rose} />
+      <MaterialCommunityIcons name="alert-circle-outline" size={56} color="#FB7185" />
       <Text style={styles.title}>Something went wrong</Text>
       <View style={styles.row}>
-        <TouchableOpacity onPress={onRestart} style={[styles.btn, { backgroundColor: theme.colors.accent.emerald }]}>
+        <TouchableOpacity onPress={onRestart} style={[styles.btn, { backgroundColor: themeColors.accent }]}>
           <Text style={styles.btnText}>Restart App</Text>
         </TouchableOpacity>
         <TouchableOpacity onPress={onReport} style={styles.btnOutline}>
@@ -63,12 +79,12 @@ function Fallback({ onRestart, onReport }: { onRestart: () => void; onReport: ()
 
 function createStyles(theme: any) {
   return StyleSheet.create({
-    container: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: theme.colors.background.primary, padding: 16 },
-    title: { color: theme.colors.text.primary, fontWeight: "900", fontSize: 18 },
+    container: { flex: 1, alignItems: "center", justifyContent: "center", gap: 12, backgroundColor: theme.background, padding: 16 },
+    title: { color: theme.textPrimary, fontWeight: "900", fontSize: 18 },
     row: { flexDirection: "row", gap: 8, marginTop: 8 },
     btn: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10 },
-    btnText: { color: theme.colors.text.inverse, fontWeight: "900" },
-    btnOutline: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light },
-    btnOutlineText: { color: theme.colors.text.primary, fontWeight: "800" }
+    btnText: { color: theme.textInverse, fontWeight: "900" },
+    btnOutline: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.borderLight },
+    btnOutlineText: { color: theme.textPrimary, fontWeight: "800" }
   });
 }

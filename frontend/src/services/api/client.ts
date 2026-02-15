@@ -7,8 +7,8 @@ import { handleAPIError } from "@utils/apiHelper";
 import { analytics } from "../analytics.service";
 let Sentry: any = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Sentry = require("@sentry/react-native");
+  const name: any = "@sentry/react-native";
+  Sentry = (require as any)(name);
 } catch {}
 
 declare module "axios" {

@@ -6,10 +6,12 @@ import * as AnalysisAPI from "../../services/api/analysis.api";
 import AnalysisTimeline from "../../components/analysis/AnalysisTimeline";
 import ComparisonView from "../../components/analysis/ComparisonView";
 import InsightsCard from "../../components/analysis/InsightsCard";
+import { useNavigation } from "@react-navigation/native";
 
 export default function AnalysisHistoryScreen() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
+  const navigation = useNavigation<any>();
   const [items, setItems] = React.useState<AnalysisAPI.Analysis[]>([]);
   const [loading, setLoading] = React.useState(true);
   const [leftId, setLeftId] = React.useState<string | null>(null);
@@ -42,7 +44,7 @@ export default function AnalysisHistoryScreen() {
       ) : items.length === 0 ? (
         <View style={styles.center}>
           <Text style={styles.subtitle}>No analyses yet</Text>
-          <Button mode="contained">Take your first skin analysis</Button>
+          <Button mode="contained" onPress={() => navigation.navigate("ARTryOn")}>Take your first skin analysis</Button>
         </View>
       ) : (
         <>

@@ -14,13 +14,13 @@
 
 | Component | Status | Completion | Notes |
 |-----------|--------|------------|-------|
-| **Backend API** | ✅ Complete | 98% | 60+ endpoints, standardized types & route registration |
-| **Database** | ✅ Complete | 100% | 25+ Prisma models, seeded data |
-| **CI/CD Pipeline** | ✅ Complete | 100% | 6 GitHub Actions workflows |
-| **Infrastructure** | ✅ Complete | 98% | Docker, hardened security, monitoring, caching |
-| **Frontend UI** | ✅ Stable | 98% | 0-error build; AR/AI flows stabilized; Optimized commerce UI |
-| **Testing** | ⚠️ Partial | 50% | 15 test suites, 4 service specs, high-coverage core flows |
-| **Documentation** | ✅ Complete | 100% | 22 docs including comprehensive Project Report |
+| **Backend API** | ✅ Stable | 88% | Core API complete; payments + notifications delivery still partial |
+| **Database** | ✅ Stable | 95% | Prisma schema + seeds; ongoing refinements for production data |
+| **CI/CD Pipeline** | ✅ Stable | 90% | Workflows in place; env + release hardening ongoing |
+| **Infrastructure** | ✅ Stable | 85% | Docker + monitoring; production rollout depends on env/provider setup |
+| **Frontend UI** | ✅ Stable | 90% | Core app flows are complete; payment + some integrations are partial |
+| **Testing** | ✅ Stable | 80% | Unit + integration + E2E coverage for key flows; expand edge cases |
+| **Documentation** | ✅ In Progress | 85% | Backend docs strong; project report summarizes completion + gaps |
 
 ---
 
@@ -142,6 +142,18 @@ npm run android  # Android emulator
 | 🛡️ **Security** | Helmet, CORS, rate limiting, CSRF, XSS protection |
 | 💾 **Caching** | Redis-based caching with IORedis |
 
+#### Backend Completion (≈ 88%)
+- Implemented
+  - Auth (JWT + refresh), users/profile, products/catalog/search, cart and orders core flows
+  - Addresses CRUD with API + local/demo fallback
+  - Promotions/referrals modules (API surface + basic flows)
+  - Observability and hardening: logging, rate limiting, security middleware, runbooks
+- Remaining
+  - Payments: create payment intents / checkout sessions and fully wire Stripe flow end-to-end
+  - Notifications delivery: integrate real email/push/SMS providers + background queue
+  - Promotions in checkout: apply promo/discount consistently during order total calculation
+  - Final QA hardening: fix known edge-case handlers and expand integration coverage
+
 ### Frontend (React Native + Expo)
 
 | Feature | Description |
@@ -157,7 +169,7 @@ npm run android  # Android emulator
 | ✨ **Animations & UX** | Parallax, reveals, micro‑interactions |
 | 🎭 **Design System** | Light/dark themes, tokens, consistent UI |
 
-#### Frontend Completion (≈ 98%)
+#### Frontend Completion (≈ 90%)
 - Implemented
   - Authentication with token refresh; secure token storage
   - Product catalog, detail pages with galleries and variants
@@ -177,11 +189,11 @@ npm run android  # Android emulator
   - Performance: image preloading, FlatList tuning, lazy-loaded screens, CI bundle-size budgets
   - Build & Release: EAS profiles (dev/preview/prod), PR checks, production auto-submit workflows, store asset scaffolding, asset verification/optimization scripts, EAS projectId verification
 - Remaining
-  - Real AR SDK Finalization (Linking native binary)
-  - Broader offline caching (lists/search), conflict‑resolution UI
-  - Adopt OpenAPI types across API layer and add Zod response validation
-  - Expand E2E to edge‑case payment error screens (3DS, timeout, network)
-  - A11y completion pass for remaining screens and expand contrast pairs
+  - End‑to‑end payments: server-issued client secret + webhook-driven order state
+  - AR/AI production hardening: native SDK linkage/config and device QA pass
+  - Offline queue UX: syncing state, user-facing conflict resolution UI
+  - Tech debt cleanup: remove duplicate/legacy auth screens and dead routes
+  - Expand E2E: payment edge cases (3DS/timeout/network) + more profile flows
 
 ---
 
@@ -356,7 +368,7 @@ docker-compose -f docker-compose.production.yml up -d
 
 ### Frontend
 - [Frontend README](frontend/README.md) — Architecture, features, testing
-- [Project Report](project_report.md) — End‑to‑end features, utilities, and backlog
+- [Project Report](project_report.md) — Completion %, gaps, and next steps
 
 ---
 
@@ -435,4 +447,4 @@ This project is proprietary software developed for the Glowverse beauty platform
 
 **Built with ❤️ for the Glowverse beauty community**
 
-*Last Updated: February 15, 2026*
+*Last Updated: February 16, 2026*

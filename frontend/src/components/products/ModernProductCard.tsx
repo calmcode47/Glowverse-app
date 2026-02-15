@@ -1,10 +1,14 @@
 import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ViewStyle } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, Dimensions, ViewStyle, Alert, Platform } from 'react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeContext';
 import type { Product } from '../../data/products';
 import OptimizedImage from '../common/OptimizedImage';
+import * as CartAPI from "../../services/api/cart.api";
+import { useCart } from "../../context/CartContext";
+import { Snackbar } from "react-native-paper";
+import Animated, { FadeInUp } from "react-native-reanimated";
 
 const { width } = Dimensions.get('window');
 const CARD_WIDTH = width * 0.44;
@@ -22,18 +26,30 @@ export default function ModernProductCard({ product, onPress, style, width }: Mo
     const styles = createStyles(theme, cardWidth);
 
     const [imageError, setImageError] = React.useState(false);
+    const [snack, setSnack] = React.useState<string | null>(null);
+    const { setCount } = useCart();
+
+    const addToCart = React.useCallback(async () => {
+        try {
+            await CartAPI.addItem({ productId: product.id, quantity: 1 });
+            setCount?.((c: number) => c + 1);
+            setSnack("Added to cart");
+        } catch (e: any) {
+            setSnack(e?.message || "Failed to add");
+        }
+    }, [product.id, setCount]);
 
     return (
+        <Animated.View entering={FadeInUp.springify()} style={[styles.container, style]}>
         <TouchableOpacity
-            style={[styles.container, style]}
             onPress={onPress}
-            activeOpacity={0.8}
+            activeOpacity={0.85}
         >
             <View style={styles.innerContainer}>
                 {/* Image Section */}
                 <View style={styles.imageContainer}>
                     {product.image && !imageError ? (
-                        <OptimizedImage uri={product.image} variant="thumb" />
+                        <OptimizedImage uri={product.image} variant="thumb" imageStyle={{ borderRadius: 0 }} />
                     ) : (
                         <View style={styles.placeholder}>
                             <MaterialCommunityIcons name="image-off-outline" size={32} color={theme.colors.text.secondary} />
@@ -49,18 +65,27 @@ export default function ModernProductCard({ product, onPress, style, width }: Mo
 
                 {/* Info Section */}
                 <View style={styles.info}>
-                    <Text style={styles.brand} numberOfLines={1}>{product.brand}</Text>
-                    <Text style={styles.name} numberOfLines={2}>{product.name}</Text>
+                    <Text style={styles.brand} numberOfLines={1}>{product.brand || "Brand"}</Text>
+                    <Text style={styles.name} numberOfLines={2}>{product.name || "Product"}</Text>
 
                     <View style={styles.footer}>
-                        <Text style={styles.price}>${product.price}</Text>
-                        <TouchableOpacity style={styles.addButton}>
+                        <Text style={styles.price}>${Number(product.price || 0).toFixed(2)}</Text>
+                        <TouchableOpacity style={styles.addButton} onPress={addToCart} accessibilityRole="button" accessibilityLabel={`Add ${product.name} to cart`}>
                             <MaterialCommunityIcons name="plus" size={16} color={theme.colors.text.inverse} />
                         </TouchableOpacity>
                     </View>
                 </View>
             </View>
+            <Snackbar
+                visible={!!snack}
+                onDismiss={() => setSnack(null)}
+                duration={1500}
+                style={{ backgroundColor: theme.colors.accent.emerald }}
+            >
+                <Text style={{ color: theme.colors.text.inverse }}>{snack}</Text>
+            </Snackbar>
         </TouchableOpacity>
+        </Animated.View>
     );
 }
 
@@ -70,6 +95,7 @@ const createStyles = (theme: any, cardWidth: number) => StyleSheet.create({
         margin: 6,
         backgroundColor: theme.colors.background.elevated,
         borderRadius: 16,
+        minHeight: Math.round(cardWidth * 0.6) + 110,
         // Shadow Layer (No Overflow Hidden)
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
@@ -82,11 +108,12 @@ const createStyles = (theme: any, cardWidth: number) => StyleSheet.create({
         borderRadius: 16,
         borderWidth: 1,
         borderColor: theme.colors.border.light,
+        backgroundColor: theme.colors.background.elevated,
         overflow: 'hidden', // Clips content
     },
     imageContainer: {
-        height: 160,
-        backgroundColor: '#F5F5F5',
+        height: Math.round(cardWidth * 0.65),
+        backgroundColor: theme.colors.background.secondary,
         position: 'relative',
     },
     image: {
@@ -98,7 +125,7 @@ const createStyles = (theme: any, cardWidth: number) => StyleSheet.create({
         flex: 1,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: theme.colors.background.elevated,
+        backgroundColor: theme.colors.background.secondary,
     },
     badge: {
         position: 'absolute',
@@ -115,19 +142,20 @@ const createStyles = (theme: any, cardWidth: number) => StyleSheet.create({
     },
     info: {
         padding: 12,
+        gap: 4,
+        minHeight: 76,
     },
     brand: {
-        fontSize: 10,
+        fontSize: 11,
         textTransform: 'uppercase',
         marginBottom: 2,
         letterSpacing: 0.5,
         color: theme.colors.text.secondary,
     },
     name: {
-        fontSize: 14,
-        fontWeight: '600',
+        fontSize: 15,
+        fontWeight: '700',
         marginBottom: 8,
-        height: 40,
         color: theme.colors.text.primary,
     },
     footer: {
@@ -137,8 +165,8 @@ const createStyles = (theme: any, cardWidth: number) => StyleSheet.create({
     },
     price: {
         fontSize: 16,
-        fontWeight: 'bold',
-        color: theme.colors.accent.emerald,
+        fontWeight: '700',
+        color: theme.colors.text.primary,
     },
     addButton: {
         width: 28,
@@ -146,6 +174,6 @@ const createStyles = (theme: any, cardWidth: number) => StyleSheet.create({
         borderRadius: 14,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: theme.colors.text.primary,
+        backgroundColor: theme.colors.accent.emerald,
     },
 });

@@ -16,7 +16,9 @@ module.exports = function (api) {
             "@context": "./src/context",
             "@utils": "./src/utils",
             "@constants": "./src/constants",
-            "@assets": "./src/assets"
+            "@assets": "./src/assets",
+            "@react-native-firebase/app": "./src/shims/rnfirebase/app",
+            "@react-native-firebase/messaging": "./src/shims/rnfirebase/messaging"
           }
         }
       ],

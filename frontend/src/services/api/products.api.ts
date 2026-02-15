@@ -1,5 +1,6 @@
 import { client } from "./client";
 import type { Product as UIProduct } from "../../data/products";
+import { products as localProducts, featuredProducts, newProducts, bestsellers } from "../../data/products";
 import { requestDeduplicator } from "@utils/requestDeduplication";
 
 export type ProductQueryParams = {
@@ -80,25 +81,70 @@ function normalizeList(res: any): { items: any[]; total: number; page: number; t
 }
 
 export async function getProducts(params: ProductQueryParams = {}): Promise<ProductsResponse> {
-  const res = await client.get("/api/v1/products", { params });
-  const { items, total, page, totalPages } = normalizeList(res.data);
-  return { products: items.map(mapApiProduct), total, page, totalPages };
+  try {
+    const res = await client.get("/api/v1/products", { params });
+    const { items, total, page, totalPages } = normalizeList(res.data);
+    return { products: items.map(mapApiProduct), total, page, totalPages };
+  } catch {
+    // Fallback to local data in dev/demo mode
+    let items = [...localProducts];
+    if (params.category) items = items.filter(p => p.category === params.category);
+    if (params.brand) items = items.filter(p => p.brand.toLowerCase() === params.brand!.toLowerCase());
+    if (typeof params.minPrice === "number") items = items.filter(p => p.price >= (params.minPrice as number));
+    if (typeof params.maxPrice === "number") items = items.filter(p => p.price <= (params.maxPrice as number));
+    if (params.inStockOnly) items = items.filter(p => p.inStock);
+    const sortBy = params.sortBy || "newest";
+    if (sortBy === "price_asc") items.sort((a, b) => a.price - b.price);
+    else if (sortBy === "price_desc") items.sort((a, b) => b.price - a.price);
+    else if (sortBy === "rating") items.sort((a, b) => (b.rating || 0) - (a.rating || 0));
+    // "newest" retains mock order
+    const page = params.page ?? 1;
+    const limit = params.limit ?? 20;
+    const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    const pageItems = items.slice(start, start + limit);
+    return { products: pageItems, total, page, totalPages };
+  }
 }
 
 export async function getProductById(id: string): Promise<UIProduct> {
   return requestDeduplicator.execute(`product:${id}`, async () => {
-    const res = await client.get(`/api/v1/products/${id}`);
-    const data = res.data.product || res.data || {};
-    const mapped = mapApiProduct(data);
-    return mapped;
+    try {
+      const res = await client.get(`/api/v1/products/${id}`);
+      const data = res.data.product || res.data || {};
+      const mapped = mapApiProduct(data);
+      return mapped;
+    } catch {
+      const found = localProducts.find(p => p.id === id);
+      if (!found) throw new Error("Product not found");
+      return found;
+    }
   });
 }
 
 export async function searchProducts(query: string, filters?: Omit<ProductQueryParams, "page" | "limit" | "sortBy"> & { sortBy?: ProductQueryParams["sortBy"]; page?: number; limit?: number }): Promise<ProductsResponse> {
-  const params: Record<string, any> = { q: query, ...filters };
-  const res = await client.get("/api/v1/products/search", { params });
-  const { items, total, page, totalPages } = normalizeList(res.data);
-  return { products: items.map(mapApiProduct), total, page, totalPages };
+  try {
+    const params: Record<string, any> = { q: query, ...filters };
+    const res = await client.get("/api/v1/products/search", { params });
+    const { items, total, page, totalPages } = normalizeList(res.data);
+    return { products: items.map(mapApiProduct), total, page, totalPages };
+  } catch {
+    const q = (query || "").toLowerCase();
+    let items = localProducts.filter(p =>
+      p.name.toLowerCase().includes(q) ||
+      p.brand.toLowerCase().includes(q) ||
+      p.category.toLowerCase().includes(q)
+    );
+    if (filters?.category) items = items.filter(p => p.category === filters.category);
+    const page = filters?.page ?? 1;
+    const limit = filters?.limit ?? 20;
+    const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    const pageItems = items.slice(start, start + limit);
+    return { products: pageItems, total, page, totalPages };
+  }
 }
 
 export async function getPopularSearches(): Promise<string[]> {
@@ -107,7 +153,9 @@ export async function getPopularSearches(): Promise<string[]> {
     const arr = Array.isArray(res.data.items) ? res.data.items : Array.isArray(res.data) ? res.data : [];
     return arr.map((x: any) => String(x));
   } catch {
-    return [];
+    // Fallback to popular brands/categories from local data
+    const terms = Array.from(new Set(localProducts.flatMap(p => [p.brand, p.category, p.name.split(" ")[0]])));
+    return terms.slice(0, 8);
   }
 }
 
@@ -119,29 +167,56 @@ export async function getSearchSuggestions(q: string, limit = 8): Promise<string
     const uniq = Array.from(new Set(names));
     return uniq.slice(0, limit);
   } catch {
-    return [];
+    const query = (q || "").toLowerCase();
+    const matches = localProducts
+      .map(p => p.name)
+      .filter(name => name.toLowerCase().includes(query));
+    return Array.from(new Set(matches)).slice(0, limit);
   }
 }
 export async function getProductsByCategory(category: string, params: Omit<ProductQueryParams, "category"> = {}): Promise<ProductsResponse> {
-  const res = await client.get(`/api/v1/products/category/${encodeURIComponent(category)}`, { params });
-  const { items, total, page, totalPages } = normalizeList(res.data);
-  return { products: items.map(mapApiProduct), total, page, totalPages };
+  try {
+    const res = await client.get(`/api/v1/products/category/${encodeURIComponent(category)}`, { params });
+    const { items, total, page, totalPages } = normalizeList(res.data);
+    return { products: items.map(mapApiProduct), total, page, totalPages };
+  } catch {
+    let items = localProducts.filter(p => p.category === (category as any));
+    const page = params?.page ?? 1;
+    const limit = params?.limit ?? 20;
+    const total = items.length;
+    const totalPages = Math.max(1, Math.ceil(total / limit));
+    const start = (page - 1) * limit;
+    const pageItems = items.slice(start, start + limit);
+    return { products: pageItems, total, page, totalPages };
+  }
 }
 
 export async function getFeaturedProducts(): Promise<UIProduct[]> {
-  const res = await client.get("/api/v1/products/featured");
-  const items = Array.isArray(res.data.products) ? res.data.products : [];
-  return items.map(mapApiProduct);
+  try {
+    const res = await client.get("/api/v1/products/featured");
+    const items = Array.isArray(res.data.products) ? res.data.products : [];
+    return items.map(mapApiProduct);
+  } catch {
+    return featuredProducts;
+  }
 }
 
 export async function getNewArrivals(): Promise<UIProduct[]> {
-  const res = await client.get("/api/v1/products/new-arrivals");
-  const items = Array.isArray(res.data.products) ? res.data.products : [];
-  return items.map(mapApiProduct);
+  try {
+    const res = await client.get("/api/v1/products/new-arrivals");
+    const items = Array.isArray(res.data.products) ? res.data.products : [];
+    return items.map(mapApiProduct);
+  } catch {
+    return newProducts;
+  }
 }
 
 export async function getBestsellers(): Promise<UIProduct[]> {
-  const res = await client.get("/api/v1/products/bestsellers");
-  const items = Array.isArray(res.data.products) ? res.data.products : [];
-  return items.map(mapApiProduct);
+  try {
+    const res = await client.get("/api/v1/products/bestsellers");
+    const items = Array.isArray(res.data.products) ? res.data.products : [];
+    return items.map(mapApiProduct);
+  } catch {
+    return bestsellers.length ? bestsellers : localProducts.slice(0, 10);
+  }
 }

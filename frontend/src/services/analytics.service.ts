@@ -1,10 +1,20 @@
-import * as Analytics from "expo-firebase-analytics";
+let Analytics: any;
+try {
+  // eslint-disable-next-line @typescript-eslint/no-var-requires
+  Analytics = require("expo-firebase-analytics");
+} catch {
+  Analytics = {
+    logEvent: async () => {},
+    setUserId: async () => {},
+    setUserProperty: async () => {}
+  };
+}
 
 // Optional Sentry integration without hard dependency
 let Sentry: any;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Sentry = require("@sentry/react-native");
+  const name: any = "@sentry/react-native";
+  Sentry = (require as any)(name);
 } catch {
   Sentry = {
     addBreadcrumb: () => {},
@@ -27,25 +37,8 @@ interface AnalyticsEvent {
 
 class AnalyticsService {
   trackEvent<K extends AnalyticsEventName>(eventName: K, params: AnalyticsEventParams[K]): void {
-    const sanitized = this.sanitizeParams(params as any);
-    try {
-      // Firebase
-      Analytics.logEvent(eventName, sanitized as any);
-      // Sentry breadcrumb
-      Sentry.addBreadcrumb?.({
-        category: "analytics",
-        message: eventName,
-        level: "info",
-        data: sanitized
-      });
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.log(`[Analytics] ${eventName}`, sanitized);
-      }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Analytics error:", error);
-    }
+    // Route through the safe wrapper to avoid module quirks
+    this.logEvent({ name: String(eventName), properties: this.sanitizeParams(params as any) }).catch(() => {});
   }
 
   private sanitizeParams(params: any): Record<string, any> {
@@ -57,7 +50,13 @@ class AnalyticsService {
         sanitized[key] = "[REDACTED]";
         continue;
       }
-      if (typeof value === "object" && !Array.isArray(value)) {
+      if (Array.isArray(value)) {
+        try {
+          sanitized[key] = JSON.stringify(value);
+        } catch {
+          sanitized[key] = String(value);
+        }
+      } else if (typeof value === "object") {
         try {
           sanitized[key] = JSON.stringify(value);
         } catch {
@@ -77,20 +76,29 @@ class AnalyticsService {
 
   async logEvent(event: AnalyticsEvent): Promise<void> {
     try {
-      await Analytics.logEvent(event.name, event.properties as any);
+      const props = (event && typeof event === "object" && event.properties)
+        ? this.sanitizeParams(event.properties)
+        : undefined;
+      if (props && Object.keys(props).length > 0) {
+        await Analytics.logEvent(event.name, props);
+      } else {
+        await Analytics.logEvent(event.name);
+      }
       Sentry.addBreadcrumb?.({
         category: "analytics",
         message: event.name,
         level: "info",
-        data: event.properties
+        data: props || {}
       });
       if (__DEV__) {
         // eslint-disable-next-line no-console
-        console.log("[Analytics]", event.name, event.properties || {});
+        console.log("[Analytics]", event.name, props || {});
       }
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error("Analytics error:", error);
+    } catch (error: any) {
+      if (__DEV__) {
+        // eslint-disable-next-line no-console
+        console.warn("Analytics suppressed:", error?.message || String(error));
+      }
     }
   }
 

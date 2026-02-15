@@ -5,8 +5,8 @@ export function measureScreenLoad(screenName: string) {
   return () => {
     const ms = Date.now() - start;
     try {
-      // eslint-disable-next-line @typescript-eslint/no-var-requires
-      const Sentry = require("@sentry/react-native");
+      const name: any = "@sentry/react-native";
+      const Sentry = (require as any)(name);
       Sentry.addBreadcrumb({
         category: "screen-load",
         message: `${screenName} loaded in ${ms}ms`,

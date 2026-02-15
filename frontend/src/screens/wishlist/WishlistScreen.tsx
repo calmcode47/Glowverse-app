@@ -1,5 +1,5 @@
 import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Dimensions, FlatList, Alert } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Dimensions, FlatList, Alert } from 'react-native';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
@@ -84,91 +84,76 @@ export default function WishlistScreen() {
     }
 
     return (
-        <View style={styles.container}>
-            <ProfessionalBackground variant="subtle" />
-
-            <ScrollView style={styles.scroll} contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-                {/* Header */}
-                <ScrollReveal delay={0} scale springy>
-                    <View style={styles.header}>
-                        <View>
-                            <Text style={styles.headerTitle}>My Wishlist</Text>
-                            <Text style={styles.headerSubtitle}>
-                                {products.length} {products.length === 1 ? 'item' : 'items'} saved
-                            </Text>
-                        </View>
-                        <TouchableOpacity style={styles.shareButton} onPress={() => {}}>
-                            <MaterialCommunityIcons
-                                name="share-variant"
-                                size={22}
-                                color={theme.colors.accent.emerald}
-                            />
-                        </TouchableOpacity>
-                    </View>
-                </ScrollReveal>
-
-                {/* Products Grid */}
-                <View style={styles.grid}>
-                  <FlatList
-                    data={products}
-                    keyExtractor={(item) => item.id}
-                    numColumns={2}
-                    columnWrapperStyle={{ justifyContent: 'space-between' }}
-                    renderItem={({ item, index }) => (
-                      <ScrollReveal delay={100 + index * 80} scale springy>
-                        <ProductCard product={item} onPress={() => handleNavigateToProduct(item)} />
-                      </ScrollReveal>
-                    )}
-                    ListEmptyComponent={loading ? <Text style={{ color: theme.colors.text.secondary }}>Loading...</Text> : null}
-                    contentContainerStyle={{ paddingBottom: 20 }}
-                  />
+      <View style={styles.container}>
+        <ProfessionalBackground variant="subtle" />
+        <FlatList
+          data={products}
+          keyExtractor={(item) => item.id}
+          numColumns={2}
+          columnWrapperStyle={{ justifyContent: 'space-between', paddingHorizontal: theme.spacing.lg }}
+          contentContainerStyle={{ paddingBottom: 20 }}
+          ListHeaderComponent={
+            <ScrollReveal delay={0} scale springy>
+              <View style={styles.header}>
+                <View>
+                  <Text style={styles.headerTitle}>My Wishlist</Text>
+                  <Text style={styles.headerSubtitle}>
+                    {products.length} {products.length === 1 ? 'item' : 'items'} saved
+                  </Text>
                 </View>
-
-                {/* Action Buttons */}
-                <ScrollReveal delay={300 + products.length * 80} scale springy>
-                    <View style={styles.actions}>
-                        <TouchableOpacity style={styles.actionButton} onPress={async () => {
-                          let added = 0;
-                          for (const p of products) {
-                            try {
-                              await CartAPI.addItem({ productId: p.id, quantity: 1 });
-                              added++;
-                            } catch {}
-                          }
-                          Alert.alert("Wishlist", `${added} items added to cart`);
-                        }}>
-                            <LinearGradient
-                                colors={theme.colors.gradients.primary}
-                                style={styles.actionButtonGradient}
-                                start={{ x: 0, y: 0 }}
-                                end={{ x: 1, y: 0 }}
-                            >
-                                <MaterialCommunityIcons
-                                    name="cart-plus"
-                                    size={22}
-                                    color={theme.colors.text.inverse}
-                                />
-                                <Text style={styles.actionButtonText}>Add All to Cart</Text>
-                            </LinearGradient>
-                        </TouchableOpacity>
-
-                        <TouchableOpacity
-                            style={styles.secondaryButton}
-                            onPress={() => {
-                              Alert.alert("Clear Wishlist", "Are you sure you want to remove all items?", [
-                                { text: "Cancel" },
-                                { text: "Clear", style: "destructive", onPress: () => clearAll() }
-                              ]);
-                            }}
-                        >
-                            <Text style={styles.secondaryButtonText}>Clear Wishlist</Text>
-                        </TouchableOpacity>
-                    </View>
-                </ScrollReveal>
-
-                <View style={{ height: 40 }} />
-            </ScrollView>
-        </View>
+                <TouchableOpacity style={styles.shareButton} onPress={() => {}}>
+                  <MaterialCommunityIcons name="share-variant" size={22} color={theme.colors.accent.emerald} />
+                </TouchableOpacity>
+              </View>
+            </ScrollReveal>
+          }
+          renderItem={({ item, index }) => (
+            <View style={{ width: CARD_WIDTH }}>
+              <ScrollReveal delay={100 + index * 80} scale springy>
+                <ProductCard product={item} onPress={() => handleNavigateToProduct(item)} />
+              </ScrollReveal>
+            </View>
+          )}
+          ListEmptyComponent={loading ? <Text style={{ color: theme.colors.text.secondary, textAlign: "center" }}>Loading...</Text> : null}
+          ListFooterComponent={
+            <ScrollReveal delay={300 + products.length * 80} scale springy>
+              <View style={styles.actions}>
+                <TouchableOpacity style={styles.actionButton} onPress={async () => {
+                  let added = 0;
+                  for (const p of products) {
+                    try {
+                      await CartAPI.addItem({ productId: p.id, quantity: 1 });
+                      added++;
+                    } catch {}
+                  }
+                  Alert.alert("Wishlist", `${added} items added to cart`);
+                }}>
+                  <LinearGradient
+                    colors={theme.colors.gradients.primary}
+                    style={styles.actionButtonGradient}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                  >
+                    <MaterialCommunityIcons name="cart-plus" size={22} color={theme.colors.text.inverse} />
+                    <Text style={styles.actionButtonText}>Add All to Cart</Text>
+                  </LinearGradient>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.secondaryButton}
+                  onPress={() => {
+                    Alert.alert("Clear Wishlist", "Are you sure you want to remove all items?", [
+                      { text: "Cancel" },
+                      { text: "Clear", style: "destructive", onPress: () => clearAll() }
+                    ]);
+                  }}
+                >
+                  <Text style={styles.secondaryButtonText}>Clear Wishlist</Text>
+                </TouchableOpacity>
+              </View>
+            </ScrollReveal>
+          }
+        />
+      </View>
     );
 }
 

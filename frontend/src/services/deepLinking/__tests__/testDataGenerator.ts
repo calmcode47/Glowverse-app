@@ -217,3 +217,21 @@ export function printTestLinks(): void {
     console.log('=== Email Template ===\n');
     console.log(generateEmailTemplate(links));
 }
+
+describe("deepLinking testDataGenerator", () => {
+    it("generates a non-empty link set", () => {
+        const links = generateTestLinks();
+        expect(Array.isArray(links)).toBe(true);
+        expect(links.length).toBeGreaterThan(0);
+        expect(links.some(l => l.type === "product")).toBe(true);
+        expect(links.some(l => l.type === "promotion")).toBe(true);
+    });
+
+    it("generates an email template containing URLs", () => {
+        const links = generateTestLinks();
+        const html = generateEmailTemplate(links);
+        expect(typeof html).toBe("string");
+        expect(html.includes("Glowverse Deep Link Testing")).toBe(true);
+        expect(html.includes(links[0].url)).toBe(true);
+    });
+});

@@ -1,8 +1,8 @@
 import { analytics } from "../../services/analytics.service";
 let Sentry: any = null;
 try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Sentry = require("@sentry/react-native");
+  const name: any = "@sentry/react-native";
+  Sentry = (require as any)(name);
 } catch {}
 
 export function trackApiError(error: any, context: { endpoint: string; method: string; statusCode: number }): void {
@@ -19,4 +19,3 @@ export function trackApiError(error: any, context: { endpoint: string; method: s
     } as any);
   } catch {}
 }
-

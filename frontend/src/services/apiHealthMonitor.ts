@@ -33,8 +33,8 @@ class APIHealthMonitor {
     } catch (error: any) {
       this.healthStatus.set("api", { status: "unhealthy", error: error?.message || "unknown", lastChecked: new Date() });
       try {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Sentry = require("@sentry/react-native");
+        const name: any = "@sentry/react-native";
+        const Sentry = (require as any)(name);
         Sentry.captureMessage("API Health Check Failed", { level: "warning", extra: { error } });
       } catch {}
     }

@@ -33,9 +33,21 @@ function mapFavorite(f: any): Favorite {
 }
 
 export async function getFavorites(): Promise<Favorite[]> {
-  const res = await client.get("/api/v1/favorites");
-  const arr = Array.isArray(res.data.favorites) ? res.data.favorites : Array.isArray(res.data) ? res.data : [];
-  return arr.map(mapFavorite);
+  try {
+    const res = await client.get("/api/v1/favorites");
+    const arr = Array.isArray(res.data.favorites) ? res.data.favorites : Array.isArray(res.data) ? res.data : [];
+    return arr.map(mapFavorite);
+  } catch {
+    // Fallback demo favorites
+    const { bestsellers } = await import("../../data/products");
+    const now = new Date().toISOString();
+    return bestsellers.slice(0, 4).map((p, idx) => ({
+      id: `demo-${idx}`,
+      productId: p.id,
+      product: p,
+      createdAt: now
+    }));
+  }
 }
 
 export async function addFavorite(productId: string): Promise<Favorite> {

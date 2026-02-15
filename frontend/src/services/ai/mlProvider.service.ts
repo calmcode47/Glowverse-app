@@ -24,7 +24,7 @@ export interface MLProviderConfig {
  * Base ML Provider Interface
  */
 export interface IMLProvider {
-    analyzeSkin(imageData: string | Buffer): Promise<Partial<SkinAnalysisResult>>;
+    analyzeSkin(imageData: string | any): Promise<Partial<SkinAnalysisResult>>;
     getName(): string;
     getVersion(): string;
 }
@@ -41,7 +41,7 @@ export class MockMLProvider implements IMLProvider {
         return '1.0.0';
     }
 
-    async analyzeSkin(imageData: string | Buffer): Promise<Partial<SkinAnalysisResult>> {
+    async analyzeSkin(imageData: string | any): Promise<Partial<SkinAnalysisResult>> {
         // Simulate processing delay
         await new Promise(resolve => setTimeout(resolve, 2000));
 
@@ -134,14 +134,12 @@ export class CustomAPIProvider implements IMLProvider {
         return '1.0.0';
     }
 
-    async analyzeSkin(imageData: string | Buffer): Promise<Partial<SkinAnalysisResult>> {
+    async analyzeSkin(imageData: string | any): Promise<Partial<SkinAnalysisResult>> {
         // This will be called by the backend, which handles the actual ML provider
         // The frontend just sends the image and receives structured results
 
         // Convert Buffer to base64 if needed
-        const base64Image = typeof imageData === 'string'
-            ? imageData
-            : imageData.toString('base64');
+        const base64Image = typeof imageData === 'string' ? imageData : String((imageData as any));
 
         const response = await fetch(`${this.apiEndpoint}/api/v1/ai/skin-analysis`, {
             method: 'POST',

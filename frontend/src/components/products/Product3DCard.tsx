@@ -108,7 +108,7 @@ export default function Product3DCard({ product, onPress, index = 0 }: Product3D
                                     style={styles.placeholderImage}
                                 >
                                     <MaterialCommunityIcons
-                                        name={getCategoryIcon(product.category)}
+                                        name={getCategoryIcon(product.category) as any}
                                         size={80}
                                         color={categoryColor}
                                     />

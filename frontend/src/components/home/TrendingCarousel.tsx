@@ -19,6 +19,7 @@ import { useNavigation } from '@react-navigation/native';
 import { Product } from '../../data/products';
 import { useTheme } from '../../theme/themeContext';
 import PriceTrendGraph from './PriceTrendGraph';
+import { useFavorites } from '../../context/FavoritesContext';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 const CARD_WIDTH = SCREEN_WIDTH * 0.75;
@@ -30,6 +31,8 @@ interface TrendingCarouselProps {
 export default function TrendingCarousel({ products }: TrendingCarouselProps) {
     const { theme } = useTheme();
     const navigation = useNavigation<any>();
+    const { add } = useFavorites();
+    const [liked, setLiked] = React.useState<Record<string, boolean>>({});
 
     const renderItem = ({ item, index }: { item: Product; index: number }) => (
         <Animated.View
@@ -72,8 +75,16 @@ export default function TrendingCarousel({ products }: TrendingCarouselProps) {
 
                 <TouchableOpacity
                     style={[styles.favButton, { backgroundColor: theme.colors.background.primary + '80' }]}
+                    onPress={async () => {
+                        try {
+                            await add(item.id);
+                            setLiked((m) => ({ ...m, [item.id]: true }));
+                        } catch {}
+                    }}
+                    accessibilityRole="button"
+                    accessibilityLabel="Add to wishlist"
                 >
-                    <MaterialCommunityIcons name="heart-outline" size={20} color={theme.colors.text.primary} />
+                    <MaterialCommunityIcons name={liked[item.id] ? "heart" : "heart-outline"} size={20} color={liked[item.id] ? theme.colors.accent.rose : theme.colors.text.primary} />
                 </TouchableOpacity>
             </TouchableOpacity>
         </Animated.View>
@@ -88,6 +99,10 @@ export default function TrendingCarousel({ products }: TrendingCarouselProps) {
                 showsHorizontalScrollIndicator={false}
                 snapToInterval={CARD_WIDTH + 20}
                 decelerationRate="fast"
+                removeClippedSubviews
+                initialNumToRender={4}
+                windowSize={5}
+                updateCellsBatchingPeriod={50}
                 contentContainerStyle={styles.listContent}
                 keyExtractor={(item) => item.id}
             />

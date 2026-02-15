@@ -13,23 +13,16 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../../theme/themeContext';
 import * as TryOnAPI from '../../services/api/tryon.api';
 import ProfessionalBackground from '../../components/animated/ProfessionalBackground';
+import LoadingOverlay from '../../components/common/LoadingOverlay';
+import FaceDetectionIndicator from '../../components/ar/FaceDetectionIndicator';
+import { useARSDK } from '../../hooks/useARSDK';
+import { ARSDKError, ARErrorCode } from '../../services/ar/errors';
+import { ARAnalytics } from '../../services/ar/AnalyticsService';
+import { useARFrameProcessor } from '../../services/ar/frameProcessor';
+import ErrorBoundary from '../../components/common/ErrorBoundary';
+import { ARSDKModule } from '../../modules/ar-sdk';
 
-// Note: PerfectCorp SDK might need to be linked separately if npm installation is not available
-// We are following the suggested implementation structure.
-let PerfectCorpAR: any;
-try {
-    PerfectCorpAR = require('@perfectcorp/react-native-ar').PerfectCorpAR;
-} catch (e) {
-    console.warn('PerfectCorp SDK not found, using mock implementation');
-    PerfectCorpAR = {
-        initialize: async () => console.log('Mock AR Init'),
-        applyProduct: async () => console.log('Mock AR Apply'),
-        clearAll: () => console.log('Mock AR Clear'),
-        View: ({ style }: any) => <View style={[style, { backgroundColor: 'rgba(255, 107, 157, 0.2)', alignItems: 'center', justifyContent: 'center' }]}><Text style={{ color: '#fff' }}>AR Overlay Mock</Text></View>
-    };
-}
-
-export default function ARTryOnScreen({ route, navigation }: any) {
+function ARTryOnScreenInner({ route, navigation }: any) {
     const { productId } = route.params;
     const { theme } = useTheme();
 
@@ -38,11 +31,31 @@ export default function ARTryOnScreen({ route, navigation }: any) {
     const [sessionId, setSessionId] = useState<string | null>(null);
     const [arEnabled, setArEnabled] = useState(false);
     const device = useCameraDevice('front');
+    const [sdkInitializing, setSdkInitializing] = useState(false);
+    const [applying, setApplying] = useState(false);
+    const [capturing, setCapturing] = useState(false);
+    const [error, setError] = useState<ARSDKError | null>(null);
+    const { isInitialized, isTracking, faceLandmarks, initialize, start, stop, applyMakeup, removeMakeup, captureScreenshot, resetError } = useARSDK();
+    const frameProcessor = useARFrameProcessor();
+    const [fps, setFps] = useState<number>(0);
 
     useEffect(() => {
         handlePermissions();
         startTryOnSession();
     }, []);
+
+    useEffect(() => {
+        let interval: any;
+        if (isInitialized) {
+            interval = setInterval(async () => {
+                try {
+                    const m = await ARSDKModule.getPerformanceMetrics();
+                    setFps(m.fps || 0);
+                } catch {}
+            }, 1000);
+        }
+        return () => clearInterval(interval);
+    }, [isInitialized]);
 
     const handlePermissions = async () => {
         if (!hasPermission) {
@@ -67,44 +80,81 @@ export default function ARTryOnScreen({ route, navigation }: any) {
         }
     };
 
-    const applyMakeup = async () => {
-        setArEnabled(true);
-        try {
-            if (PerfectCorpAR.initialize) {
-                await PerfectCorpAR.initialize({
-                    apiKey: 'PROD_VTRYON_KEY_2026_X8', // Placeholder for actual key
-                });
-
-                await PerfectCorpAR.applyProduct({
-                    productId: productId,
-                    type: 'lipstick', // Defaulting to lipstick for this demo
-                });
+    useEffect(() => {
+        let mounted = true;
+        (async () => {
+            try {
+                setSdkInitializing(true);
+                await initialize();
+                await start();
+            } catch (e) {
+                const err = e as ARSDKError;
+                if (mounted) setError(err);
+            } finally {
+                if (mounted) setSdkInitializing(false);
             }
+        })();
+        return () => {
+            mounted = false;
+            stop().catch(() => undefined);
+        };
+    }, []);
 
+    const getErrorMessage = (e: ARSDKError): string => {
+        switch (e.code) {
+            case ARErrorCode.LICENSE_INVALID:
+                return 'AR feature is temporarily unavailable';
+            case ARErrorCode.CAMERA_PERMISSION_DENIED:
+                return 'Camera permission is required';
+            case ARErrorCode.FACE_NOT_DETECTED:
+                return 'Please position your face in the frame';
+            default:
+                return 'An AR error occurred';
+        }
+    };
+
+    const onApplyMakeup = async () => {
+        setApplying(true);
+        try {
+            setArEnabled(true);
+            await applyMakeup({
+                productId,
+                category: 'lipstick',
+                color: '#FF6B9D',
+                intensity: 80
+            });
             if (sessionId) {
                 await TryOnAPI.applyProduct(sessionId, productId);
             }
-        } catch (error) {
-            Alert.alert('Error', 'Failed to apply makeup effects.');
+            ARAnalytics.trackProductApplied(
+                { id: productId, name: productId, category: 'lipstick', color: '#FF6B9D', finish: 'glossy', opacity: 0.8 },
+                0.8
+            );
+        } catch (e) {
+            const err = e as ARSDKError;
+            setError(err);
+            Alert.alert('Error', getErrorMessage(err));
             setArEnabled(false);
+        } finally {
+            setApplying(false);
         }
     };
 
     const capturePhoto = async () => {
         if (!camera.current) return;
-
+        setCapturing(true);
         try {
-            const photo = await camera.current.takePhoto({
-                flash: 'off',
-                enableShutterSound: true,
-            });
-
+            const screenshot = await captureScreenshot();
             navigation.navigate('Results', {
-                imageUri: `file://${photo.path}`,
+                imageUri: screenshot.uri,
                 productId,
             });
-        } catch (error) {
-            Alert.alert('Error', 'Failed to capture photo');
+        } catch (e) {
+            const err = e as ARSDKError;
+            setError(err);
+            Alert.alert('Error', getErrorMessage(err));
+        } finally {
+            setCapturing(false);
         }
     };
 
@@ -131,17 +181,21 @@ export default function ARTryOnScreen({ route, navigation }: any) {
                 device={device}
                 isActive={true}
                 photo={true}
+                frameProcessor={frameProcessor as any}
             />
 
-            {arEnabled && PerfectCorpAR.View && (
-                <PerfectCorpAR.View style={StyleSheet.absoluteFill} />
-            )}
+            <FaceDetectionIndicator
+                detected={!!faceLandmarks}
+                quality={(faceLandmarks?.quality as any) ?? null}
+            />
 
             {/* Top Bar */}
             <View style={styles.topBar}>
                 <TouchableOpacity
                     style={styles.circleButton}
                     onPress={() => navigation.goBack()}
+                    accessibilityLabel="Close try-on"
+                    testID="tryon-close"
                 >
                     <MaterialCommunityIcons name="close" size={24} color="#FFFFFF" />
                 </TouchableOpacity>
@@ -165,9 +219,11 @@ export default function ARTryOnScreen({ route, navigation }: any) {
                             <TouchableOpacity
                                 style={styles.secondaryButton}
                                 onPress={() => {
-                                    PerfectCorpAR.clearAll && PerfectCorpAR.clearAll();
+                                    removeMakeup().catch(() => undefined);
                                     setArEnabled(false);
                                 }}
+                                accessibilityLabel="Reset makeup"
+                                testID="tryon-reset"
                             >
                                 <MaterialCommunityIcons name="refresh" size={24} color="#FFFFFF" />
                                 <Text style={styles.buttonText}>Reset</Text>
@@ -176,6 +232,8 @@ export default function ARTryOnScreen({ route, navigation }: any) {
                             <TouchableOpacity
                                 style={styles.captureButton}
                                 onPress={capturePhoto}
+                                accessibilityLabel="Capture screenshot"
+                                testID="tryon-capture"
                             >
                                 <View style={styles.captureButtonInner} />
                             </TouchableOpacity>
@@ -183,6 +241,8 @@ export default function ARTryOnScreen({ route, navigation }: any) {
                             <TouchableOpacity
                                 style={styles.secondaryButton}
                                 onPress={() => navigation.navigate('ProductDetail', { productId })}
+                                accessibilityLabel="Open cart"
+                                testID="tryon-cart"
                             >
                                 <MaterialCommunityIcons name="shopping-outline" size={24} color="#FFFFFF" />
                                 <Text style={styles.buttonText}>Cart</Text>
@@ -191,15 +251,33 @@ export default function ARTryOnScreen({ route, navigation }: any) {
                     ) : (
                         <TouchableOpacity
                             style={styles.applyButton}
-                            onPress={applyMakeup}
+                            onPress={onApplyMakeup}
+                            accessibilityLabel="Apply makeup"
+                            testID="tryon-apply"
                         >
-                            <MaterialCommunityIcons name="sparkles" size={24} color="#FFFFFF" />
+                            <MaterialCommunityIcons name="star-four-points" size={24} color="#FFFFFF" />
                             <Text style={styles.applyButtonText}>Apply Makeup</Text>
                         </TouchableOpacity>
                     )}
                 </View>
             </View>
+
+            <View style={styles.fpsBadge} accessibilityLabel="FPS counter">
+                <Text style={styles.fpsText}>{fps} FPS</Text>
+            </View>
+
+            <LoadingOverlay visible={sdkInitializing} message="Initializing AR..." />
+            <LoadingOverlay visible={applying} message="Applying look..." />
+            <LoadingOverlay visible={capturing} message="Capturing..." />
         </View>
+    );
+}
+
+export default function ARTryOnScreen(props: any) {
+    return (
+        <ErrorBoundary onRetry={() => {}}>
+            <ARTryOnScreenInner {...props} />
+        </ErrorBoundary>
     );
 }
 
@@ -342,4 +420,17 @@ const styles = StyleSheet.create({
         fontSize: 12,
         fontWeight: '700',
     },
+    fpsBadge: {
+        position: 'absolute',
+        right: 12,
+        bottom: 140,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        borderRadius: 12,
+        paddingHorizontal: 8,
+        paddingVertical: 4
+    },
+    fpsText: {
+        color: '#fff',
+        fontWeight: '800'
+    }
 });

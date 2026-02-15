@@ -30,13 +30,17 @@ import { categories } from '../../data/products';
 import type { Product } from '../../data/products';
 import * as ProductsAPI from '../../services/api/products.api';
 import type { RootStackParamList } from '../../navigation/types';
+import { useAuth } from "../../context/AuthContext";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import PromotionBanner from '../../components/promotions/PromotionBanner';
+import { InteractionManager } from 'react-native';
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const navigation = useNavigation<StackNavigationProp<RootStackParamList>>();
   const { theme, isDark } = useTheme();
+  const { user } = useAuth() as any;
   const [activeCategory, setActiveCategory] = useState('all');
   const { scrollY, scrollHandler } = useAppleScrollHandler();
   const [refreshing, setRefreshing] = useState(false);
@@ -45,6 +49,7 @@ export default function HomeScreen() {
   const [newArrivals, setNewArrivals] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+  const [greetingName, setGreetingName] = useState<string>("");
   const onRefresh = () => {
     setRefreshing(true);
     (async () => {
@@ -67,24 +72,46 @@ export default function HomeScreen() {
   };
 
   React.useEffect(() => {
-    (async () => {
-      try {
-        const [f, t, n] = await Promise.all([
-          ProductsAPI.getFeaturedProducts(),
-          ProductsAPI.getBestsellers(),
-          ProductsAPI.getNewArrivals()
-        ]);
-        setFeatured(f);
-        setTrending(t);
-        setNewArrivals(n);
-        setErr(null);
-      } catch (e: any) {
-        setErr(e?.message || 'Failed to load products');
-      } finally {
-        setLoading(false);
-      }
-    })();
+    const task = InteractionManager.runAfterInteractions(() => {
+      (async () => {
+        try {
+          const [f, t, n] = await Promise.all([
+            ProductsAPI.getFeaturedProducts(),
+            ProductsAPI.getBestsellers(),
+            ProductsAPI.getNewArrivals()
+          ]);
+          setFeatured(f);
+          setTrending(t);
+          setNewArrivals(n);
+          setErr(null);
+        } catch (e: any) {
+          setErr(e?.message || 'Failed to load products');
+        } finally {
+          setLoading(false);
+        }
+      })();
+    });
+    return () => {
+      // @ts-ignore
+      task?.cancel?.();
+    };
   }, []);
+
+  React.useEffect(() => {
+    (async () => {
+      if (user?.name) {
+        setGreetingName(user.name.split(" ")[0]);
+        return;
+      }
+      try {
+        const raw = await AsyncStorage.getItem("demo_user");
+        if (raw) {
+          const u = JSON.parse(raw);
+          if (u?.name) setGreetingName(String(u.name).split(" ")[0]);
+        }
+      } catch {}
+    })();
+  }, [user?.name]);
 
   const styles = createStyles(theme, isDark);
 
@@ -105,13 +132,14 @@ export default function HomeScreen() {
         showsVerticalScrollIndicator={false}
         onScroll={scrollHandler}
         scrollEventThrottle={16}
+        removeClippedSubviews
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Header */}
         <ScrollReveal delay={0} scale springy>
           <View style={styles.header}>
             <View>
-              <Text style={styles.greeting}>Hello, Alex 👋</Text>
+              <Text style={styles.greeting}>Hello{greetingName ? `, ${greetingName}` : ""} 👋</Text>
               <Text style={styles.subgreeting}>Elevate your style today</Text>
             </View>
             <View style={styles.headerIcons}>
@@ -177,7 +205,7 @@ export default function HomeScreen() {
                   ]}
                   onPress={() => {
                     setActiveCategory(category.id);
-                    navigation.navigate('ShopTab' as any);
+                    (navigation as any).navigate('MainTabs', { screen: 'ShopTab' });
                   }}
                 >
                   <View style={[
@@ -201,7 +229,7 @@ export default function HomeScreen() {
         <ScrollReveal delay={600} scale springy>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Featured Products</Text>
-            <TouchableOpacity onPress={() => navigation.navigate('ShopTab' as any)}>
+            <TouchableOpacity onPress={() => (navigation as any).navigate('MainTabs', { screen: 'ShopTab' })}>
               <Text style={styles.seeAll}>See All →</Text>
             </TouchableOpacity>
           </View>
@@ -295,11 +323,11 @@ export default function HomeScreen() {
         </ScrollReveal>
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 20, gap: 16, paddingBottom: 20 }}>
-          <TipCard title="Dress for Success" description="Tips on formal wear matching." color="#3B82F6" theme={theme} />
-          <TipCard title="Summer Vibes" description="Choosing the right sunglasses." color="#F59E0B" theme={theme} />
-          <TipCard title="Shoe Care" description="Keep your sneakers fresh." color="#10B981" theme={theme} />
-          <TipCard title="Smart Style" description="Accessorizing with tech gadgets." color="#8B5CF6" theme={theme} />
-          <TipCard title="Glow Guide" description="Maintaining your premium look." color="#EC4899" theme={theme} />
+          <TipCard title="Dress for Success" description="Tips on formal wear matching." color="#3B82F6" theme={theme} onPress={() => navigation.navigate('TipsDetail' as any, { title: "Dress for Success", body: "Tips on formal wear matching." })} />
+          <TipCard title="Summer Vibes" description="Choosing the right sunglasses." color="#F59E0B" theme={theme} onPress={() => navigation.navigate('TipsDetail' as any, { title: "Summer Vibes", body: "Choosing the right sunglasses." })} />
+          <TipCard title="Shoe Care" description="Keep your sneakers fresh." color="#10B981" theme={theme} onPress={() => navigation.navigate('TipsDetail' as any, { title: "Shoe Care", body: "Keep your sneakers fresh with simple daily routines." })} />
+          <TipCard title="Smart Style" description="Accessorizing with tech gadgets." color="#8B5CF6" theme={theme} onPress={() => navigation.navigate('TipsDetail' as any, { title: "Smart Style", body: "Accessorizing with tech gadgets." })} />
+          <TipCard title="Glow Guide" description="Maintaining your premium look." color="#EC4899" theme={theme} onPress={() => navigation.navigate('TipsDetail' as any, { title: "Glow Guide", body: "Maintaining your premium look." })} />
         </ScrollView>
 
         {/* Brand Spotlight */}
@@ -307,7 +335,7 @@ export default function HomeScreen() {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Brand Spotlight</Text>
           </View>
-          <View style={styles.brandSpotlight}>
+          <TouchableOpacity style={styles.brandSpotlight} onPress={() => navigation.navigate('EliteAccess' as any)}>
             <LinearGradient
               colors={['#1F2937', '#111827']}
               style={styles.spotlightGradient}
@@ -318,7 +346,7 @@ export default function HomeScreen() {
                 <Text style={styles.spotlightSubtitle}>Ray-Ban Custom Lab is now open for you.</Text>
               </View>
             </LinearGradient>
-          </View>
+          </TouchableOpacity>
         </ScrollReveal>
 
         {/* Bottom Spacing */}
@@ -369,8 +397,8 @@ function StatCard({ icon, label, value, theme }: {
   );
 }
 
-const TipCard = ({ title, description, color, theme }: any) => (
-  <TouchableOpacity style={{
+const TipCard = ({ title, description, color, theme, onPress }: any) => (
+  <TouchableOpacity onPress={onPress} style={{
     width: 200,
     padding: theme.spacing.md,
     backgroundColor: theme.colors.background.elevated,

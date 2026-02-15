@@ -1,5 +1,6 @@
 import React from "react";
 import "react-native-gesture-handler";
+import { enableScreens, enableFreeze } from "react-native-screens";
 import { StatusBar } from "expo-status-bar";
 import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
@@ -33,6 +34,11 @@ import { offlineQueue } from "./src/services/offlineQueue.service";
 import { networkMonitor } from "./src/services/sync/NetworkMonitor";
 import { OfflineBanner } from "./src/components/offline/OfflineBanner";
 
+// Optimize navigation performance
+try {
+  enableScreens(true);
+  enableFreeze(true);
+} catch {}
 
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
@@ -107,21 +113,23 @@ function AppContent({ connected }: { connected: boolean }) {
       onReady={() => {
         routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
       }}
-      onStateChange={async () => {
+      onStateChange={() => {
         const previous = routeNameRef.current;
         const current = navigationRef.current?.getCurrentRoute()?.name;
         if (current && previous !== current) {
-          await analytics.logScreenView(current);
+          analytics.logScreenView(current).catch(() => {});
         }
         routeNameRef.current = current;
       }}
     >
-      <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
-      <OfflineBanner />
-      <ConflictIndicator />
-      <ConflictHost />
-      <RootNavigator />
-      <StatusBar style="auto" />
+      <NotificationsProvider>
+        <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
+        <OfflineBanner />
+        <ConflictIndicator />
+        <ConflictHost />
+        <RootNavigator />
+        <StatusBar style="auto" />
+      </NotificationsProvider>
     </NavigationContainer>
   );
 }
@@ -131,47 +139,75 @@ export default function App() {
   usePreloadScreens();
 
   React.useEffect(() => {
-    (async () => {
-      await AsyncStorage.setItem("apiBaseUrl", ENV.apiBaseUrl);
-      const origin = ENV.apiBaseUrl.replace(/\/api\/v1$/, "");
-      try {
-        const res = await fetch(`${origin}/health`);
-        setConnected(res.status === 200);
-      } catch {
-        setConnected(false);
-      }
-    })();
+    const cancel = InteractionManager.runAfterInteractions(() => {
+      (async () => {
+        await AsyncStorage.setItem("apiBaseUrl", ENV.apiBaseUrl);
+        const origin = ENV.apiBaseUrl.replace(/\/api\/v1$/, "");
+        try {
+          const res = await fetch(`${origin}/health`);
+          setConnected(res.status === 200);
+        } catch {
+          setConnected(false);
+        }
+      })();
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
   }, []);
 
   React.useEffect(() => {
-    conflictQueue.loadConflicts().catch(() => { });
+    const cancel = InteractionManager.runAfterInteractions(() => {
+      conflictQueue.loadConflicts().catch(() => { });
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
   }, []);
 
   React.useEffect(() => {
-    if (connected) {
+    if (!connected) return;
+    const cancel = InteractionManager.runAfterInteractions(() => {
       offlineQueue.processQueue().catch(() => { });
-    }
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
   }, [connected]);
 
   React.useEffect(() => {
-    try {
-      const dsn = ENV.sentryDSN;
-      if (dsn) {
-        const Sentry = require("@sentry/react-native");
-        Sentry.init({
-          dsn,
-          enableInExpoDevelopment: false,
-          debug: false,
-          environment: ENV.environment,
-          release: Constants.expoConfig?.version
-        });
-      }
-    } catch { }
+    const isWeb = typeof window !== "undefined";
+    const dsn = isWeb ? undefined : ENV.sentryDSN;
+    if (dsn && !isWeb) {
+      const moduleName: any = "@sentry/react-native";
+      (import(moduleName) as Promise<any>)
+        .then((Sentry) => {
+          try {
+            Sentry.init({
+              dsn,
+              enableInExpoDevelopment: false,
+              debug: false,
+              environment: ENV.environment,
+              release: Constants.expoConfig?.version
+            });
+          } catch {}
+        })
+        .catch(() => {});
+    }
   }, []);
 
   React.useEffect(() => {
-    initializeStripe().catch(() => { });
-    notificationService.initialize().catch(() => { });
+    const cancel = InteractionManager.runAfterInteractions(() => {
+      initializeStripe().catch(() => { });
+      notificationService.initialize().catch(() => { });
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
   }, []);
 
   React.useEffect(() => {
@@ -202,29 +238,25 @@ export default function App() {
   }, []);
 
   return (
-    <ErrorBoundary>
-      <PersistQueryClientProvider
-        client={queryClient}
-        persistOptions={{ persister: asyncStoragePersister }}
-      >
-        <GestureHandlerRootView style={{ flex: 1 }}>
-          <SafeAreaProvider>
-            <ThemeProvider>
-              <AuthProvider>
-                <NotificationsProvider>
-                  <CartProvider>
-                    <FavoritesProvider>
-                      <ErrorBoundary>
-                        <AppContent connected={connected} />
-                      </ErrorBoundary>
-                    </FavoritesProvider>
-                  </CartProvider>
-                </NotificationsProvider>
-              </AuthProvider>
-            </ThemeProvider>
-          </SafeAreaProvider>
-        </GestureHandlerRootView>
-      </PersistQueryClientProvider>
-    </ErrorBoundary>
+    <PersistQueryClientProvider
+      client={queryClient}
+      persistOptions={{ persister: asyncStoragePersister }}
+    >
+      <GestureHandlerRootView style={{ flex: 1 }}>
+        <SafeAreaProvider>
+          <ThemeProvider>
+            <AuthProvider>
+              <CartProvider>
+                <FavoritesProvider>
+                  <ErrorBoundary>
+                    <AppContent connected={connected} />
+                  </ErrorBoundary>
+                </FavoritesProvider>
+              </CartProvider>
+            </AuthProvider>
+          </ThemeProvider>
+        </SafeAreaProvider>
+      </GestureHandlerRootView>
+    </PersistQueryClientProvider>
   );
 }

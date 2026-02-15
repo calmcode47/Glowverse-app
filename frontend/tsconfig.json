@@ -1,27 +1,67 @@
 {
-  "extends": "expo/tsconfig.base",
   "compilerOptions": {
     "strict": true,
     "baseUrl": ".",
-    "target": "ES2017",
-    "lib": ["ES2017", "DOM"],
+    "target": "ES2020",
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "lib": [
+      "ES2020",
+      "DOM"
+    ],
     "esModuleInterop": true,
     "allowSyntheticDefaultImports": true,
     "paths": {
-      "@components/*": ["src/components/*"],
-      "@navigation/*": ["src/navigation/*"],
-      "@screens/*": ["src/screens/*"],
-      "@services/*": ["src/services/*"],
-      "@hooks/*": ["src/hooks/*"],
-      "@context/*": ["src/context/*"],
-      "@utils/*": ["src/utils/*"],
-      "@constants/*": ["src/constants/*"],
-      "@assets/*": ["src/assets/*"]
+      "@components/*": [
+        "src/components/*"
+      ],
+      "@navigation/*": [
+        "src/navigation/*"
+      ],
+      "@screens/*": [
+        "src/screens/*"
+      ],
+      "@services/*": [
+        "src/services/*"
+      ],
+      "@hooks/*": [
+        "src/hooks/*"
+      ],
+      "@context/*": [
+        "src/context/*"
+      ],
+      "@utils/*": [
+        "src/utils/*"
+      ],
+      "@constants/*": [
+        "src/constants/*"
+      ],
+      "@assets/*": [
+        "src/assets/*"
+      ]
     },
-    "types": ["react", "react-native", "expo", "jest"],
+    "types": [
+      "react",
+      "react-native",
+      "expo",
+      "jest"
+    ],
     "jsx": "react-native",
     "resolveJsonModule": true,
     "skipLibCheck": true
   },
-  "exclude": ["__tests__/**/*"]
+  "include": [
+    "src/**/*",
+    "App.tsx",
+    "index.ts",
+    "jest.config.js"
+  ],
+  "exclude": [
+    "__tests__/**/*",
+    "coverage/**/*",
+    "dist/**/*",
+    "build/**/*",
+    "node_modules"
+  ],
+  "extends": "expo/tsconfig.base"
 }

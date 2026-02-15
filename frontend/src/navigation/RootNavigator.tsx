@@ -35,6 +35,9 @@ const OrderDetailScreen = lazyLoad(() => import("@screens/profile/OrderDetailScr
 const OrderTrackingScreen = lazyLoad(() => import("@screens/orders/OrderTrackingScreen"));
 const AnalysisHistoryScreen = lazyLoad(() => import("@screens/analysis/AnalysisHistoryScreen"));
 const AnalysisResultsScreen = lazyLoad(() => import("@screens/analysis/AnalysisResultsScreen"));
+const HistoryDashboardScreen = lazyLoad(() => import("@screens/history/HistoryDashboardScreen"));
+const FitnessActivityDetail = lazyLoad(() => import("@screens/fitness/FitnessActivityDetail"));
+const ARSessionDetail = lazyLoad(() => import("@screens/ar/ARSessionDetail"));
 const SettingsScreen = lazyLoad(() => import("@screens/profile/SettingsScreen"));
 const NotificationsScreen = lazyLoad(() => import("@screens/notifications/NotificationsScreen"));
 const PromotionsScreen = lazyLoad(() => import("@screens/shop/PromotionsScreen"));
@@ -42,6 +45,8 @@ const ReferralDashboardScreen = lazyLoad(() => import("@screens/referrals/Referr
 const VirtualTryOnScreen = lazyLoad(() => import("@screens/ar/VirtualTryOnScreen"));
 const ARTryOnScreen = lazyLoad(() => import("@screens/tryon/ARTryOnScreen"));
 const FitnessDashboardScreen = lazyLoad(() => import("@screens/fitness/FitnessDashboardScreen"));
+const TipsDetailScreen = lazyLoad(() => import("@screens/tips/TipsDetailScreen"));
+const EliteAccessScreen = lazyLoad(() => import("@screens/elite/EliteAccessScreen"));
 const NotificationPreferencesScreen = lazyLoad(() => import("@screens/settings/NotificationPreferencesScreen"));
 const AdvancedFiltersScreen = lazyLoad(() => import("@screens/shop/AdvancedFiltersScreen"));
 const SkinAnalysisScreen = lazyLoad(() => import("@screens/analysis/SkinAnalysisScreen"));
@@ -84,50 +89,45 @@ export default function RootNavigator() {
     <LazyLoadErrorBoundary>
       <Suspense fallback={<LazyScreenLoading />}>
         <Stack.Navigator
-          initialRouteName={!hasOnboarded ? "Onboarding" : isAuthenticated ? "MainTabs" : "Login"}
+          initialRouteName={"MainTabs"}
           screenOptions={{
             headerTitleAlign: "center",
-            headerStyle: { backgroundColor: appTheme.colors.surfaceDark },
-            headerTintColor: appTheme.colors.text.inverse,
+            headerStyle: { backgroundColor: "#FFFFFF" },
+            headerTintColor: "#1E2A3B",
             headerRight: () => <HeaderRight />,
             headerLeft: () => <BackButton />,
           }}
         >
-          {!isAuthenticated ? (
-            <>
-              <Stack.Screen
-                name="Onboarding"
-                component={OnboardingScreen}
-                options={{
-                  title: "Welcome",
-                  headerLeft: () => null,
-                }}
-              />
-              <Stack.Screen
-                name="Login"
-                component={LoginScreen}
-                options={{
-                  title: "Login",
-                }}
-              />
-              <Stack.Screen
-                name="SignUp"
-                component={RegisterScreen}
-                options={{
-                  title: "Create Account",
-                }}
-              />
-            </>
-          ) : (
-            <Stack.Screen
-              name="MainTabs"
-              component={MainTabNavigator}
-              options={{
-                title: "Your Brand",
-                headerShown: false,
-              }}
-            />
-          )}
+          <Stack.Screen
+            name="MainTabs"
+            component={MainTabNavigator}
+            options={{
+              title: "Glowverse",
+              headerShown: false,
+            }}
+          />
+          <Stack.Screen
+            name="Onboarding"
+            component={OnboardingScreen}
+            options={{
+              title: "Welcome",
+              headerLeft: () => null,
+            }}
+          />
+          <Stack.Screen
+            name="Login"
+            component={LoginScreen}
+            options={{
+              title: "Login",
+            }}
+          />
+          <Stack.Screen
+            name="SignUp"
+            component={RegisterScreen}
+            options={{
+              title: "Create Account",
+            }}
+          />
           <Stack.Screen
             name="ProductDetail"
             component={ProductDetailScreen}
@@ -162,6 +162,33 @@ export default function RootNavigator() {
               title: "Results",
               cardStyleInterpolator: CardStyleInterpolators.forModalPresentationIOS,
               gestureEnabled: true,
+            }}
+          />
+          <Stack.Screen
+            name="HistoryDashboard"
+            component={HistoryDashboardScreen}
+            options={{
+              title: "History",
+              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+              gestureEnabled: true
+            }}
+          />
+          <Stack.Screen
+            name="FitnessActivityDetail"
+            component={FitnessActivityDetail}
+            options={{
+              title: "Fitness Activity",
+              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+              gestureEnabled: true
+            }}
+          />
+          <Stack.Screen
+            name="ARSessionDetail"
+            component={ARSessionDetail}
+            options={{
+              title: "AR Session",
+              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
+              gestureEnabled: true
             }}
           />
           <Stack.Screen
@@ -377,6 +404,22 @@ export default function RootNavigator() {
               title: "Promotions",
               cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS,
               gestureEnabled: true
+            }}
+          />
+          <Stack.Screen
+            name="TipsDetail"
+            component={TipsDetailScreen}
+            options={{
+              title: "Daily Tip",
+              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS
+            }}
+          />
+          <Stack.Screen
+            name="EliteAccess"
+            component={EliteAccessScreen}
+            options={{
+              title: "Elite Access",
+              cardStyleInterpolator: CardStyleInterpolators.forHorizontalIOS
             }}
           />
           <Stack.Screen

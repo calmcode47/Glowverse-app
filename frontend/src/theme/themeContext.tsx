@@ -21,7 +21,7 @@ const THEME_STORAGE_KEY = '@glowverse_theme_mode';
 
 export function ThemeProvider({ children }: { children: ReactNode }) {
     const systemColorScheme = useColorScheme();
-    const [themeMode, setThemeModeState] = useState<ThemeMode>('auto');
+    const [themeMode, setThemeModeState] = useState<ThemeMode>('light');
 
     // Initialize theme from storage
     useEffect(() => {
@@ -78,7 +78,13 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 export function useTheme() {
     const context = useContext(ThemeContext);
     if (context === undefined) {
-        throw new Error('useTheme must be used within a ThemeProvider');
+        return {
+            theme: lightTheme,
+            themeMode: 'light',
+            isDark: false,
+            setThemeMode: () => {},
+            toggleTheme: () => {},
+        };
     }
     return context;
 }

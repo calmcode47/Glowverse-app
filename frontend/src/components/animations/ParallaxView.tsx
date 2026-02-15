@@ -39,7 +39,7 @@ export default function ParallaxView({
         };
     });
 
-    return <Animated.View style={[animatedStyle, style]}>{children}</Animated.View>;
+    return <Animated.View pointerEvents="none" style={[animatedStyle, style]}>{children}</Animated.View>;
 }
 
 /**
