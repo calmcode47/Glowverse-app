@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, Image, TouchableOpacity } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import type { Promotion } from "../../services/api/promotions.api";
 import { Button } from "react-native-paper";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
 import * as Clipboard from "expo-clipboard";
 import { Share } from "react-native";
 import { deepLinkingService } from "../../services/deepLinking.service";

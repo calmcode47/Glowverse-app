@@ -53,7 +53,7 @@ export default function ProfileScreen() {
       >
         {/* Profile Header */}
         <ScrollReveal delay={0}>
-          <ProfileHeader user={user || { name: "", email: "" }} onEditAvatar={() => navigation.navigate('EditProfile')} />
+          <ProfileHeader user={user ? { ...user, level: (user as any).level || "Bronze", points: (user as any).points || 0 } as any : { name: "", email: "", avatar: null, level: "Bronze", points: 0 }} onEditAvatar={() => navigation.navigate('EditProfile')} />
         </ScrollReveal>
 
         {/* Stats Row */}
@@ -110,6 +110,12 @@ export default function ProfileScreen() {
         <ScrollReveal delay={300}>
           <Text style={styles.sectionTitle}>Preferences</Text>
           <View style={styles.menuSection}>
+            <MenuItem
+              icon="bell-ring-outline"
+              label="Notification Preferences"
+              onPress={() => navigation.navigate('NotificationPreferences')}
+              styles={styles}
+            />
             <MenuItem
               icon="cog"
               label="Settings"
@@ -171,7 +177,7 @@ export default function ProfileScreen() {
         <View style={{ height: 100 }} />
       </ScrollView>
 
-      
+
     </View>
   );
 }

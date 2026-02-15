@@ -24,11 +24,11 @@ const AuthContext = React.createContext<AuthContextType>({
   accessToken: null,
   isAuthenticated: false,
   isLoading: true,
-  login: async () => {},
-  register: async () => {},
-  logout: async () => {},
-  refreshAuth: async () => {},
-  updateUser: () => {}
+  login: async () => { },
+  register: async () => { },
+  logout: async () => { },
+  refreshAuth: async () => { },
+  updateUser: () => { }
 });
 
 async function setTokens(accessToken: string, refreshToken: string): Promise<void> {
@@ -80,7 +80,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           const me = await AuthAPI.getProfile();
           setUser(me.user);
         }
-      } catch {}
+      } catch { }
       setIsLoading(false);
     })();
   }, []);
@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email: res.user.email,
         name: res.user.name || ""
       });
-    } catch {}
+    } catch { }
   };
 
   const register = async (data: RegisterData): Promise<void> => {
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = async (): Promise<void> => {
     try {
       await AuthAPI.logout();
-    } catch {}
+    } catch { }
     await clearTokens();
     setAccessToken(null);
     setUser(null);
@@ -148,6 +148,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
-export function useAuth() {
+export function useGlowAuth() {
   return React.useContext(AuthContext);
 }
+
+export { useGlowAuth as useAuth };

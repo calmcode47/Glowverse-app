@@ -18,7 +18,7 @@ export default function OutOfStockModal({ conflict, onResolve, onCancel }: Props
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onCancel}>
       <View style={styles.overlay}>
-        <View style={styles.sheet} accessibilityRole="dialog" accessibilityLabel="Item unavailable">
+        <View style={styles.sheet} accessibilityRole="header" accessibilityLabel="Item unavailable">
           <View style={styles.header}>
             <MaterialCommunityIcons name="package-variant-remove" size={40} color={theme.colors.error} />
             <Text style={styles.title}>Item Unavailable</Text>

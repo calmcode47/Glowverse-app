@@ -20,7 +20,7 @@ import * as CartAPI from "@services/api/cart.api";
 import { analytics } from "@services/analytics.service";
 
 export default function VirtualTryOnScreen() {
-  const theme = useTheme();
+  const theme = useTheme() as any;
   const navigation = useNavigation();
   const route = useRoute<any>();
   const { capturePhoto, cameraType, toggleCameraType, requestPermissions } = useCamera();

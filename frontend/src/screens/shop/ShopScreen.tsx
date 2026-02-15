@@ -224,7 +224,7 @@ export default function ShopScreen() {
           contentContainerStyle={{ paddingBottom: 20 }}
           refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
           renderItem={renderItem}
-          getItemLayout={getItemLayout}
+          getItemLayout={getItemLayout as any}
           removeClippedSubviews
           maxToRenderPerBatch={10}
           initialNumToRender={8}

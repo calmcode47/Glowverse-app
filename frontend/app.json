@@ -28,9 +28,16 @@
       "supportsTablet": false,
       "bundleIdentifier": "com.glowverse.app",
       "entitlements": {
-        "com.apple.developer.in-app-payments": ["merchant.com.glowverse"]
+        "com.apple.developer.in-app-payments": [
+          "merchant.com.glowverse"
+        ]
       },
-      "associatedDomains": ["applinks:glowverse.com", "applinks:www.glowverse.com"],
+      "associatedDomains": [
+        "applinks:glowverse.app",
+        "applinks:www.glowverse.app",
+        "applinks:glowverse.com",
+        "applinks:www.glowverse.com"
+      ],
       "buildNumber": "1",
       "infoPlist": {
         "NSCameraUsageDescription": "Glowverse needs access to your camera for virtual try-on and skin analysis.",
@@ -43,7 +50,11 @@
       }
     },
     "android": {
-      "permissions": ["CAMERA", "READ_MEDIA_IMAGES", "INTERNET"],
+      "permissions": [
+        "CAMERA",
+        "READ_MEDIA_IMAGES",
+        "INTERNET"
+      ],
       "googleServicesFile": "./google-services.json",
       "versionCode": 1,
       "intentFilters": [
@@ -51,10 +62,31 @@
           "action": "VIEW",
           "autoVerify": true,
           "data": [
-            { "scheme": "https", "host": "glowverse.com", "pathPrefix": "/app" },
-            { "scheme": "https", "host": "www.glowverse.com", "pathPrefix": "/app" }
+            {
+              "scheme": "https",
+              "host": "glowverse.com",
+              "pathPrefix": "/app"
+            },
+            {
+              "scheme": "https",
+              "host": "www.glowverse.com",
+              "pathPrefix": "/app"
+            },
+            {
+              "scheme": "https",
+              "host": "glowverse.app",
+              "pathPrefix": "/app"
+            },
+            {
+              "scheme": "https",
+              "host": "www.glowverse.app",
+              "pathPrefix": "/app"
+            }
           ],
-          "category": ["BROWSABLE", "DEFAULT"]
+          "category": [
+            "BROWSABLE",
+            "DEFAULT"
+          ]
         }
       ],
       "adaptiveIcon": {
@@ -65,14 +97,30 @@
       "package": "com.glowverse.app"
     },
     "scheme": "glowverse",
-    "deeplinks": ["glowverse://"],
+    "deeplinks": [
+      "glowverse://"
+    ],
     "web": {
       "favicon": "./assets/favicon.png"
     },
     "plugins": [
       "expo-camera",
       "expo-media-library",
-      "expo-notifications"
+      "expo-notifications",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "deploymentTarget": "13.0"
+          },
+          "android": {
+            "minSdkVersion": 24,
+            "compileSdkVersion": 34,
+            "targetSdkVersion": 34,
+            "enableProguardInReleaseBuilds": true
+          }
+        }
+      ]
     ],
     "extra": {
       "apiBaseUrl": "${API_BASE_URL}",
@@ -83,7 +131,19 @@
       "sentryDsn": "${SENTRY_DSN}",
       "stripePublishableKey": "${STRIPE_PUBLISHABLE_KEY}",
       "stripeMerchantId": "${STRIPE_MERCHANT_ID}",
-      "eas": { "projectId": "YOUR_PROJECT_ID" }
+      "arSdk": {
+        "vendor": "${AR_SDK_VENDOR}",
+        "enabled": "${AR_SDK_ENABLED}",
+        "apiKey": "${AR_SDK_API_KEY}",
+        "licenseKey": "${AR_SDK_LICENSE_KEY}",
+        "apiUrl": "${AR_SDK_API_URL}",
+        "targetFps": "${AR_TARGET_FPS}",
+        "enableGpuAcceleration": "${AR_ENABLE_GPU_ACCELERATION}",
+        "maxTextureCacheSizeMb": "${AR_MAX_TEXTURE_CACHE_SIZE_MB}"
+      },
+      "eas": {
+        "projectId": "YOUR_PROJECT_ID"
+      }
     }
   }
 }

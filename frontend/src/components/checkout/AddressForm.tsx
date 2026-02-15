@@ -186,7 +186,7 @@ export default function AddressForm({ visible, onClose, onSave }: Props) {
                 placeholder="Phone Number"
                 value={draft.phone}
                 onChangeText={(t) => handleFieldChange('phone', t)}
-                onBlur={() => validateField('phone', draft.phone)}
+                onBlur={() => validateField('phone', draft.phone || '')}
                 keyboardType="phone-pad"
               />
               {fieldErrors.phone && <Text style={styles.errorText}>{fieldErrors.phone}</Text>}

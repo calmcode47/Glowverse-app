@@ -18,7 +18,7 @@ import OrderConfirmationScreen from "@screens/shop/OrderConfirmationScreen";
 import EditProfileScreen from "@screens/profile/EditProfileScreen";
 import AddressesScreen from "@screens/profile/AddressesScreen";
 import EditAddressScreen from "@screens/profile/EditAddressScreen";
-import { useAuth } from "@context/AuthContext";
+import { useAuth } from "../context/AuthContext";
 import LazyScreenLoading from "@components/loading/LazyScreenLoading";
 import LazyLoadErrorBoundary from "@components/error/LazyLoadErrorBoundary";
 import { lazyLoad } from "@utils/lazyLoad";

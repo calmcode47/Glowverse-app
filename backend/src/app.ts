@@ -6,11 +6,6 @@ import morgan from "morgan";
 import env from "@config/env";
 import { errorHandler, notFoundHandler } from "@middleware/errorHandler";
 import { apiLimiter } from "@middleware/rateLimiter";
-import orderRoutes from '@routes/order.routes';
-import notificationRoutes from '@routes/notification.routes';
-import fitnessRoutes from '@routes/fitness.routes';
-import guideRoutes from '@routes/guide.routes';
-import searchRoutes from '@routes/search.routes';
 import { registerRoutes } from "@routes/index";
 import { initDbMetrics } from "./utils/db-metrics";
 
@@ -30,6 +25,11 @@ app.use(
 );
 
 app.use(compression());
+
+// Serve .well-known association files for Universal/App Links
+import path from 'path';
+app.use('/.well-known', express.static(path.join(process.cwd(), '.well-known')));
+
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 
@@ -51,14 +51,8 @@ app.get("/health", (req, res) => {
 });
 
 const API_PREFIX = `/api/${env.apiVersion}`;
-app.use(`${API_PREFIX}/orders`, orderRoutes);
-app.use(`${API_PREFIX}/notifications`, notificationRoutes);
-app.use(`${API_PREFIX}/fitness`, fitnessRoutes);
-app.use(`${API_PREFIX}/guides`, guideRoutes);
-app.use(`${API_PREFIX}/search`, searchRoutes);
-app.use(API_PREFIX, apiLimiter);
 
-// Register all routes
+// All routes are registered through the central registerRoutes function
 registerRoutes(app, API_PREFIX);
 
 app.use(notFoundHandler);

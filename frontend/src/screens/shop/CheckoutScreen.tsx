@@ -39,7 +39,9 @@ export default function CheckoutScreen() {
   const [termsAccepted, setTermsAccepted] = React.useState(false);
   const [paymentMethodId, setPaymentMethodId] = React.useState<string | null>(null);
   const labels = ["Shipping", "Payment", "Review"];
-  const { confirmPayment, handleNextAction, confirmApplePayPayment, confirmGooglePayPayment } = useStripe();
+  const stripe = useStripe();
+  const { confirmPayment, handleNextAction } = stripe;
+  const { confirmApplePayPayment, confirmGooglePayPayment } = stripe as any;
 
   React.useEffect(() => {
     (async () => {
@@ -104,7 +106,7 @@ export default function CheckoutScreen() {
             await mgr.handlePaymentError(mapped, clientSecret, navigation);
             throw new Error(mapped.userMessage);
           }
-          if (res?.paymentIntent?.status === "requires_action") {
+          if ((res?.paymentIntent?.status as any) === "requires_action") {
             const next = await handleNextAction(clientSecret);
             if ((next as any)?.error) {
               const mapped = stripeErrorMapper({ code: "three_d_secure_authentication_failed", message: (next as any).error?.message }, { amount: amountCents, currency: "usd", transactionId: paymentIntentId });

@@ -133,7 +133,7 @@ export default function ProductsManagementScreen() {
                     contentContainerStyle={styles.list}
                     ListEmptyComponent={
                         <View style={styles.emptyState}>
-                            <MaterialCommunityIcons name="package-variant" size={64} color={theme.colors.border.main} />
+                            <MaterialCommunityIcons name="package-variant" size={64} color={(theme.colors.border as any).main || theme.colors.border.light} />
                             <Text style={[styles.emptyText, { color: theme.colors.text.tertiary }]}>No products found</Text>
                         </View>
                     }

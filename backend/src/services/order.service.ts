@@ -170,10 +170,28 @@ export class OrderService {
     static async updateOrderStatus(
         orderId: string,
         status: OrderStatus,
-        trackingNumber?: string,
-        trackingUrl?: string
-    ): Promise<Order> {
-        const order = await prisma.order.findUnique({ where: { id: orderId } });
+        metadata?: {
+            paymentIntentId?: string;
+            chargeId?: string;
+            amountPaid?: number;
+            currency?: string;
+            paymentMethod?: string;
+            paidAt?: Date;
+            failureReason?: string;
+            refundedAmount?: number;
+            refundedAt?: Date;
+            canceledAt?: Date;
+            disputeId?: string;
+            disputeReason?: string;
+            disputeAmount?: number;
+            disputedAt?: Date;
+            trackingNumber?: string;
+            trackingUrl?: string;
+        },
+        tx?: Prisma.TransactionClient
+    ): Promise<OrderWithItems> {
+        const client = tx || prisma;
+        const order = await client.order.findUnique({ where: { id: orderId }, include: { items: true } });
         if (!order) throw new AppError('Order not found', 404);
 
         // Validation logic for transitions... (simplified)
@@ -182,26 +200,40 @@ export class OrderService {
         }
 
         const updateData: Prisma.OrderUpdateInput = { status };
-        if (status === OrderStatus.SHIPPED) {
-            updateData.trackingNumber = trackingNumber;
-            updateData.trackingUrl = trackingUrl;
-            // Estimate delivery 3 days from now
-            const estDate = new Date();
-            estDate.setDate(estDate.getDate() + 3);
-            updateData.estimatedDelivery = estDate;
-        } else if (status === OrderStatus.DELIVERED) {
-            updateData.deliveredAt = new Date();
-        } else if (status === OrderStatus.CANCELLED) {
-            updateData.cancelledAt = new Date();
-            // TODO: Restore stock if cancelled
+
+        if (metadata) {
+            if (metadata.paymentIntentId) updateData.paymentIntentId = metadata.paymentIntentId;
+            if (metadata.chargeId) updateData.chargeId = metadata.chargeId;
+
+            if (status === OrderStatus.PROCESSING || metadata.paidAt) {
+                updateData.paymentStatus = PaymentStatus.PAID;
+                updateData.paidAt = metadata.paidAt || new Date();
+            }
+
+            if (status === OrderStatus.SHIPPED) {
+                updateData.trackingNumber = metadata.trackingNumber;
+                updateData.trackingUrl = metadata.trackingUrl;
+                const estDate = new Date();
+                estDate.setDate(estDate.getDate() + 3);
+                updateData.estimatedDelivery = estDate;
+            } else if (status === OrderStatus.DELIVERED) {
+                updateData.deliveredAt = new Date();
+            } else if (status === OrderStatus.CANCELLED) {
+                updateData.cancelledAt = metadata.canceledAt || new Date();
+                updateData.paymentStatus = PaymentStatus.CANCELLED;
+            } else if (status === OrderStatus.REFUNDED) {
+                updateData.paymentStatus = PaymentStatus.REFUNDED;
+                updateData.internalNotes = `Refunded: ${metadata.refundedAmount} ${metadata.currency || ''}`;
+            }
         }
 
-        const updatedOrder = await prisma.order.update({
+        const updatedOrder = await client.order.update({
             where: { id: orderId },
-            data: updateData
+            data: updateData,
+            include: { items: true }
         });
 
-        return updatedOrder;
+        return updatedOrder as OrderWithItems;
     }
 
     /**
@@ -276,6 +308,35 @@ export class OrderService {
     }
 
     // --- Private Helpers ---
+
+    /**
+     * Find order by Stripe Payment Intent ID
+     */
+    static async findByPaymentIntent(paymentIntentId: string): Promise<OrderWithItems | null> {
+        const order = await prisma.order.findFirst({
+            where: { paymentIntentId },
+            include: { items: true }
+        });
+        return order as OrderWithItems | null;
+    }
+
+    /**
+     * Find order by Stripe Charge ID
+     */
+    static async findByChargeId(chargeId: string): Promise<OrderWithItems | null> {
+        const order = await prisma.order.findFirst({
+            where: { chargeId },
+            include: { items: true }
+        });
+        return order as OrderWithItems | null;
+    }
+
+    /**
+     * Wrapper for database transactions
+     */
+    static async transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
+        return await prisma.$transaction(fn);
+    }
 
     private static generateOrderNumber(): string {
         const date = new Date().toISOString().slice(0, 10).replace(/-/g, ''); // YYYYMMDD

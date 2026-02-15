@@ -1,4 +1,4 @@
-import { Application } from "express";
+import express, { Application } from "express";
 import authRoutes from "./auth.routes";
 import userRoutes from "./user.routes";
 import productRoutes from "./product.routes";
@@ -16,6 +16,28 @@ import perfectcorpRoutes from "./perfectcorp.routes";
 import uploadRoutes from "./upload.routes";
 import rateLimitRoutes from "./admin/rate-limits.routes";
 import metricsRoutes from "./metrics.routes";
+import webhookRoutes from "./webhook.routes";
+
+export {
+    authRoutes,
+    userRoutes,
+    productRoutes,
+    cartRoutes,
+    orderRoutes,
+    analysisRoutes,
+    tryonRoutes,
+    favoriteRoutes,
+    notificationRoutes,
+    promotionRoutes,
+    referralRoutes,
+    fitnessRoutes,
+    guideRoutes,
+    perfectcorpRoutes,
+    uploadRoutes,
+    rateLimitRoutes,
+    metricsRoutes,
+    webhookRoutes
+};
 
 /**
  * Register all application routes
@@ -70,6 +92,11 @@ export const registerRoutes = (app: Application, apiPrefix: string): void => {
     // ============================================
     app.use(`${apiPrefix}/admin/rate-limits`, rateLimitRoutes);
     app.use(`${apiPrefix}/metrics`, metricsRoutes);
+
+    // ============================================
+    // WEBHOOKS (Requires raw body for Stripe)
+    // ============================================
+    app.use(`${apiPrefix}/webhooks`, express.raw({ type: 'application/json' }), webhookRoutes);
 
     // Deprecated path alias for upload (for backward compatibility)
     app.use("/images/upload", uploadRoutes);

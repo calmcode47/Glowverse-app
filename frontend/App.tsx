@@ -5,13 +5,15 @@ import { NavigationContainer } from "@react-navigation/native";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { Text, View } from "react-native";
+import { PersistQueryClientProvider } from "@tanstack/react-query-persist-client";
+import { queryClient, asyncStoragePersister } from "./src/lib/queryClient";
 import { ThemeProvider } from "./src/theme/themeContext";
 import { useTheme } from "./src/theme/themeContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { ENV } from "./src/config/environment";
 import RootNavigator from "./src/navigation/RootNavigator";
 import { analytics } from "./src/services/analytics.service";
-import { AuthProvider } from "./src/context/AuthContext";
+import { AuthProvider, useGlowAuth } from "./src/context/AuthContext";
 import { CartProvider } from "./src/context/CartContext";
 import { FavoritesProvider } from "./src/context/FavoritesContext";
 import ErrorBoundary from "./src/components/error/ErrorBoundary";
@@ -28,6 +30,9 @@ import ConflictIndicator from "./src/components/conflicts/ConflictIndicator";
 import ConflictHost from "./src/components/conflicts/ConflictHost";
 import { conflictQueue } from "./src/services/conflictQueue.service";
 import { offlineQueue } from "./src/services/offlineQueue.service";
+import { networkMonitor } from "./src/services/sync/NetworkMonitor";
+import { OfflineBanner } from "./src/components/offline/OfflineBanner";
+
 
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
@@ -38,64 +43,17 @@ function ConnectivityBanner({ connected, base }: { connected: boolean; base: str
 }
 
 
-export default function App() {
-  const [connected, setConnected] = React.useState(true);
+function AppContent({ connected }: { connected: boolean }) {
   const navigationRef = React.useRef<any>(null);
-  const routeNameRef = React.useRef<string | undefined>();
-  usePreloadScreens();
+  const routeNameRef = React.useRef<string | undefined>(undefined);
+  const { isAuthenticated } = (useGlowAuth as any)();
+
   React.useEffect(() => {
-    (async () => {
-      await AsyncStorage.setItem("apiBaseUrl", ENV.apiBaseUrl);
-      const origin = ENV.apiBaseUrl.replace(/\/api\/v1$/, "");
-      try {
-        const res = await fetch(`${origin}/health`);
-        setConnected(res.status === 200);
-      } catch {
-        setConnected(false);
-      }
-    })();
-  }, []);
-  React.useEffect(() => {
-    conflictQueue.loadConflicts().catch(() => { });
-  }, []);
-  React.useEffect(() => {
-    if (connected) {
-      offlineQueue.processQueue().catch(() => { });
+    if (isAuthenticated) {
+      deepLinkingService.processPendingLink(isAuthenticated);
     }
-  }, [connected]);
-  React.useEffect(() => {
-    try {
-      const dsn = ENV.sentryDSN;
-      if (dsn) {
-        // eslint-disable-next-line @typescript-eslint/no-var-requires
-        const Sentry = require("@sentry/react-native");
-        Sentry.init({
-          dsn,
-          enableInExpoDevelopment: false,
-          debug: false,
-          environment: ENV.environment,
-          release: Constants.expoConfig?.version
-        });
-      }
-    } catch { }
-  }, []);
-  React.useEffect(() => {
-    initializeStripe().catch(() => { });
-    notificationService.initialize().catch(() => { });
-  }, []);
-  React.useEffect(() => {
-    const cancel = InteractionManager.runAfterInteractions(() => {
-      try {
-        // Defer any non-critical work until after interactions
-        memoryUsageMonitor(10000);
-        apiHealthMonitor.start();
-      } catch { }
-    });
-    return () => {
-      // @ts-ignore
-      cancel?.cancel?.();
-    };
-  }, []);
+  }, [isAuthenticated]);
+
   React.useEffect(() => {
     deepLinkingService.setNavigationRef(navigationRef);
     (async () => {
@@ -103,18 +61,25 @@ export default function App() {
         const url = await deepLinkingService.getInitialURL();
         if (url) {
           setTimeout(() => {
-            deepLinkingService.navigate(url);
+            deepLinkingService.navigate(url, isAuthenticated);
           }, 1000);
         }
       } catch { }
     })();
     const unsub = deepLinkingService.addListener((url) => {
-      deepLinkingService.navigate(url);
+      deepLinkingService.navigate(url, isAuthenticated);
     });
     return () => unsub();
-  }, []);
+  }, [isAuthenticated]);
+
   const linking = {
-    prefixes: ["glowverse://", "https://glowverse.com/app", "https://www.glowverse.com/app"],
+    prefixes: [
+      "glowverse://",
+      "https://glowverse.com/app",
+      "https://www.glowverse.com/app",
+      "https://glowverse.app/app",
+      "https://www.glowverse.app/app"
+    ],
     config: {
       screens: {
         Home: "home",
@@ -134,45 +99,132 @@ export default function App() {
       }
     }
   } as const;
+
+  return (
+    <NavigationContainer
+      ref={navigationRef}
+      linking={linking as any}
+      onReady={() => {
+        routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
+      }}
+      onStateChange={async () => {
+        const previous = routeNameRef.current;
+        const current = navigationRef.current?.getCurrentRoute()?.name;
+        if (current && previous !== current) {
+          await analytics.logScreenView(current);
+        }
+        routeNameRef.current = current;
+      }}
+    >
+      <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
+      <OfflineBanner />
+      <ConflictIndicator />
+      <ConflictHost />
+      <RootNavigator />
+      <StatusBar style="auto" />
+    </NavigationContainer>
+  );
+}
+
+export default function App() {
+  const [connected, setConnected] = React.useState(true);
+  usePreloadScreens();
+
+  React.useEffect(() => {
+    (async () => {
+      await AsyncStorage.setItem("apiBaseUrl", ENV.apiBaseUrl);
+      const origin = ENV.apiBaseUrl.replace(/\/api\/v1$/, "");
+      try {
+        const res = await fetch(`${origin}/health`);
+        setConnected(res.status === 200);
+      } catch {
+        setConnected(false);
+      }
+    })();
+  }, []);
+
+  React.useEffect(() => {
+    conflictQueue.loadConflicts().catch(() => { });
+  }, []);
+
+  React.useEffect(() => {
+    if (connected) {
+      offlineQueue.processQueue().catch(() => { });
+    }
+  }, [connected]);
+
+  React.useEffect(() => {
+    try {
+      const dsn = ENV.sentryDSN;
+      if (dsn) {
+        const Sentry = require("@sentry/react-native");
+        Sentry.init({
+          dsn,
+          enableInExpoDevelopment: false,
+          debug: false,
+          environment: ENV.environment,
+          release: Constants.expoConfig?.version
+        });
+      }
+    } catch { }
+  }, []);
+
+  React.useEffect(() => {
+    initializeStripe().catch(() => { });
+    notificationService.initialize().catch(() => { });
+  }, []);
+
+  React.useEffect(() => {
+    const cancel = InteractionManager.runAfterInteractions(() => {
+      try {
+        memoryUsageMonitor(10000);
+        apiHealthMonitor.start();
+      } catch { }
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
+  }, []);
+
+  React.useEffect(() => {
+    networkMonitor.start();
+    const unsubscribeNetwork = networkMonitor.addListener((status) => {
+      if (status.isOnline) {
+        offlineQueue.processQueue().catch(() => { });
+      }
+    });
+
+    return () => {
+      unsubscribeNetwork();
+      networkMonitor.stop();
+    };
+  }, []);
+
   return (
     <ErrorBoundary>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <SafeAreaProvider>
-          <ThemeProvider>
-            <AuthProvider>
-              <NotificationsProvider>
-                <CartProvider>
-                  <FavoritesProvider>
-                    <ErrorBoundary>
-                      <NavigationContainer
-                        ref={navigationRef}
-                        linking={linking as any}
-                        onReady={() => {
-                          routeNameRef.current = navigationRef.current?.getCurrentRoute()?.name;
-                        }}
-                        onStateChange={async () => {
-                          const previous = routeNameRef.current;
-                          const current = navigationRef.current?.getCurrentRoute()?.name;
-                          if (current && previous !== current) {
-                            await analytics.logScreenView(current);
-                          }
-                          routeNameRef.current = current;
-                        }}
-                      >
-                        <ConnectivityBanner connected={connected} base={ENV.apiBaseUrl} />
-                        <ConflictIndicator />
-                        <ConflictHost />
-                        <RootNavigator />
-                        <StatusBar style="auto" />
-                      </NavigationContainer>
-                    </ErrorBoundary>
-                  </FavoritesProvider>
-                </CartProvider>
-              </NotificationsProvider>
-            </AuthProvider>
-          </ThemeProvider>
-        </SafeAreaProvider>
-      </GestureHandlerRootView>
+      <PersistQueryClientProvider
+        client={queryClient}
+        persistOptions={{ persister: asyncStoragePersister }}
+      >
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <SafeAreaProvider>
+            <ThemeProvider>
+              <AuthProvider>
+                <NotificationsProvider>
+                  <CartProvider>
+                    <FavoritesProvider>
+                      <ErrorBoundary>
+                        <AppContent connected={connected} />
+                      </ErrorBoundary>
+                    </FavoritesProvider>
+                  </CartProvider>
+                </NotificationsProvider>
+              </AuthProvider>
+            </ThemeProvider>
+          </SafeAreaProvider>
+        </GestureHandlerRootView>
+      </PersistQueryClientProvider>
     </ErrorBoundary>
   );
 }

@@ -1,4 +1,4 @@
-import { UserRole } from '@prisma/client';
+export type UserRole = 'USER' | 'ADMIN' | 'VENDOR';
 
 declare global {
   namespace Express {
@@ -6,7 +6,7 @@ declare global {
       user?: {
         userId: string;
         email: string;
-        role?: UserRole;
+        role?: UserRole | string;
       };
       file?: Express.Multer.File;
       files?: Express.Multer.File[];
@@ -14,4 +14,4 @@ declare global {
   }
 }
 
-export {};
+export { };

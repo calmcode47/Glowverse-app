@@ -37,6 +37,10 @@ interface EnvConfig {
     url: string;
     enabled: boolean;
   };
+  stripe: {
+    secretKey: string;
+    webhookSecret: string;
+  };
 }
 
 const validateEnv = (): EnvConfig => {
@@ -93,6 +97,10 @@ const validateEnv = (): EnvConfig => {
     redis: {
       url: process.env.REDIS_URL || "redis://localhost:6379",
       enabled: process.env.REDIS_ENABLED === "true"
+    },
+    stripe: {
+      secretKey: process.env.STRIPE_SECRET_KEY || "",
+      webhookSecret: process.env.STRIPE_WEBHOOK_SECRET || ""
     }
   };
 };

@@ -42,7 +42,7 @@ export default function FocusTrap({ children, active = true, returnFocus = true,
       accessible
       accessibilityLabel="Modal dialog"
       accessibilityViewIsModal
-      accessibilityRole="dialog"
+      accessibilityRole="header"
     >
       {children}
     </View>

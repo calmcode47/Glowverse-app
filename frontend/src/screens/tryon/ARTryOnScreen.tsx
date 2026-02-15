@@ -289,7 +289,7 @@ const styles = StyleSheet.create({
         right: 0,
         paddingBottom: 50,
         paddingHorizontal: 30,
-        backgroundGradient: 'linear', // Conceptual
+        // backgroundGradient: 'linear' as any, // Conceptual
     },
     controlsRow: {
         flexDirection: 'row',

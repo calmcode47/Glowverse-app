@@ -102,7 +102,7 @@ export default function UsersManagementScreen() {
                     refreshing={isLoading}
                     ListEmptyComponent={
                         <View style={styles.emptyState}>
-                            <MaterialCommunityIcons name="account-off-outline" size={64} color={theme.colors.border.main} />
+                            <MaterialCommunityIcons name="account-off-outline" size={64} color={(theme.colors.border as any).main || theme.colors.border.light} />
                             <Text style={[styles.emptyText, { color: theme.colors.text.tertiary }]}>No users found</Text>
                         </View>
                     }

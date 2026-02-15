@@ -268,4 +268,70 @@ export class NotificationService {
             data: { productId },
         });
     }
+
+    /**
+     * Payment failed notification
+     */
+    static async sendPaymentFailedNotification(order: any): Promise<Notification> {
+        return this.createNotification({
+            userId: order.userId,
+            type: NotificationType.ORDER_CANCELLED,
+            title: 'Payment Failed',
+            message: `Payment failed for order #${order.orderNumber}. Please try again.`,
+            data: { orderId: order.id },
+            priority: NotificationPriority.HIGH,
+        });
+    }
+
+    /**
+     * Refund notification
+     */
+    static async sendRefundNotification(order: any): Promise<Notification> {
+        return this.createNotification({
+            userId: order.userId,
+            type: NotificationType.ORDER_CANCELLED,
+            title: 'Refund Processed',
+            message: `A refund has been processed for order #${order.orderNumber}.`,
+            data: { orderId: order.id },
+        });
+    }
+
+    /**
+     * Admin alert for disputes
+     */
+    static async sendAdminAlert(data: { type: string; orderId: string; disputeId: string; amount: number; reason: string }): Promise<void> {
+        console.log('[Admin Alert] Dispute Created:', data);
+        // In a real app, this might send an email to admins or post to Slack
+    }
+
+    /**
+     * Order confirmation email/push
+     */
+    static async sendOrderConfirmation(order: any): Promise<Notification> {
+        return this.notifyOrderStatus(order.userId, order.id, OrderStatus.PROCESSING);
+    }
+
+    /**
+     * Generic notification method for flexible use
+     */
+    static async sendNotification(data: {
+        userId: string;
+        type: string; // Map to NotificationType
+        channel: string; // handled by preferences
+        subject: string;
+        message: string;
+        data?: any;
+    }): Promise<Notification> {
+        // Simple mapping for demonstration
+        let nt = NotificationType.GENERAL;
+        if (data.type === 'order') nt = NotificationType.ORDER_PLACED;
+
+        return this.createNotification({
+            userId: data.userId,
+            type: nt,
+            title: data.subject,
+            message: data.message,
+            data: data.data,
+        });
+    }
 }

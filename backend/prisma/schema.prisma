@@ -180,6 +180,8 @@ model User {
   guideBookmarks    GuideBookmark[]
   guideComments     GuideComment[]
   productReviews    ProductReview[]
+  notificationPreferences NotificationPreferences?
+  notificationHistory    NotificationHistory[]
 
   @@map("users")
 }
@@ -543,12 +545,78 @@ model Notification {
   createdAt DateTime         @default(now())
   updatedAt DateTime         @updatedAt
   
+  history   NotificationHistory[]
+
   @@map("notifications")
   @@index([userId, isRead])
   @@index([userId, createdAt])
   @@index([type])
   @@index([isRead])
   @@index([createdAt])
+}
+
+model NotificationPreferences {
+  id        String   @id @default(uuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Channel preferences
+  emailEnabled         Boolean  @default(true)
+  pushEnabled          Boolean  @default(true)
+  smsEnabled           Boolean  @default(false)
+  
+  // Category preferences
+  ordersEnabled        Boolean  @default(true)
+  promotionsEnabled    Boolean  @default(true)
+  fitnessEnabled       Boolean  @default(true)
+  accountEnabled       Boolean  @default(true)
+  socialEnabled        Boolean  @default(true)
+  
+  // Frequency settings
+  promotionFrequency   String   @default("daily") // daily, weekly, monthly, never
+  digestEnabled        Boolean  @default(false)
+  digestTime           String?  @default("09:00") // HH:MM format
+  
+  // Quiet hours
+  quietHoursEnabled    Boolean  @default(false)
+  quietHoursStart      String?  @default("22:00")
+  quietHoursEnd        String?  @default("08:00")
+  
+  createdAt            DateTime @default(now())
+  updatedAt            DateTime @updatedAt
+  
+  @@map("notification_preferences")
+}
+
+model NotificationHistory {
+  id             String           @id @default(uuid())
+  userId         String
+  user           User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  notificationId String?
+  notification   Notification?    @relation(fields: [notificationId], references: [id], onDelete: SetNull)
+  
+  type           NotificationType
+  channel        String           // email, push, sms
+  status         String           // sent, failed, suppressed
+  reason         String?          // e.g., quiet_hours, type_disabled, frequency_limit
+  
+  createdAt      DateTime         @default(now())
+
+  @@map("notification_history")
+  @@index([userId, type])
+  @@index([userId, createdAt])
+  @@index([createdAt])
+}
+
+model WebhookEvent {
+  id          String   @id // Use Stripe event ID
+  type        String
+  processed   Boolean  @default(false)
+  error       String?
+  createdAt   DateTime @default(now())
+  processedAt DateTime?
+
+  @@map("webhook_events")
 }
 
 // ============================================

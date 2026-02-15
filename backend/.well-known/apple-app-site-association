@@ -1,0 +1,25 @@
+{
+  "applinks": {
+    "apps": [],
+    "details": [
+      {
+        "appID": "TEAM_ID.com.glowverse.app",
+        "paths": [
+          "/app/products/*",
+          "/app/referral/*",
+          "/app/order/*",
+          "/app/analysis/*",
+          "/app/promo/*",
+          "/app/notifications/*",
+          "/app/fitness/*",
+          "/app/settings",
+          "/app/profile",
+          "/reset-password"
+        ]
+      }
+    ]
+  },
+  "webcredentials": {
+    "apps": ["TEAM_ID.com.glowverse.app"]
+  }
+}

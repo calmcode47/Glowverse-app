@@ -9,7 +9,10 @@ type PillButtonProps = {
   label: string;
   selected?: boolean;
   onPress?: () => void;
-  style?: ViewStyle;
+  style?: ViewStyle | ViewStyle[];
+  icon?: string;
+  disabled?: boolean;
+  secondary?: boolean;
 };
 
 export default function PillButton({ label, selected, onPress, style }: PillButtonProps) {

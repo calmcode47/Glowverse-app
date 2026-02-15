@@ -20,7 +20,7 @@ export default function ValidationErrorModal({ conflict, onResolve, onCancel }: 
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onCancel}>
       <View style={styles.overlay}>
-        <View style={styles.sheet} accessibilityRole="dialog" accessibilityLabel="Validation error">
+        <View style={styles.sheet} accessibilityRole="header" accessibilityLabel="Validation error">
           <View style={styles.header}>
             <MaterialCommunityIcons name="alert-circle" size={40} color={theme.colors.warning} />
             <Text style={styles.title}>Validation Error</Text>

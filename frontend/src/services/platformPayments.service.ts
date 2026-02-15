@@ -1,5 +1,5 @@
 import { Platform } from "react-native";
-import { useApplePay, useGooglePay } from "@stripe/stripe-react-native";
+const { useApplePay, useGooglePay } = require("@stripe/stripe-react-native");
 import { ENV } from "../config/environment";
 
 export type PlatformPaymentResult = {

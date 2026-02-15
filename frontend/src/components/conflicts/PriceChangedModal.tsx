@@ -24,7 +24,7 @@ export default function PriceChangedModal({ conflict, onResolve, onCancel }: Pro
   return (
     <Modal visible transparent animationType="slide" onRequestClose={onCancel}>
       <View style={styles.overlay}>
-        <View style={styles.sheet} accessibilityRole="dialog" accessibilityLabel="Price changed">
+        <View style={styles.sheet} accessibilityRole="header" accessibilityLabel="Price changed">
           <View style={styles.header}>
             <MaterialCommunityIcons
               name={isIncrease ? "trending-up" : "trending-down"}

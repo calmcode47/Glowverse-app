@@ -66,9 +66,10 @@ export class AuthService {
         email: data.email,
         password: hashedPassword,
         name: data.name,
-        profile: { create: {} }
+        profile: { create: {} },
+        notificationPreferences: { create: {} }
       },
-      include: { profile: true }
+      include: { profile: true, notificationPreferences: true }
     });
 
     const tokens = await this.generateTokens(user);

@@ -2,7 +2,7 @@ import React from "react";
 import { View, Text, StyleSheet, ScrollView } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import ProfessionalBackground from "../../components/animated/ProfessionalBackground";
-import * as RefAPI from "../../services/api/referrals.api";
+import { referralsApi as RefAPI, ReferralData } from "../../services/api/referrals.api";
 import ShareCard from "../../components/referral/ShareCard";
 import { deepLinkingService } from "../../services/deepLinking.service";
 import ReferralStats from "../../components/referral/ReferralStats";
@@ -10,12 +10,12 @@ import ReferralStats from "../../components/referral/ReferralStats";
 export default function ReferralScreen() {
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const [data, setData] = React.useState<RefAPI.ReferralData | null>(null);
+  const [data, setData] = React.useState<ReferralData | null>(null);
   const [loading, setLoading] = React.useState(true);
   React.useEffect(() => {
     (async () => {
       try {
-        const d = await RefAPI.getMyReferrals();
+        const d = await RefAPI.getMyReferral();
         setData(d);
       } finally {
         setLoading(false);

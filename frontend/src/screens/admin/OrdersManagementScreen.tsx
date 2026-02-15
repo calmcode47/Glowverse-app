@@ -60,8 +60,8 @@ export default function OrdersManagementScreen() {
             statuses.map(s => ({
                 text: s.charAt(0).toUpperCase() + s.slice(1),
                 onPress: () => updateOrderStatus(order.id, s),
-                style: s === 'cancelled' ? 'destructive' : 'default'
-            })).concat([{ text: 'Cancel', style: 'cancel' }] as any)
+                style: (s === 'cancelled' ? 'destructive' : 'default') as any
+            })).concat([{ text: 'Cancel', style: 'cancel' as any }] as any)
         );
     };
 
@@ -142,7 +142,7 @@ export default function OrdersManagementScreen() {
                     onRefresh={loadOrders}
                     ListEmptyComponent={
                         <View style={styles.emptyState}>
-                            <MaterialCommunityIcons name="clipboard-text-outline" size={64} color={theme.colors.border.main} />
+                            <MaterialCommunityIcons name="clipboard-text-outline" size={64} color={(theme.colors.border as any).main || theme.colors.border.light} />
                             <Text style={[styles.emptyText, { color: theme.colors.text.tertiary }]}>No orders found</Text>
                         </View>
                     }

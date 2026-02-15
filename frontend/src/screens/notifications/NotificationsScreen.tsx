@@ -51,10 +51,10 @@ export default function NotificationsScreen() {
       return;
     }
     const [type, id] = deep.split(":");
-    if (type === "order") navigation.navigate("OrderDetail" as never, { orderId: id } as never);
-    else if (type === "product") navigation.navigate("ProductDetail" as never, { productId: id } as never);
-    else if (type === "promo") navigation.navigate("Promotions" as never, {} as never);
-    else if (type === "notifications") navigation.navigate("Notifications" as never, {} as never);
+    if (type === "order") (navigation as any).navigate("OrderDetail", { orderId: id });
+    else if (type === "product") (navigation as any).navigate("ProductDetail", { productId: id });
+    else if (type === "promo") (navigation as any).navigate("Promotions", {});
+    else if (type === "notifications") (navigation as any).navigate("Notifications", {});
   };
 
   const renderGroup = ({ item, index }: { item: [string, NotifAPI.AppNotification[]], index: number }) => {

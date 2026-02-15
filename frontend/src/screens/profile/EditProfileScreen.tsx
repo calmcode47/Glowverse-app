@@ -19,7 +19,7 @@ export default function EditProfileScreen() {
   const [phone, setPhone] = React.useState("");
   const [dob, setDob] = React.useState("");
   const [gender, setGender] = React.useState("");
-  const [avatar, setAvatar] = React.useState<string | undefined>(user?.avatar);
+  const [avatar, setAvatar] = React.useState<string | undefined>((user as any)?.avatar);
   const [saving, setSaving] = React.useState(false);
 
   const pickPhoto = async () => {

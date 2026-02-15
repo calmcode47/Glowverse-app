@@ -13,7 +13,7 @@ export function trackAPICall(endpoint: string, duration: number) {
   log("info", `API ${endpoint} ${duration}ms`);
 }
 
-export function memoryUsageMonitor(intervalMs = 5000) {
+export function memoryUsageMonitor(intervalMs: number = 5000) {
   const timer = setInterval(() => {
     const anyPerf = (globalThis as any).performance;
     const mem = anyPerf && anyPerf.memory ? anyPerf.memory : null;

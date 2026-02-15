@@ -1,7 +1,7 @@
 import React from 'react';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
-import { useTheme } from '../../theme/themeContext';
+import { useTheme } from '../theme/themeContext';
 
 import DashboardScreen from '../screens/admin/DashboardScreen';
 import ProductsManagementScreen from '../screens/admin/ProductsManagementScreen';

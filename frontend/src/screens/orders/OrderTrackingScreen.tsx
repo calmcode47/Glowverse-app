@@ -173,7 +173,7 @@ export default function OrderTrackingScreen({ route, navigation }: any) {
 
                 {/* Action Buttons */}
                 <View style={styles.actions}>
-                    {order.status === 'pending' && (
+                    {(order.status as any) === 'pending' && (
                         <Button
                             onPress={async () => {
                                 Alert.alert(

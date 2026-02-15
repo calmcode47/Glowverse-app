@@ -17,6 +17,7 @@ type Props = {
   children?: React.ReactNode;
   accessibilityLabel?: string;
   fullWidth?: boolean;
+  style?: any;
 };
 
 export default function Button({
@@ -29,7 +30,8 @@ export default function Button({
   onPress,
   children,
   accessibilityLabel,
-  fullWidth
+  fullWidth,
+  style
 }: Props) {
   const theme = useTheme();
 
@@ -37,17 +39,17 @@ export default function Button({
     variant === "primary"
       ? "contained"
       : variant === "secondary"
-      ? "contained-tonal"
-      : variant === "outline"
-      ? "outlined"
-      : "text";
+        ? "contained-tonal"
+        : variant === "outline"
+          ? "outlined"
+          : "text";
 
   const contentStyle =
     size === "small"
       ? styles.small
       : size === "large"
-      ? styles.large
-      : styles.medium;
+        ? styles.large
+        : styles.medium;
 
   const iconNode =
     icon ??
@@ -61,7 +63,7 @@ export default function Button({
       disabled={disabled}
       icon={iconNode as any}
       contentStyle={contentStyle}
-      style={[fullWidth ? styles.fullWidth : undefined]}
+      style={[fullWidth ? styles.fullWidth : undefined, style]}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel}
     >

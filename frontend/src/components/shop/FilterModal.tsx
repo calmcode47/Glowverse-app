@@ -7,88 +7,106 @@ import { focusManagement } from "../../utils/focusManagement";
 
 type Props = {
   visible: boolean;
-  value: Filters;
-  onChange: (v: Filters) => void;
-  onClose: () => void;
+  value?: Filters;
+  onChange?: (v: Filters) => void;
+  onClose?: () => void;
   categories?: string[];
   brands?: string[];
+  // Aliases for compatibility
+  onDismiss?: () => void;
+  onApply?: (v: Filters) => void;
+  initial?: Filters;
 };
 
-export default function FilterModal({ visible, value, onChange, onClose, categories = [], brands = [] }: Props) {
+export default function FilterModal({
+  visible,
+  value,
+  onChange,
+  onClose,
+  categories = [],
+  brands = [],
+  onDismiss,
+  onApply,
+  initial
+}: Props) {
+  const finalValue = value || initial || {};
+  const finalOnClose = onClose || onDismiss || (() => { });
+  const finalOnChange = onChange || onApply || (() => { });
+
   const { theme } = useTheme();
   const styles = createStyles(theme);
-  const [draft, setDraft] = React.useState<Filters>(value);
-  const firstRef = React.useRef<View>(null);
-  React.useEffect(() => setDraft(value), [value, visible]);
+  const [draft, setDraft] = React.useState<Filters>(finalValue);
+  const firstRef = React.useRef<any>(null);
+  React.useEffect(() => setDraft(finalValue), [finalValue, visible]);
   return (
     <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
       <View style={styles.overlay}>
         <FocusTrap active={visible} returnFocus onEscape={onClose}>
-        <View style={styles.sheet} accessible accessibilityLabel="Filter options" accessibilityRole="dialog">
-          <Text style={styles.title}>Filters</Text>
-          <View style={styles.row}>
-            <Text style={styles.label}>Category</Text>
-            <TextInput
-              ref={firstRef}
-              value={draft.category || ""}
-              onChangeText={(t) => setDraft({ ...draft, category: t || undefined })}
-              placeholder="e.g. makeup"
-              style={styles.input}
-            />
+          <View style={styles.sheet} accessible accessibilityLabel="Filter options" accessibilityRole="header">
+            <Text style={styles.title}>Filters</Text>
+            <View style={styles.row}>
+              <Text style={styles.label}>Category</Text>
+              <TextInput
+                ref={firstRef}
+                value={draft.category || ""}
+                onChangeText={(t) => setDraft({ ...draft, category: t || undefined })}
+                placeholder="e.g. makeup"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Brand</Text>
+              <TextInput
+                value={draft.brand || ""}
+                onChangeText={(t) => setDraft({ ...draft, brand: t || undefined })}
+                placeholder="e.g. mac"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Min Price</Text>
+              <TextInput
+                value={draft.minPrice?.toString() || ""}
+                onChangeText={(t) => setDraft({ ...draft, minPrice: t ? Number(t) : undefined })}
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Max Price</Text>
+              <TextInput
+                value={draft.maxPrice?.toString() || ""}
+                onChangeText={(t) => setDraft({ ...draft, maxPrice: t ? Number(t) : undefined })}
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Sort By</Text>
+              <TextInput
+                value={draft.sortBy || ""}
+                onChangeText={(t) => setDraft({ ...draft, sortBy: (t || undefined) as any })}
+                placeholder="price_asc | price_desc | rating | newest"
+                style={styles.input}
+              />
+            </View>
+            <View style={styles.actions}>
+              <TouchableOpacity onPress={finalOnClose} style={styles.secondary} accessibilityLabel="Cancel filters" accessibilityRole="button">
+                <Text style={styles.secondaryText}>Cancel</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() => {
+                  finalOnChange(draft);
+                  finalOnClose();
+                }}
+                style={styles.primary}
+                accessibilityLabel="Apply filters"
+                accessibilityRole="button"
+              >
+                <Text style={styles.primaryText}>Apply</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Brand</Text>
-            <TextInput
-              value={draft.brand || ""}
-              onChangeText={(t) => setDraft({ ...draft, brand: t || undefined })}
-              placeholder="e.g. mac"
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Min Price</Text>
-            <TextInput
-              value={draft.minPrice?.toString() || ""}
-              onChangeText={(t) => setDraft({ ...draft, minPrice: t ? Number(t) : undefined })}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Max Price</Text>
-            <TextInput
-              value={draft.maxPrice?.toString() || ""}
-              onChangeText={(t) => setDraft({ ...draft, maxPrice: t ? Number(t) : undefined })}
-              keyboardType="numeric"
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.row}>
-            <Text style={styles.label}>Sort By</Text>
-            <TextInput
-              value={draft.sortBy || ""}
-              onChangeText={(t) => setDraft({ ...draft, sortBy: (t || undefined) as any })}
-              placeholder="price_asc | price_desc | rating | newest"
-              style={styles.input}
-            />
-          </View>
-          <View style={styles.actions}>
-            <TouchableOpacity onPress={onClose} style={styles.secondary} accessibilityLabel="Cancel filters" accessibilityRole="button">
-              <Text style={styles.secondaryText}>Cancel</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              onPress={() => {
-                onChange(draft);
-                onClose();
-              }}
-              style={styles.primary}
-              accessibilityLabel="Apply filters"
-              accessibilityRole="button"
-            >
-              <Text style={styles.primaryText}>Apply</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
         </FocusTrap>
       </View>
     </Modal>

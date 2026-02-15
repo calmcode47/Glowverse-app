@@ -61,10 +61,9 @@ export default function AnalyticsScreen() {
             </View>
 
             <View style={styles.content}>
-                <GradientCard style={styles.chartCard}>
-                    <Text style={[styles.chartTitle, { color: '#FFF' }]}>Weekly Sales Overview</Text>
+                <GradientCard title="Weekly Sales" style={styles.chartCard}>
                     <AnimatedBarChart
-                        data={salesData.map(d => ({ ...d, color: 'white' }))}
+                        data={salesData.map(d => ({ ...d, color: 'primary' as any }))}
                         height={150}
                     />
                 </GradientCard>
