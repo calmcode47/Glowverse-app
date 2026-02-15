@@ -1,5 +1,5 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert, Linking } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import ProfessionalBackground from "../../components/animated/ProfessionalBackground";
 import * as OrdersAPI from "../../services/api/orders.api";
@@ -62,9 +62,16 @@ export default function OrderDetailScreen() {
       try {
         await CartAPI.addItem({ productId: it.productId, variantId: it.variantId, quantity: it.quantity });
         added += it.quantity;
-      } catch {}
+      } catch { }
     }
     Alert.alert("Reorder", `${added} items added to cart`);
+  };
+
+  const contactSupport = () => {
+    if (!order) return;
+    const subject = `Order Support Request - ${order.number || order.id.slice(0, 8)}`;
+    const body = `Order ID: ${order.id}\nOrder Number: ${order.number || 'N/A'}\nStatus: ${order.status}\n\nPlease describe your issue:\n\n`;
+    Linking.openURL(`mailto:support@glowverse.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
   };
 
   return (
@@ -80,13 +87,48 @@ export default function OrderDetailScreen() {
       ) : (
         <ScrollView contentContainerStyle={{ padding: 16, gap: 12 }}>
           <View style={styles.card}>
-            <Text style={styles.number}>Order #{order.number || order.id}</Text>
+            <Text style={styles.number}>Order #{order.number || order.id.slice(0, 8).toUpperCase()}</Text>
             <Text style={styles.meta}>{new Date(order.createdAt).toLocaleString()}</Text>
-            <Text style={[styles.status, { color: theme.colors.text.primary }]}>{order.status.toUpperCase()}</Text>
+            <Text style={[styles.status, { color: getStatusColor(order.status, theme) }]}>{order.status.toUpperCase()}</Text>
           </View>
+
+          {/* Status Timeline */}
           <View style={styles.card}>
             <OrderStatusTimeline current={toStep(order.status)} />
           </View>
+
+          {/* Tracking Number Section */}
+          {order.trackingNumber && (order.status === 'shipped' || order.status === 'delivered') && (
+            <View style={styles.card}>
+              <Text style={styles.section}>Tracking Information</Text>
+              <Text style={styles.trackingLabel}>Tracking Number</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  const trackingUrl = getTrackingUrl(order.trackingNumber!);
+                  Linking.openURL(trackingUrl);
+                }}
+              >
+                <Text style={styles.trackingNumber}>{order.trackingNumber}</Text>
+                <Text style={styles.trackingLink}>Track Package →</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+
+          {/* Estimated Delivery Section */}
+          {order.estimatedDelivery && order.status !== 'delivered' && order.status !== 'cancelled' && (
+            <View style={[styles.card, styles.deliveryCard]}>
+              <Text style={styles.deliveryLabel}>Estimated Delivery</Text>
+              <Text style={styles.deliveryDate}>
+                {new Date(order.estimatedDelivery).toLocaleDateString('en-US', {
+                  weekday: 'long',
+                  month: 'long',
+                  day: 'numeric',
+                })}
+              </Text>
+            </View>
+          )}
+
+          {/* Order Items */}
           <View style={styles.card}>
             <Text style={styles.section}>Items</Text>
             {order.items.map((it, idx) => (
@@ -100,6 +142,8 @@ export default function OrderDetailScreen() {
               </View>
             ))}
           </View>
+
+          {/* Shipping Address */}
           <View style={styles.card}>
             <Text style={styles.section}>Shipping</Text>
             {order.shippingAddress ? (
@@ -111,6 +155,8 @@ export default function OrderDetailScreen() {
               </>
             ) : null}
           </View>
+
+          {/* Order Summary */}
           <View style={styles.card}>
             <View style={styles.row}>
               <Text style={styles.label}>Subtotal</Text>
@@ -129,6 +175,8 @@ export default function OrderDetailScreen() {
               <Text style={styles.total}>${order.total.toFixed(2)}</Text>
             </View>
           </View>
+
+          {/* Action Buttons */}
           <View style={{ flexDirection: "row", gap: 8 }}>
             {order.status !== "cancelled" && order.status !== "delivered" ? (
               <TouchableOpacity onPress={cancel} disabled={updating} style={styles.btnOutline}>
@@ -139,6 +187,12 @@ export default function OrderDetailScreen() {
               <Text style={styles.btnPrimaryText}>Reorder</Text>
             </TouchableOpacity>
           </View>
+
+          {/* Contact Support Button */}
+          <TouchableOpacity onPress={contactSupport} style={styles.btnSupport}>
+            <Text style={styles.btnSupportText}>📧 Contact Support</Text>
+          </TouchableOpacity>
+
           {error ? <Text style={{ color: theme.colors.error }}>{error}</Text> : null}
         </ScrollView>
       )}
@@ -159,29 +213,112 @@ function toStep(status: OrdersAPI.Order["status"]) {
   }
 }
 
+function getStatusColor(status: OrdersAPI.Order["status"], theme: any): string {
+  switch (status) {
+    case "delivered":
+      return theme.colors.accent.emerald;
+    case "shipped":
+      return "#2196F3";
+    case "processing":
+      return "#FF9800";
+    case "cancelled":
+      return theme.colors.error;
+    default:
+      return theme.colors.text.primary;
+  }
+}
+
+function getTrackingUrl(trackingNumber: string): string {
+  // UPS tracking numbers start with "1Z"
+  if (trackingNumber.startsWith('1Z')) {
+    return `https://www.ups.com/track?tracknum=${trackingNumber}`;
+  }
+  // FedEx tracking numbers are 12-14 digits
+  if (/^\d{12,14}$/.test(trackingNumber)) {
+    return `https://www.fedex.com/fedextrack/?tracknumbers=${trackingNumber}`;
+  }
+  // USPS tracking numbers are 20-22 digits
+  if (/^\d{20,22}$/.test(trackingNumber)) {
+    return `https://tools.usps.com/go/TrackConfirmAction?tLabels=${trackingNumber}`;
+  }
+  // Default to UPS
+  return `https://www.ups.com/track?tracknum=${trackingNumber}`;
+}
+
 function createStyles(theme: any) {
   return StyleSheet.create({
     container: { flex: 1, backgroundColor: theme.colors.background.primary },
     header: { paddingTop: 60, paddingHorizontal: 16, paddingBottom: 8 },
     title: { fontSize: 20, fontWeight: "800" },
-    card: { borderWidth: 1, borderColor: theme.colors.border.light, backgroundColor: theme.colors.background.elevated, borderRadius: 12, padding: 12 },
-    number: { color: theme.colors.text.primary, fontWeight: "900", fontSize: 18 },
-    meta: { color: theme.colors.text.secondary, marginTop: 4 },
-    status: { marginTop: 6, fontWeight: "800" },
-    section: { color: theme.colors.text.primary, fontWeight: "800", marginBottom: 6 },
-    itemRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 8 },
-    thumb: { width: 52, height: 52, borderRadius: 8 },
-    itemName: { color: theme.colors.text.primary, fontWeight: "700" },
-    itemMeta: { color: theme.colors.text.tertiary, marginTop: 2 },
-    itemPrice: { color: theme.colors.text.primary, fontWeight: "700" },
-    line: { color: theme.colors.text.secondary },
-    row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 6 },
+    card: {
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+      backgroundColor: theme.colors.background.elevated,
+      borderRadius: 12,
+      padding: 16
+    },
+    number: { color: theme.colors.text.primary, fontWeight: "900", fontSize: 20 },
+    meta: { color: theme.colors.text.secondary, marginTop: 4, fontSize: 14 },
+    status: { marginTop: 8, fontWeight: "800", fontSize: 16 },
+    section: { color: theme.colors.text.primary, fontWeight: "800", marginBottom: 12, fontSize: 16 },
+    trackingLabel: {
+      fontSize: 14,
+      color: theme.colors.text.secondary,
+      marginBottom: 8
+    },
+    trackingNumber: {
+      fontSize: 18,
+      fontWeight: "600",
+      color: theme.colors.text.primary,
+      marginBottom: 8,
+      letterSpacing: 1,
+    },
+    trackingLink: {
+      fontSize: 14,
+      color: theme.colors.accent.emerald,
+      fontWeight: "600"
+    },
+    deliveryCard: {
+      backgroundColor: '#E8F5E9',
+      borderColor: '#4CAF50',
+    },
+    deliveryLabel: {
+      fontSize: 14,
+      color: '#2E7D32',
+      marginBottom: 4,
+      fontWeight: '600',
+    },
+    deliveryDate: {
+      fontSize: 18,
+      fontWeight: "700",
+      color: '#2E7D32'
+    },
+    itemRow: { flexDirection: "row", alignItems: "center", gap: 10, marginBottom: 12, paddingBottom: 12, borderBottomWidth: 1, borderBottomColor: theme.colors.border.light },
+    thumb: { width: 60, height: 60, borderRadius: 8 },
+    itemName: { color: theme.colors.text.primary, fontWeight: "700", fontSize: 15 },
+    itemMeta: { color: theme.colors.text.tertiary, marginTop: 4, fontSize: 14 },
+    itemPrice: { color: theme.colors.text.primary, fontWeight: "700", fontSize: 16 },
+    line: { color: theme.colors.text.secondary, marginBottom: 2 },
+    row: { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
     label: { color: theme.colors.text.secondary },
     value: { color: theme.colors.text.primary, fontWeight: "800" },
     total: { color: theme.colors.text.primary, fontWeight: "900", fontSize: 18 },
-    btnOutline: { flex: 1, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light, alignItems: "center" },
+    btnOutline: { flex: 1, paddingVertical: 14, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light, alignItems: "center" },
     btnOutlineText: { color: theme.colors.text.primary, fontWeight: "800" },
-    btnPrimary: { flex: 1, paddingVertical: 12, borderRadius: 10, backgroundColor: theme.colors.accent.emerald, alignItems: "center" },
-    btnPrimaryText: { color: theme.colors.text.inverse, fontWeight: "900" }
+    btnPrimary: { flex: 1, paddingVertical: 14, borderRadius: 10, backgroundColor: theme.colors.accent.emerald, alignItems: "center" },
+    btnPrimaryText: { color: theme.colors.text.inverse, fontWeight: "900" },
+    btnSupport: {
+      paddingVertical: 14,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+      alignItems: "center",
+      marginTop: 4,
+    },
+    btnSupportText: {
+      color: theme.colors.text.primary,
+      fontWeight: "700",
+      fontSize: 15,
+    },
   });
 }

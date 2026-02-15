@@ -10,6 +10,7 @@ export type ProductQueryParams = {
   minPrice?: number;
   maxPrice?: number;
   sortBy?: "price_asc" | "price_desc" | "rating" | "newest";
+  inStockOnly?: boolean;
 };
 
 export type ProductsResponse = {
@@ -32,7 +33,7 @@ function toThumb(url?: string, size = 400): string | undefined {
         return u.toString();
       }
     }
-  } catch {}
+  } catch { }
   return url;
 }
 
@@ -41,10 +42,10 @@ function mapApiProduct(p: any): UIProduct {
     Array.isArray(p.images) && p.images.length
       ? p.images.map((x: any) => String(x))
       : p.imageUrl
-      ? [String(p.imageUrl)]
-      : p.image
-      ? [String(p.image)]
-      : [];
+        ? [String(p.imageUrl)]
+        : p.image
+          ? [String(p.image)]
+          : [];
   const image = images[0] ? toThumb(images[0], 600) : undefined;
   return {
     id: String(p.id || p._id || p.uuid),

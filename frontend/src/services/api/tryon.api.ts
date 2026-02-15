@@ -54,3 +54,13 @@ export async function saveFavorite(id: string): Promise<{ message: string; favor
   const res = await client.post<{ message: string; favorite?: unknown }>(`/api/v1/tryon/${id}/favorite`);
   return res.data;
 }
+
+export async function createSession(productId: string): Promise<{ id: string }> {
+  const res = await client.post<{ id: string }>("/api/v1/tryon/session", { productId });
+  return res.data;
+}
+
+export async function applyProduct(sessionId: string, productId: string): Promise<{ success: boolean }> {
+  const res = await client.post<{ success: boolean }>("/api/v1/tryon/apply", { sessionId, productId });
+  return res.data;
+}

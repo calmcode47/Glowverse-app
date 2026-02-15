@@ -113,256 +113,275 @@ export default function ProductDetailScreen({ route, navigation }: any) {
           </View>
         ) : null}
         {product ? (
-        <>
-        {/* Image Gallery */}
-        <View style={styles.imageGallery}>
-          <ScrollView
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            onScroll={(e) => {
-              const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
-              setActiveImageIndex(index);
-            }}
-            scrollEventThrottle={16}
-          >
-            {productImages.length > 0 ? productImages.map((imgUrl: string, idx: number) => (
-              <View key={idx} style={styles.imageContainer}>
-                <OptimizedImage
-                  uri={getCloudinaryUrl(imgUrl, { width: Math.round(SCREEN_WIDTH), height: Math.round(SCREEN_WIDTH), quality: 'auto', format: 'auto' })}
-                  width={Math.round(SCREEN_WIDTH)}
-                  height={Math.round(SCREEN_WIDTH)}
-                  resizeMode="contain"
-                  priority={idx === 0 ? 'high' : 'normal'}
-                  alt={`${product.name} product image`}
-                />
-              </View>
-            )) : (
-              <View style={styles.imageContainer}>
-                <LinearGradient
-                  colors={[theme.colors.background.tertiary, theme.colors.background.secondary]}
-                  style={styles.imagePlaceholder}
-                >
-                  <MaterialCommunityIcons name="image-outline" size={80} color={theme.colors.text.tertiary} />
-                </LinearGradient>
-              </View>
-            )}
-          </ScrollView>
+          <>
+            {/* Image Gallery */}
+            <View style={styles.imageGallery}>
+              <ScrollView
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={(e) => {
+                  const index = Math.round(e.nativeEvent.contentOffset.x / SCREEN_WIDTH);
+                  setActiveImageIndex(index);
+                }}
+                scrollEventThrottle={16}
+              >
+                {productImages.length > 0 ? productImages.map((imgUrl: string, idx: number) => (
+                  <View key={idx} style={styles.imageContainer}>
+                    <OptimizedImage
+                      uri={getCloudinaryUrl(imgUrl, { width: Math.round(SCREEN_WIDTH), height: Math.round(SCREEN_WIDTH), quality: 'auto', format: 'auto' })}
+                      width={Math.round(SCREEN_WIDTH)}
+                      height={Math.round(SCREEN_WIDTH)}
+                      resizeMode="contain"
+                      priority={idx === 0 ? 'high' : 'normal'}
+                      alt={`${product.name} product image`}
+                    />
+                  </View>
+                )) : (
+                  <View style={styles.imageContainer}>
+                    <LinearGradient
+                      colors={[theme.colors.background.tertiary, theme.colors.background.secondary]}
+                      style={styles.imagePlaceholder}
+                    >
+                      <MaterialCommunityIcons name="image-outline" size={80} color={theme.colors.text.tertiary} />
+                    </LinearGradient>
+                  </View>
+                )}
+              </ScrollView>
 
-          {/* Image Indicators */}
-          {productImages.length > 1 && (
-            <View style={styles.imageIndicators}>
-              {productImages.map((_: string, index: number) => (
-                <View
-                  key={index}
-                  style={[
-                    styles.indicator,
-                    {
-                      backgroundColor: index === activeImageIndex ? theme.colors.accent.emerald : theme.colors.border.DEFAULT,
-                      width: index === activeImageIndex ? 24 : 8,
-                    },
-                  ]}
-                />
-              ))}
-            </View>
-          )}
-
-          {/* Favorite & Back Buttons */}
-          <View style={styles.favoriteButton}>
-            <FavoriteButton productId={product.id} productName={product.name} price={product.price} size={24} source="product_detail" />
-          </View>
-
-          <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
-            <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text.primary} />
-          </TouchableOpacity>
-        </View>
-
-        {/* Product Info */}
-        <View style={styles.productInfo}>
-          <View style={styles.header}>
-            <View style={{ flex: 1 }}>
-              <Text style={styles.brand}>{product.brand}</Text>
-              <Text style={styles.productName} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_NAME)}>{product.name}</Text>
-            </View>
-            <TouchableOpacity style={styles.shareButton} accessible accessibilityRole="button" accessibilityLabel="Share product" accessibilityHint="Double tap to share this product">
-              <MaterialCommunityIcons name="share-variant-outline" size={22} color={theme.colors.text.primary} />
-            </TouchableOpacity>
-          </View>
-
-          {/* Rating & Stats */}
-          <View style={styles.statsRow}>
-            <View style={styles.ratingContainer}>
-              <MaterialCommunityIcons name="star" size={18} color={theme.colors.accent.gold} />
-              <Text style={styles.ratingText}>{product.rating}</Text>
-              <Text style={styles.reviewsText}>({product.reviews} reviews)</Text>
-            </View>
-            {product.isBestseller && (
-              <View style={styles.soldBadge}>
-                <MaterialCommunityIcons name="fire" size={16} color={theme.colors.accent.rose} />
-                <Text style={styles.soldText}>Bestseller</Text>
-              </View>
-            )}
-          </View>
-
-          {/* Price */}
-          <View style={styles.priceContainer}>
-            <Text style={styles.price} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_PRICE)}>${product.price.toFixed(2)}</Text>
-            {product.originalPrice && (
-              <>
-                <Text style={styles.originalPrice}>${product.originalPrice.toFixed(2)}</Text>
-                <View style={styles.discountBadge}>
-                  <Text style={styles.discountText}>
-                    {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
-                  </Text>
+              {/* Image Indicators */}
+              {productImages.length > 1 && (
+                <View style={styles.imageIndicators}>
+                  {productImages.map((_: string, index: number) => (
+                    <View
+                      key={index}
+                      style={[
+                        styles.indicator,
+                        {
+                          backgroundColor: index === activeImageIndex ? theme.colors.accent.emerald : theme.colors.border.DEFAULT,
+                          width: index === activeImageIndex ? 24 : 8,
+                        },
+                      ]}
+                    />
+                  ))}
                 </View>
-              </>
-            )}
-          </View>
+              )}
 
-          {/* Size Selector */}
-          {product.sizes && product.sizes.length > 0 && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Size</Text>
-              <View style={styles.sizeSelector}>
-                {product.sizes.map((size: string) => (
-                  <TouchableOpacity
-                    key={size}
-                    style={[
-                      styles.sizeOption,
-                      selectedSize === size && styles.sizeOptionActive,
-                      { borderColor: selectedSize === size ? theme.colors.accent.emerald : theme.colors.border.DEFAULT }
-                    ]}
-                    onPress={() => setSelectedSize(size)}
-                  >
-                    <Text style={[
-                      styles.sizeText,
-                      { color: selectedSize === size ? theme.colors.accent.emerald : theme.colors.text.primary }
-                    ]}>
-                      {size}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+              {/* Favorite & Back Buttons */}
+              <View style={styles.favoriteButton}>
+                <FavoriteButton productId={product.id} productName={product.name} price={product.price} size={24} source="product_detail" />
               </View>
-            </View>
-          )}
 
-          {/* Features */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Features</Text>
-            <View style={styles.features}>
-              {product.features.map((feature: string, index: number) => (
-                <View key={index} style={styles.featureItem}>
-                  <MaterialCommunityIcons name="check-circle" size={18} color={theme.colors.accent.emerald} />
-                  <Text style={styles.featureText}>{feature}</Text>
-                </View>
-              ))}
-            </View>
-          </View>
-
-          {/* Description */}
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Description</Text>
-            <Text style={styles.description}>{product.description}</Text>
-          </View>
-
-          {/* Reviews */}
-          <View style={styles.section}>
-            <View style={styles.reviewsHeader}>
-              <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
-              <TouchableOpacity>
-                <Text style={styles.seeAllLink}>See All →</Text>
+              <TouchableOpacity style={styles.backButton} onPress={() => navigation.goBack()}>
+                <MaterialCommunityIcons name="arrow-left" size={24} color={theme.colors.text.primary} />
               </TouchableOpacity>
             </View>
-            <View style={styles.reviewsList}>
-              {reviews.map((review) => (
-                <View key={review.id} style={styles.reviewCard}>
-                  <View style={styles.reviewHeader}>
-                    <View style={styles.reviewerAvatar}>
-                      <MaterialCommunityIcons name="account" size={20} color={theme.colors.text.tertiary} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.reviewerName}>{review.name}</Text>
-                      <View style={styles.reviewRating}>
-                        {[...Array(review.rating)].map((_, i) => (
-                          <MaterialCommunityIcons key={i} name="star" size={12} color={theme.colors.accent.gold} />
-                        ))}
-                        <Text style={styles.reviewDate}>{review.date}</Text>
-                      </View>
-                    </View>
-                  </View>
-                  <Text style={styles.reviewComment}>{review.comment}</Text>
+
+            {/* Product Info */}
+            <View style={styles.productInfo}>
+              <View style={styles.header}>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.brand}>{product.brand}</Text>
+                  <Text style={styles.productName} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_NAME)}>{product.name}</Text>
                 </View>
-              ))}
-            </View>
-          </View>
+                <TouchableOpacity
+                  style={styles.shareButton}
+                  onPress={async () => {
+                    if (!product) return;
+                    try {
+                      const Share = require('react-native-share').default;
+                      await Share.open({
+                        title: product.name,
+                        message: `Check out the ${product.name} on Glowverse!`,
+                        url: `https://glowverse.com/products/${product.id}`,
+                      });
+                    } catch (error) {
+                      // Share cancelled or failed
+                    }
+                  }}
+                  accessible
+                  accessibilityRole="button"
+                  accessibilityLabel="Share product"
+                  accessibilityHint="Double tap to share this product"
+                >
+                  <MaterialCommunityIcons name="share-variant-outline" size={22} color={theme.colors.text.primary} />
+                </TouchableOpacity>
+              </View>
 
-          {/* Write a Review */}
-          <View style={styles.section}>
-            <TouchableOpacity
-              style={styles.writeReviewButton}
-              onPress={() => { const next = !showReviewForm; setShowReviewForm(next); if (next && product) trackStarted(product.id, product.name); }}
-            >
-              <MaterialCommunityIcons name="pencil" size={20} color={theme.colors.accent.emerald} />
-              <Text style={styles.writeReviewButtonText}>Write a Review</Text>
-              <MaterialCommunityIcons
-                name={showReviewForm ? 'chevron-up' : 'chevron-down'}
-                size={20}
-                color={theme.colors.text.secondary}
-              />
-            </TouchableOpacity>
+              {/* Rating & Stats */}
+              <View style={styles.statsRow}>
+                <View style={styles.ratingContainer}>
+                  <MaterialCommunityIcons name="star" size={18} color={theme.colors.accent.gold} />
+                  <Text style={styles.ratingText}>{product.rating}</Text>
+                  <Text style={styles.reviewsText}>({product.reviews} reviews)</Text>
+                </View>
+                {product.isBestseller && (
+                  <View style={styles.soldBadge}>
+                    <MaterialCommunityIcons name="fire" size={16} color={theme.colors.accent.rose} />
+                    <Text style={styles.soldText}>Bestseller</Text>
+                  </View>
+                )}
+              </View>
 
-            {showReviewForm && (
-              <View style={styles.reviewForm}>
-                {/* Star Rating Selector */}
-                <View style={styles.ratingSelector}>
-                  <Text style={styles.ratingLabel}>Your Rating:</Text>
-                  <View style={styles.stars}>
-                    {[1, 2, 3, 4, 5].map((star) => (
-                      <TouchableOpacity key={star} onPress={() => setReviewRating(star)}>
-                        <MaterialCommunityIcons
-                          name={star <= reviewRating ? 'star' : 'star-outline'}
-                          size={32}
-                          color={star <= reviewRating ? theme.colors.accent.gold : theme.colors.text.tertiary}
-                        />
+              {/* Price */}
+              <View style={styles.priceContainer}>
+                <Text style={styles.price} {...useTestID(TestIDs.PRODUCT_DETAIL.PRODUCT_PRICE)}>${product.price.toFixed(2)}</Text>
+                {product.originalPrice && (
+                  <>
+                    <Text style={styles.originalPrice}>${product.originalPrice.toFixed(2)}</Text>
+                    <View style={styles.discountBadge}>
+                      <Text style={styles.discountText}>
+                        {Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)}% OFF
+                      </Text>
+                    </View>
+                  </>
+                )}
+              </View>
+
+              {/* Size Selector */}
+              {product.sizes && product.sizes.length > 0 && (
+                <View style={styles.section}>
+                  <Text style={styles.sectionTitle}>Size</Text>
+                  <View style={styles.sizeSelector}>
+                    {product.sizes.map((size: string) => (
+                      <TouchableOpacity
+                        key={size}
+                        style={[
+                          styles.sizeOption,
+                          selectedSize === size && styles.sizeOptionActive,
+                          { borderColor: selectedSize === size ? theme.colors.accent.emerald : theme.colors.border.DEFAULT }
+                        ]}
+                        onPress={() => setSelectedSize(size)}
+                      >
+                        <Text style={[
+                          styles.sizeText,
+                          { color: selectedSize === size ? theme.colors.accent.emerald : theme.colors.text.primary }
+                        ]}>
+                          {size}
+                        </Text>
                       </TouchableOpacity>
                     ))}
                   </View>
                 </View>
+              )}
 
-                {/* Review Text Input */}
-                <View style={styles.reviewInputContainer}>
-                  <Text style={styles.inputLabel}>Your Review:</Text>
-                  <View style={[styles.reviewInput, { borderColor: theme.colors.border.DEFAULT }]}>
-                    <Text style={{ color: theme.colors.text.secondary, fontSize: 14 }}>
-                      {reviewText || 'Share your experience with this product...'}
-                    </Text>
-                  </View>
+              {/* Features */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Features</Text>
+                <View style={styles.features}>
+                  {product.features.map((feature: string, index: number) => (
+                    <View key={index} style={styles.featureItem}>
+                      <MaterialCommunityIcons name="check-circle" size={18} color={theme.colors.accent.emerald} />
+                      <Text style={styles.featureText}>{feature}</Text>
+                    </View>
+                  ))}
                 </View>
-
-                {/* Submit Button */}
-                <TouchableOpacity
-                  style={styles.submitReviewButton}
-                  onPress={() => {
-                    setShowReviewForm(false);
-                    setReviewText('');
-                    setReviewRating(5);
-                    if (product) trackSubmitted(product.id, reviewRating, reviewText.length);
-                  }}
-                >
-                  <LinearGradient
-                    colors={theme.colors.gradients.primary}
-                    style={styles.submitReviewGradient}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                  >
-                    <Text style={styles.submitReviewText}>Submit Review</Text>
-                  </LinearGradient>
-                </TouchableOpacity>
               </View>
-            )}
-          </View>
-        </View>
-        </>
+
+              {/* Description */}
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Description</Text>
+                <Text style={styles.description}>{product.description}</Text>
+              </View>
+
+              {/* Reviews */}
+              <View style={styles.section}>
+                <View style={styles.reviewsHeader}>
+                  <Text style={styles.sectionTitle}>Reviews ({reviews.length})</Text>
+                  <TouchableOpacity>
+                    <Text style={styles.seeAllLink}>See All →</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={styles.reviewsList}>
+                  {reviews.map((review) => (
+                    <View key={review.id} style={styles.reviewCard}>
+                      <View style={styles.reviewHeader}>
+                        <View style={styles.reviewerAvatar}>
+                          <MaterialCommunityIcons name="account" size={20} color={theme.colors.text.tertiary} />
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={styles.reviewerName}>{review.name}</Text>
+                          <View style={styles.reviewRating}>
+                            {[...Array(review.rating)].map((_, i) => (
+                              <MaterialCommunityIcons key={i} name="star" size={12} color={theme.colors.accent.gold} />
+                            ))}
+                            <Text style={styles.reviewDate}>{review.date}</Text>
+                          </View>
+                        </View>
+                      </View>
+                      <Text style={styles.reviewComment}>{review.comment}</Text>
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Write a Review */}
+              <View style={styles.section}>
+                <TouchableOpacity
+                  style={styles.writeReviewButton}
+                  onPress={() => { const next = !showReviewForm; setShowReviewForm(next); if (next && product) trackStarted(product.id, product.name); }}
+                >
+                  <MaterialCommunityIcons name="pencil" size={20} color={theme.colors.accent.emerald} />
+                  <Text style={styles.writeReviewButtonText}>Write a Review</Text>
+                  <MaterialCommunityIcons
+                    name={showReviewForm ? 'chevron-up' : 'chevron-down'}
+                    size={20}
+                    color={theme.colors.text.secondary}
+                  />
+                </TouchableOpacity>
+
+                {showReviewForm && (
+                  <View style={styles.reviewForm}>
+                    {/* Star Rating Selector */}
+                    <View style={styles.ratingSelector}>
+                      <Text style={styles.ratingLabel}>Your Rating:</Text>
+                      <View style={styles.stars}>
+                        {[1, 2, 3, 4, 5].map((star) => (
+                          <TouchableOpacity key={star} onPress={() => setReviewRating(star)}>
+                            <MaterialCommunityIcons
+                              name={star <= reviewRating ? 'star' : 'star-outline'}
+                              size={32}
+                              color={star <= reviewRating ? theme.colors.accent.gold : theme.colors.text.tertiary}
+                            />
+                          </TouchableOpacity>
+                        ))}
+                      </View>
+                    </View>
+
+                    {/* Review Text Input */}
+                    <View style={styles.reviewInputContainer}>
+                      <Text style={styles.inputLabel}>Your Review:</Text>
+                      <View style={[styles.reviewInput, { borderColor: theme.colors.border.DEFAULT }]}>
+                        <Text style={{ color: theme.colors.text.secondary, fontSize: 14 }}>
+                          {reviewText || 'Share your experience with this product...'}
+                        </Text>
+                      </View>
+                    </View>
+
+                    {/* Submit Button */}
+                    <TouchableOpacity
+                      style={styles.submitReviewButton}
+                      onPress={() => {
+                        setShowReviewForm(false);
+                        setReviewText('');
+                        setReviewRating(5);
+                        if (product) trackSubmitted(product.id, reviewRating, reviewText.length);
+                      }}
+                    >
+                      <LinearGradient
+                        colors={theme.colors.gradients.primary}
+                        style={styles.submitReviewGradient}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                      >
+                        <Text style={styles.submitReviewText}>Submit Review</Text>
+                      </LinearGradient>
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            </View>
+          </>
         ) : null}
 
         <View style={{ height: 120 }} />
@@ -412,7 +431,7 @@ export default function ProductDetailScreen({ route, navigation }: any) {
                   } as any);
                   setCount?.((c: number) => c + quantity);
                 }
-              } catch {}
+              } catch { }
             }}
             accessible
             accessibilityRole="button"

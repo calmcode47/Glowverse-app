@@ -19,6 +19,7 @@ import Constants from "expo-constants";
 import { NotificationsProvider } from "./src/context/NotificationsContext";
 import { initializeStripe } from "./src/services/stripe.service";
 import { deepLinkingService } from "./src/services/deepLinking.service";
+import { notificationService } from "./src/services/notifications/firebaseConfig";
 import { usePreloadScreens } from "./src/hooks/usePreloadScreens";
 import { InteractionManager } from "react-native";
 import { memoryUsageMonitor } from "./src/utils/performance";
@@ -27,7 +28,7 @@ import ConflictIndicator from "./src/components/conflicts/ConflictIndicator";
 import ConflictHost from "./src/components/conflicts/ConflictHost";
 import { conflictQueue } from "./src/services/conflictQueue.service";
 import { offlineQueue } from "./src/services/offlineQueue.service";
- 
+
 
 function ConnectivityBanner({ connected, base }: { connected: boolean; base: string }) {
   const { theme } = useTheme();
@@ -55,11 +56,11 @@ export default function App() {
     })();
   }, []);
   React.useEffect(() => {
-    conflictQueue.loadConflicts().catch(() => {});
+    conflictQueue.loadConflicts().catch(() => { });
   }, []);
   React.useEffect(() => {
     if (connected) {
-      offlineQueue.processQueue().catch(() => {});
+      offlineQueue.processQueue().catch(() => { });
     }
   }, [connected]);
   React.useEffect(() => {
@@ -76,10 +77,11 @@ export default function App() {
           release: Constants.expoConfig?.version
         });
       }
-    } catch {}
+    } catch { }
   }, []);
   React.useEffect(() => {
-    initializeStripe().catch(() => {});
+    initializeStripe().catch(() => { });
+    notificationService.initialize().catch(() => { });
   }, []);
   React.useEffect(() => {
     const cancel = InteractionManager.runAfterInteractions(() => {
@@ -87,7 +89,7 @@ export default function App() {
         // Defer any non-critical work until after interactions
         memoryUsageMonitor(10000);
         apiHealthMonitor.start();
-      } catch {}
+      } catch { }
     });
     return () => {
       // @ts-ignore
@@ -104,7 +106,7 @@ export default function App() {
             deepLinkingService.navigate(url);
           }, 1000);
         }
-      } catch {}
+      } catch { }
     })();
     const unsub = deepLinkingService.addListener((url) => {
       deepLinkingService.navigate(url);
@@ -142,7 +144,7 @@ export default function App() {
                 <CartProvider>
                   <FavoritesProvider>
                     <ErrorBoundary>
-                    <NavigationContainer
+                      <NavigationContainer
                         ref={navigationRef}
                         linking={linking as any}
                         onReady={() => {

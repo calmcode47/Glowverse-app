@@ -34,19 +34,42 @@ export default function PromotionCard({ promo, featured, onPress, onShop, onCopi
         </View>
         {promo.description ? <Text style={styles.desc} numberOfLines={2}>{promo.description}</Text> : null}
         {promo.code ? (
-          <View style={styles.codeRow}>
-            <Text style={styles.code}>{promo.code}</Text>
-            <TouchableOpacity onPress={async () => { try { await Clipboard.setStringAsync(promo.code!); trackPromoCopied(promo.code!); onCopied?.(); } catch { onCopied?.(); } }}><Text style={styles.copy}>Copy Code</Text></TouchableOpacity>
+          <View style={styles.promoCodeContainer}>
+            <View style={styles.dashedBorder}>
+              <Text style={styles.code}>{promo.code}</Text>
+              <TouchableOpacity
+                style={styles.copyButton}
+                onPress={async () => {
+                  try {
+                    await Clipboard.setStringAsync(promo.code!);
+                    trackPromoCopied(promo.code!);
+                    onCopied?.();
+                  } catch {
+                    onCopied?.();
+                  }
+                }}
+              >
+                <MaterialCommunityIcons name="content-copy" size={16} color={theme.colors.accent.blue} />
+                <Text style={styles.copy}>Copy</Text>
+              </TouchableOpacity>
+            </View>
           </View>
         ) : null}
         <View style={styles.footer}>
           {countdown ? <Text style={[styles.expiry, soon && { color: theme.colors.accent.rose }]}>Ends in {countdown}</Text> : exp ? <Text style={styles.expiry}>Expires {exp.toLocaleDateString()}</Text> : null}
-          <Button mode="contained-tonal" onPress={() => onShop(promo.code)}>Shop Now</Button>
-          <Button mode="text" onPress={async () => {
-            const link = deepLinkingService.createUniversalLink("promo", { code: promo.code || "" });
-            const message = `Check out this deal: ${promo.title}. Use code ${promo.code}. ${link}`;
-            try { await Share.share({ message }); } catch {}
-          }}>Share</Button>
+          <View style={styles.actions}>
+            <Button mode="contained-tonal" compact onPress={() => onShop(promo.code)}>Shop Now</Button>
+            <TouchableOpacity
+              style={styles.iconShare}
+              onPress={async () => {
+                const link = deepLinkingService.createUniversalLink("promo", { code: promo.code || "" });
+                const message = `Check out this deal: ${promo.title}. Use code ${promo.code}. ${link}`;
+                try { await Share.share({ message }); } catch { }
+              }}
+            >
+              <MaterialCommunityIcons name="share-variant" size={20} color={theme.colors.text.secondary} />
+            </TouchableOpacity>
+          </View>
         </View>
       </View>
     </TouchableOpacity>
@@ -62,17 +85,61 @@ function formatDuration(ms: number): string {
 
 function createStyles(theme: any, featured?: boolean) {
   return StyleSheet.create({
-    card: { borderWidth: 1, borderColor: theme.colors.border.light, backgroundColor: theme.colors.background.elevated, borderRadius: 16, overflow: "hidden" },
+    card: {
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+      backgroundColor: theme.colors.background.elevated,
+      borderRadius: 16,
+      overflow: "hidden",
+      marginBottom: 12,
+      ...theme.shadows.sm
+    },
     image: { width: "100%", aspectRatio: featured ? 2 : 2.4 },
-    content: { padding: 12, gap: 6 },
+    content: { padding: 16, gap: 12 },
     row: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    title: { color: theme.colors.text.primary, fontWeight: "900", flex: 1, marginRight: 8 },
-    badge: { color: theme.colors.text.inverse, fontWeight: "900", paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8 },
-    desc: { color: theme.colors.text.secondary },
-    codeRow: { flexDirection: "row", alignItems: "center", gap: 10 },
-    code: { color: theme.colors.text.primary, fontWeight: "800", letterSpacing: 1 },
-    copy: { color: theme.colors.accent.blue, fontWeight: "800" },
-    footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between" },
-    expiry: { color: theme.colors.text.tertiary }
+    title: { color: theme.colors.text.primary, fontWeight: "900", fontSize: 16, flex: 1, marginRight: 8 },
+    badge: { color: theme.colors.text.inverse, fontWeight: "900", paddingHorizontal: 10, paddingVertical: 4, borderRadius: 8, fontSize: 12 },
+    desc: { color: theme.colors.text.secondary, fontSize: 13, lineHeight: 18 },
+    promoCodeContainer: {
+      marginTop: 4,
+    },
+    dashedBorder: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      borderWidth: 2,
+      borderColor: theme.colors.accent.emerald,
+      borderStyle: 'dashed',
+      borderRadius: 12,
+      padding: 12,
+      backgroundColor: theme.colors.accent.emerald + '05',
+    },
+    code: {
+      color: theme.colors.accent.emerald,
+      fontWeight: "900",
+      letterSpacing: 2,
+      fontSize: 18,
+      textTransform: "uppercase"
+    },
+    copyButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      backgroundColor: theme.colors.background.primary,
+      paddingHorizontal: 10,
+      paddingVertical: 6,
+      borderRadius: 8,
+      borderWidth: 1,
+      borderColor: theme.colors.border.light,
+    },
+    copy: { color: theme.colors.accent.blue, fontWeight: "800", fontSize: 12 },
+    footer: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 4 },
+    actions: { flexDirection: 'row', alignItems: 'center', gap: 12 },
+    iconShare: {
+      padding: 8,
+      borderRadius: 20,
+      backgroundColor: theme.colors.background.secondary,
+    },
+    expiry: { color: theme.colors.text.tertiary, fontSize: 11 }
   });
 }

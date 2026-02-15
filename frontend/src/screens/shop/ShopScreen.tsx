@@ -56,7 +56,8 @@ export default function ShopScreen() {
         brand: filters.brand,
         minPrice: filters.minPrice,
         maxPrice: filters.maxPrice,
-        sortBy: filters.sortBy
+        sortBy: filters.sortBy,
+        inStockOnly: filters.inStockOnly
       };
       const res = await ProductsAPI.getProducts(params);
       setTotalPages(res.totalPages);
@@ -112,12 +113,16 @@ export default function ShopScreen() {
   }, [loading, items.length]);
 
   React.useEffect(() => {
+    const newFilters = route?.params?.filters as Filters | undefined;
     const cat = route?.params?.category as string | undefined;
     const brand = route?.params?.brand as string | undefined;
-    if (cat || brand) {
+
+    if (newFilters) {
+      setFilters(newFilters);
+    } else if (cat || brand) {
       setFilters((f) => ({ ...f, category: cat ?? f.category, brand: brand ?? f.brand }));
     }
-  }, [route?.params]);
+  }, [route?.params?.filters, route?.params?.category, route?.params?.brand]);
 
   const onRefresh = () => {
     setRefreshing(true);
@@ -185,8 +190,8 @@ export default function ShopScreen() {
       </View>
       <FilterBar
         filters={filters}
-        onOpenFilters={() => setFilterOpen(true)}
-        onClearAll={() => setFilters({})}
+        onOpenFilters={() => navigation.navigate("AdvancedFilters", { currentFilters: filters })}
+        onClearAll={() => setFilters({ sortBy: "newest" })}
       />
       {loading && items.length === 0 ? (
         <View style={styles.grid}>
@@ -234,12 +239,6 @@ export default function ShopScreen() {
           }
         />
       )}
-      <FilterModal
-        visible={filterOpen}
-        value={filters}
-        onChange={(v) => setFilters(v)}
-        onClose={() => setFilterOpen(false)}
-      />
     </View>
   );
 }

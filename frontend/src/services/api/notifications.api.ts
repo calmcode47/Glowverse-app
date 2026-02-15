@@ -23,6 +23,10 @@ function map(n: any): AppNotification {
   };
 }
 
+export async function registerDevice(data: { deviceToken: string; platform: string }): Promise<void> {
+  await client.post("/api/v1/notifications/register-device", data);
+}
+
 export async function list(): Promise<AppNotification[]> {
   const res = await client.get("/api/v1/notifications");
   const arr = Array.isArray(res.data.notifications) ? res.data.notifications : Array.isArray(res.data) ? res.data : [];
@@ -43,4 +47,20 @@ export async function remove(id: string): Promise<void> {
 
 export async function clearAll(): Promise<void> {
   await client.delete("/api/v1/notifications");
+}
+
+export type NotificationPreferences = {
+  orderUpdates: boolean;
+  promotions: boolean;
+  productRestocked: boolean;
+  newsletter: boolean;
+};
+
+export async function getPreferences(): Promise<NotificationPreferences> {
+  const res = await client.get<NotificationPreferences>("/api/v1/notifications/preferences");
+  return res.data;
+}
+
+export async function updatePreferences(data: Partial<NotificationPreferences>): Promise<void> {
+  await client.patch("/api/v1/notifications/preferences", data);
 }

@@ -1,9 +1,8 @@
 import React from "react";
 import { Platform } from "react-native";
 import { useNavigation } from "@react-navigation/native";
-import { notificationService } from "../services/notifications.service";
+import { notificationService } from "../services/notifications/firebaseConfig";
 import { client } from "../services/api/client";
-import * as Notifications from "expo-notifications";
 import { useAuth } from "./AuthContext";
 import { deepLinkingService } from "../services/deepLinking.service";
 import { analytics } from "../services/analytics.service";
@@ -43,7 +42,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
 
   React.useEffect(() => {
     if (isAuthenticated) {
-      initializePush().catch(() => {});
+      initializePush().catch(() => { });
     }
     return () => notificationService.cleanup();
   }, [isAuthenticated]);
@@ -60,14 +59,14 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
   }, []);
 
   async function initializePush() {
-    const granted = await notificationService.requestPermissions();
+    const granted = await notificationService.requestPermission();
     if (!granted) return;
-    const token = await notificationService.registerForPushNotifications();
+    const token = await notificationService.getDeviceToken();
     if (!token) return;
     setExpoPushToken(token);
     try {
-      await client.post("/api/v1/users/push-token", { token, platform: Platform.OS });
-    } catch {}
+      await client.post("/api/v1/notifications/register-device", { deviceToken: token, platform: Platform.OS });
+    } catch { }
     await refreshNotifications();
   }
 
@@ -93,7 +92,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       setNotifications((prev) => prev.map((n) => (n.id === id ? { ...n, read: true } : n)));
       setUnreadCount((x) => Math.max(0, x - 1));
       await notificationService.setBadgeCount(Math.max(0, unreadCount - 1));
-    } catch {}
+    } catch { }
   }
 
   async function markAllAsRead() {
@@ -102,7 +101,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
       setUnreadCount(0);
       await notificationService.clearBadge();
-    } catch {}
+    } catch { }
   }
 
   async function deleteNotification(id: string) {
@@ -110,11 +109,11 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       await client.delete(`/api/v1/notifications/${encodeURIComponent(id)}`);
       setNotifications((prev) => prev.filter((n) => n.id !== id));
       analytics.trackEvent(AnalyticsEventName.NOTIFICATION_DISMISSED, { notification_id: id });
-    } catch {}
+    } catch { }
   }
 
   async function requestPermission(): Promise<boolean> {
-    return notificationService.requestPermissions();
+    return notificationService.requestPermission();
   }
 
   function handleNotificationNavigation(data: any) {

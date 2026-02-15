@@ -8,10 +8,14 @@ import { useTestID } from "../../hooks/useTestID";
 
 export type Filters = {
   category?: string;
+  categories?: string[];
   brand?: string;
+  brands?: string[];
   minPrice?: number;
   maxPrice?: number;
+  priceRange?: number[];
   sortBy?: "price_asc" | "price_desc" | "rating" | "newest";
+  inStockOnly?: boolean;
 };
 
 type Props = {
@@ -34,11 +38,24 @@ export default function FilterBar({ filters, onOpenFilters, onClearAll }: Props)
       {hasAny ? (
         <>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chips}>
-            {filters.category ? <FilterChip label={`Category: ${filters.category}`} /> : null}
-            {filters.brand ? <FilterChip label={`Brand: ${filters.brand}`} /> : null}
+            {filters.categories && filters.categories.length > 0 ? (
+              <FilterChip label={`Categories: ${filters.categories.length}`} />
+            ) : filters.category ? (
+              <FilterChip label={`Category: ${filters.category}`} />
+            ) : null}
+
+            {filters.brands && filters.brands.length > 0 ? (
+              <FilterChip label={`Brands: ${filters.brands.length}`} />
+            ) : filters.brand ? (
+              <FilterChip label={`Brand: ${filters.brand}`} />
+            ) : null}
+
             {filters.sortBy ? <FilterChip label={`Sort: ${filters.sortBy}`} /> : null}
-            {filters.minPrice !== undefined || filters.maxPrice !== undefined ? (
-              <FilterChip label={`Price: ${filters.minPrice ?? 0}-${filters.maxPrice ?? "∞"}`} />
+            {filters.inStockOnly ? <FilterChip label="In Stock Only" /> : null}
+            {filters.priceRange ? (
+              <FilterChip label={`Price: $${filters.priceRange[0]}-$${filters.priceRange[1]}`} />
+            ) : filters.minPrice !== undefined || filters.maxPrice !== undefined ? (
+              <FilterChip label={`Price: $${filters.minPrice ?? 0}-$${filters.maxPrice ?? "∞"}`} />
             ) : null}
           </ScrollView>
           <TouchableOpacity onPress={onClearAll} style={styles.clearBtn}>

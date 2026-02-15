@@ -18,7 +18,7 @@
 | **Database** | ✅ Complete | 100% | 25+ Prisma models, seeded data |
 | **CI/CD Pipeline** | ✅ Complete | 100% | 6 GitHub Actions workflows |
 | **Infrastructure** | ✅ Complete | 95% | Docker, security, monitoring, caching |
-| **Frontend UI** | ✅ Mostly Complete | 93% | AR try‑on, analysis, cart/checkout, offline, analytics, a11y pass, OpenAPI coverage audit, EAS & store assets |
+| **Frontend UI** | ✅ Mostly Complete | 95% | AR try-on, skin analysis, fitness dashboard, promo management |
 | **Testing** | ⚠️ Partial | 40% | 14 test suites, 4 service specs |
 | **Documentation** | ✅ Complete | 98% | 21 docs, runbooks, deployment guides |
 
@@ -157,11 +157,15 @@ npm run android  # Android emulator
 | ✨ **Animations & UX** | Parallax, reveals, micro‑interactions |
 | 🎭 **Design System** | Light/dark themes, tokens, consistent UI |
 
-#### Frontend Completion (≈ 93%)
+#### Frontend Completion (≈ 95%)
 - Implemented
   - Authentication with token refresh; secure token storage
   - Product catalog, detail pages with galleries and variants
   - Cart operations, promo codes, multi‑step checkout
+  - **Refined Promotion UI**: Coupon-style design with one-tap copy functionality
+  - **Social Sharing**: Native system-level sharing for products and referral codes
+  - **Notification Center**: Granular user preferences with real-time backend synchronization
+  - **Fitness Tracking**: Comprehensive dashboard with goal progress and activity charts
   - Orders list/detail, addresses CRUD, profile update
   - AR virtual try‑on with capture and overlays
   - AI skin analysis flow and results
@@ -173,8 +177,8 @@ npm run android  # Android emulator
   - Performance: image preloading, FlatList tuning, lazy-loaded screens, CI bundle-size budgets
   - Build & Release: EAS profiles (dev/preview/prod), PR checks, production auto-submit workflows, store asset scaffolding, asset verification/optimization scripts, EAS projectId verification
 - Remaining
+  - Real AR SDK Finalization (Linking native binary)
   - Broader offline caching (lists/search), conflict‑resolution UI
-  - Finalize and upload store screenshots & icons; set `extra.eas.projectId`
   - Adopt OpenAPI types across API layer and add Zod response validation
   - Expand E2E to edge‑case payment error screens (3DS, timeout, network)
   - A11y completion pass for remaining screens and expand contrast pairs
@@ -431,4 +435,4 @@ This project is proprietary software developed for the Glowverse beauty platform
 
 **Built with ❤️ for the Glowverse beauty community**
 
-*Last Updated: February 14, 2026*
+*Last Updated: February 15, 2026*

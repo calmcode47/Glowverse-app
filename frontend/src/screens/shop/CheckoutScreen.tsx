@@ -12,6 +12,7 @@ import { createPaymentIntent } from "../../services/api/payments.api";
 import { useStripe } from "@stripe/stripe-react-native";
 import { useNavigation } from "@react-navigation/native";
 import { useCart } from "../../context/CartContext";
+import { useAuth } from "../../context/AuthContext";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { analytics } from "../../services/analytics.service";
 import { TestIDs } from "../../constants/testIDs";
@@ -26,10 +27,12 @@ export default function CheckoutScreen() {
   const styles = createStyles(theme);
   const navigation = useNavigation<any>();
   const { setCount } = useCart();
+  const { user } = useAuth();
   const [step, setStep] = React.useState(1);
   const [cart, setCart] = React.useState<CartAPI.Cart | null>(null);
   const [loadingCart, setLoadingCart] = React.useState(true);
   const [shippingId, setShippingId] = React.useState<string | undefined>(undefined);
+  const [selectedAddress, setSelectedAddress] = React.useState<OrdersAPI.Address | null>(null);
   const [paymentMethod, setPaymentMethod] = React.useState<string | undefined>("card");
   const [placing, setPlacing] = React.useState(false);
   const [placeError, setPlaceError] = React.useState<string | null>(null);
@@ -49,7 +52,7 @@ export default function CheckoutScreen() {
             await CartAPI.applyPromoCode(pending);
             await AsyncStorage.removeItem("pendingPromoCode");
             c = await CartAPI.getCart();
-          } catch {}
+          } catch { }
         }
         setCart(c);
       } finally {
@@ -57,6 +60,23 @@ export default function CheckoutScreen() {
       }
     })();
   }, []);
+
+  // Fetch selected address when shippingId changes
+  React.useEffect(() => {
+    if (shippingId && user?.id) {
+      (async () => {
+        try {
+          const addresses = await OrdersAPI.getUserAddresses(user.id);
+          const addr = addresses.find(a => a.id === shippingId);
+          setSelectedAddress(addr || null);
+        } catch (e) {
+          console.error('Failed to fetch address:', e);
+        }
+      })();
+    } else {
+      setSelectedAddress(null);
+    }
+  }, [shippingId, user?.id]);
 
   const next = () => setStep((s: number) => Math.min(3, s + 1));
   const back = () => setStep((s: number) => Math.max(1, s - 1));
@@ -176,7 +196,7 @@ export default function CheckoutScreen() {
           {step === 3 ? (
             <ReviewStep
               cart={cart}
-              address={undefined}
+              address={selectedAddress || undefined}
               paymentMethod={paymentMethod}
               termsAccepted={termsAccepted}
               onToggleTerms={() => setTermsAccepted((v: boolean) => !v)}

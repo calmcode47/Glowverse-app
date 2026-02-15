@@ -28,6 +28,14 @@ export type RootStackParamList = {
   Cart: undefined;
   Search: undefined;
   Notifications: undefined;
+  OrderTracking: { orderId: string };
+  OrderDetail: { orderId: string };
+  Admin: undefined;
+  Referrals: undefined;
+  AdvancedFilters: { currentFilters: any };
+  ARTryOn: { productId: string };
+  FitnessDashboard: undefined;
+  NotificationPreferences: undefined;
 };
 
 declare global {

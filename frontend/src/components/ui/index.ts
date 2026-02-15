@@ -7,3 +7,4 @@ export { default as GradientCard } from "./GradientCard";
 export { default as CategoryFilters } from "./CategoryFilters";
 export { default as CarouselCard } from "./CarouselCard";
 export { default as ShopListCard } from "./ShopListCard";
+export { default as Checkbox } from "./Checkbox";
