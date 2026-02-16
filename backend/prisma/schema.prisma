@@ -182,6 +182,7 @@ model User {
   productReviews    ProductReview[]
   notificationPreferences NotificationPreferences?
   notificationHistory    NotificationHistory[]
+  pushTokens             PushToken[]
 
   @@map("users")
 }
@@ -215,6 +216,22 @@ model RefreshToken {
 
   @@map("refresh_tokens")
   @@index([userId])
+}
+
+model PushToken {
+  id          String   @id @default(uuid())
+  userId      String
+  token       String
+  deviceInfo  Json?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  @@unique([userId, token])
+  @@index([userId, isActive])
+  @@map("push_tokens")
 }
 
 model Analysis {
@@ -464,7 +481,7 @@ model Order {
   shippingAddress String        // JSON
   billingAddress  String?       // JSON
   paymentMethod   String
-  paymentIntentId String?
+  paymentIntentId String?       @unique
   
   // Fulfillment
   trackingNumber  String?
@@ -492,6 +509,7 @@ model Order {
   @@index([orderNumber])
   @@index([status])
   @@index([createdAt])
+  @@index([paymentIntentId])
 }
 
 /// OrderItem model - line items within an order

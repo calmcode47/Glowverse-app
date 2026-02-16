@@ -57,12 +57,60 @@ export const config = {
         };
     },
 
+    get stripe() {
+        const cfg = getConfig();
+        return {
+            secretKey: cfg.STRIPE_SECRET_KEY,
+            publishableKey: cfg.STRIPE_PUBLISHABLE_KEY,
+            webhookSecret: cfg.STRIPE_WEBHOOK_SECRET,
+            webhookTolerance: cfg.STRIPE_WEBHOOK_TOLERANCE,
+        };
+    },
+
+    get sendgrid() {
+        const cfg = getConfig();
+        return {
+            apiKey: cfg.SENDGRID_API_KEY,
+            fromEmail: cfg.SENDGRID_FROM_EMAIL,
+            fromName: cfg.SENDGRID_FROM_NAME,
+            enabled: cfg.SENDGRID_ENABLED,
+            templates: {
+                orderConfirmation: cfg.SENDGRID_TEMPLATE_ORDER_CONFIRMATION || '',
+                orderShipped: cfg.SENDGRID_TEMPLATE_ORDER_SHIPPED || '',
+                passwordReset: cfg.SENDGRID_TEMPLATE_PASSWORD_RESET || '',
+                welcome: cfg.SENDGRID_TEMPLATE_WELCOME || '',
+                promotion: cfg.SENDGRID_TEMPLATE_PROMOTION || '',
+            },
+        };
+    },
+
+    get app() {
+        const cfg = getConfig();
+        return {
+            frontendUrl: 'https://app.glowverse.com', // TODO: Add to env
+        };
+    },
+
     get email() {
         const cfg = getConfig();
         return {
             service: cfg.EMAIL_SERVICE,
             from: cfg.EMAIL_FROM,
             sendgridApiKey: cfg.SENDGRID_API_KEY,
+        };
+    },
+
+    get pushNotifications() {
+        const cfg = getConfig();
+        return {
+            enabled: cfg.PUSH_NOTIFICATIONS_ENABLED,
+        };
+    },
+
+    get expo() {
+        const cfg = getConfig();
+        return {
+            accessToken: cfg.EXPO_ACCESS_TOKEN || '',
         };
     },
 

@@ -7,6 +7,7 @@ import env from "@config/env";
 import { errorHandler, notFoundHandler } from "@middleware/errorHandler";
 import { apiLimiter } from "@middleware/rateLimiter";
 import { registerRoutes } from "@routes/index";
+import webhookRoutes from "@routes/webhook.routes";
 import { initDbMetrics } from "./utils/db-metrics";
 
 // Initialize DB monitoring
@@ -30,6 +31,15 @@ app.use(compression());
 import path from 'path';
 app.use('/.well-known', express.static(path.join(process.cwd(), '.well-known')));
 
+// CRITICAL: Webhook routes MUST come BEFORE express.json()
+// Stripe needs raw body for signature verification
+app.use(
+  '/api/webhooks',
+  express.raw({ type: 'application/json' }),
+  webhookRoutes
+);
+
+// Now apply JSON parsing for other routes
 app.use(express.json({ limit: "10mb" }));
 app.use(express.urlencoded({ extended: true, limit: "10mb" }));
 

@@ -29,10 +29,30 @@ export const envSchema = z.object({
     PERFECTCORP_API_KEY: z.string().min(1),
     PERFECTCORP_API_URL: z.string().url().default('https://api.perfectcorp.com'),
 
+    // Stripe Payment
+    STRIPE_SECRET_KEY: z.string().min(1),
+    STRIPE_PUBLISHABLE_KEY: z.string().min(1),
+    STRIPE_WEBHOOK_SECRET: z.string().min(1),
+    STRIPE_WEBHOOK_TOLERANCE: z.coerce.number().default(300),
+
+    // SendGrid
+    SENDGRID_API_KEY: z.string().min(1),
+    SENDGRID_FROM_EMAIL: z.string().email(),
+    SENDGRID_FROM_NAME: z.string().default('Glowverse'),
+    SENDGRID_ENABLED: z.string().transform((val: string) => val === 'true').default('true'),
+    SENDGRID_TEMPLATE_ORDER_CONFIRMATION: z.string().optional(),
+    SENDGRID_TEMPLATE_ORDER_SHIPPED: z.string().optional(),
+    SENDGRID_TEMPLATE_PASSWORD_RESET: z.string().optional(),
+    SENDGRID_TEMPLATE_WELCOME: z.string().optional(),
+    SENDGRID_TEMPLATE_PROMOTION: z.string().optional(),
+
+    // Push Notifications
+    EXPO_ACCESS_TOKEN: z.string().optional(),
+    PUSH_NOTIFICATIONS_ENABLED: z.string().transform((val: string) => val === 'true').default('false'),
+
     // Email Service (Future)
     EMAIL_SERVICE: z.enum(['sendgrid', 'ses', 'smtp']).optional(),
     EMAIL_FROM: z.string().email().optional(),
-    SENDGRID_API_KEY: z.string().optional(),
 
     // Monitoring & Observability
     SENTRY_DSN: z.string().url().optional(),

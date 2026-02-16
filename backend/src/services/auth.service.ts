@@ -5,6 +5,8 @@ import { User } from "@prisma/client";
 import prisma from "@config/database";
 import env from "@config/env";
 import { AppError } from "@utils/errors";
+import { EnhancedNotificationService } from "./enhancedNotification.service";
+import logger from "@utils/logger";
 
 interface JwtPayload {
   userId: string;
@@ -73,6 +75,12 @@ export class AuthService {
     });
 
     const tokens = await this.generateTokens(user);
+
+    // Send Welcome Email
+    await EnhancedNotificationService.sendWelcome(user.id, user.email, user.name || 'User').catch(err => {
+      logger.error('Failed to send welcome email:', err);
+    });
+
     return { user, tokens };
   }
 
@@ -163,6 +171,26 @@ export class AuthService {
       throw new AppError("Invalid password", 401);
     }
     await prisma.user.delete({ where: { id: userId } });
+  }
+
+  static async requestPasswordReset(email: string): Promise<void> {
+    const user = await prisma.user.findUnique({ where: { email } });
+    if (!user) {
+      // Don't reveal user existence
+      return;
+    }
+
+    const resetToken = randomUUID();
+    const expiresIn = new Date();
+    expiresIn.setHours(expiresIn.getHours() + 1);
+
+    // TODO: Store reset token in database (needs schema update)
+    // For now, we'll just send the email with the token
+
+    // Send Password Reset Email
+    await EnhancedNotificationService.sendPasswordReset(user.email, user.name || 'User', resetToken).catch(err => {
+      logger.error('Failed to send password reset email:', err);
+    });
   }
 }
 

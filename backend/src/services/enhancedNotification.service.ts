@@ -8,6 +8,11 @@
 import { notificationPreferencesService } from './notificationPreferences.service';
 import prisma from "@config/database";
 import { NotificationType } from "@prisma/client";
+import { EmailService } from './email.service';
+import { PushNotificationService } from './push-notification.service';
+import { NotificationService } from './notification.service';
+import { config } from '@config/index';
+import logger from '@utils/logger';
 
 export interface SendNotificationParams {
     userId: string;
@@ -40,14 +45,14 @@ export class EnhancedNotificationService {
 
             // Check if this notification type is enabled
             if (!this.isNotificationTypeEnabled(preferences, type)) {
-                console.log(`[Notification] Suppressed by user preference: ${type} for user ${userId}`);
+                logger.info(`[Notification] Suppressed by user preference: ${type} for user ${userId}`);
                 await this.trackSuppression(userId, type, 'type_disabled');
                 return false;
             }
 
             // Check quiet hours (only for low priority)
             if (priority === 'low' && this.isQuietHours(preferences)) {
-                console.log(`[Notification] Suppressed by quiet hours for user ${userId}`);
+                logger.info(`[Notification] Suppressed by quiet hours for user ${userId}`);
                 await this.queueForLater(params);
                 await this.trackSuppression(userId, type, 'quiet_hours');
                 return false;
@@ -55,7 +60,7 @@ export class EnhancedNotificationService {
 
             // Check promotion frequency
             if (type === 'promotion' && !(await this.shouldSendPromotion(preferences, userId))) {
-                console.log(`[Notification] Suppressed by frequency limit for user ${userId}`);
+                logger.info(`[Notification] Suppressed by frequency limit for user ${userId}`);
                 await this.trackSuppression(userId, type, 'frequency_limit');
                 return false;
             }
@@ -73,9 +78,205 @@ export class EnhancedNotificationService {
             }
 
             return sent;
-        } catch (error) {
-            console.error('[Notification] Error sending notification:', error);
+        } catch (error: any) {
+            logger.error('[Notification] Error sending notification:', { error: error.message });
             return false;
+        }
+    }
+
+    /**
+     * Send order confirmation notification
+     */
+    static async sendOrderConfirmation(
+        userId: string,
+        orderId: string,
+        orderData: any
+    ) {
+        try {
+            // 1. Create in-app notification
+            await NotificationService.createNotification({
+                userId,
+                type: NotificationType.ORDER_PLACED,
+                title: 'Order Confirmed',
+                message: `Your order #${orderData.orderNumber} has been confirmed!`,
+                data: { orderId },
+            });
+
+            // 2. Send email notification
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user?.email) {
+                await EmailService.sendOrderConfirmation(user.email, {
+                    orderId,
+                    orderNumber: orderData.orderNumber,
+                    customerName: user.name || 'Valued Customer',
+                    orderDate: new Date().toISOString(),
+                    items: orderData.items,
+                    subtotal: Number(orderData.subtotal),
+                    shipping: Number(orderData.shipping),
+                    tax: Number(orderData.tax),
+                    total: Number(orderData.total),
+                    shippingAddress: orderData.shippingAddress,
+                });
+            }
+
+            // 3. Send push notification
+            await PushNotificationService.send({
+                userId,
+                title: '🎉 Order Confirmed!',
+                body: `Your order #${orderData.orderNumber} has been confirmed`,
+                data: {
+                    type: 'order',
+                    orderId,
+                    screen: 'OrderDetails',
+                },
+                badge: 1,
+            });
+
+            logger.info(`✅ Order confirmation sent to ${userId}`);
+        } catch (error: any) {
+            logger.error('Failed to send order confirmation', { error: error.message, userId, orderId });
+            // Don't throw - notification failure shouldn't break order creation
+        }
+    }
+
+    /**
+     * Send order shipped notification
+     */
+    static async sendOrderShipped(
+        userId: string,
+        orderId: string,
+        orderData: any
+    ) {
+        try {
+            // 1. Create in-app notification
+            await NotificationService.createNotification({
+                userId,
+                type: NotificationType.ORDER_SHIPPED,
+                title: 'Order Shipped',
+                message: `Your order #${orderData.orderNumber} has been shipped!`,
+                data: {
+                    orderId,
+                    trackingNumber: orderData.trackingNumber,
+                },
+            });
+
+            // 2. Send email notification
+            const user = await prisma.user.findUnique({ where: { id: userId } });
+            if (user?.email) {
+                await EmailService.sendOrderShipped(user.email, {
+                    orderNumber: orderData.orderNumber,
+                    customerName: user.name || 'Valued Customer',
+                    trackingNumber: orderData.trackingNumber,
+                    carrier: orderData.carrier,
+                    estimatedDelivery: orderData.estimatedDelivery ? new Date(orderData.estimatedDelivery).toLocaleDateString() : undefined,
+                });
+            }
+
+            // 3. Send push notification
+            await PushNotificationService.send({
+                userId,
+                title: '📦 Order Shipped!',
+                body: `Track your order #${orderData.orderNumber}`,
+                data: {
+                    type: 'order',
+                    orderId,
+                    trackingNumber: orderData.trackingNumber,
+                    screen: 'TrackOrder',
+                },
+            });
+
+            logger.info(`✅ Order shipped notification sent to ${userId}`);
+        } catch (error: any) {
+            logger.error('Failed to send order shipped notification', { error: error.message });
+        }
+    }
+
+    /**
+     * Send password reset email
+     */
+    static async sendPasswordReset(email: string, name: string, resetToken: string) {
+        try {
+            await EmailService.sendPasswordReset(email, {
+                name,
+                resetToken,
+                expiresIn: '1 hour',
+            });
+
+            logger.info(`✅ Password reset email sent to ${email}`);
+        } catch (error: any) {
+            logger.error('Failed to send password reset email', { error: error.message, email });
+            throw error; // This one should throw - critical for password reset
+        }
+    }
+
+    /**
+     * Send welcome email
+     */
+    static async sendWelcome(userId: string, email: string, name: string) {
+        try {
+            // 1. Create in-app notification
+            await NotificationService.createNotification({
+                userId,
+                type: NotificationType.GENERAL, // Using GENERAL as SYSTEM might not exist in enum
+                title: 'Welcome to Glowverse!',
+                message: 'Start exploring products and try our AR features.',
+            });
+
+            // 2. Send welcome email
+            await EmailService.sendWelcome(email, { name });
+
+            logger.info(`✅ Welcome notification sent to ${userId}`);
+        } catch (error: any) {
+            logger.error('Failed to send welcome notification', { error: error.message });
+        }
+    }
+
+    /**
+     * Send promotion notification
+     */
+    static async sendPromotion(
+        userIds: string[],
+        promotionData: {
+            title: string;
+            description: string;
+            ctaText: string;
+            ctaUrl: string;
+            imageUrl?: string;
+            expiresAt?: string;
+        }
+    ) {
+        try {
+            // Get user emails
+            const users = await prisma.user.findMany({
+                where: { id: { in: userIds } },
+                select: { id: true, email: true },
+            });
+
+            // 1. Create in-app notifications
+            await Promise.all(
+                users.map((user) =>
+                    NotificationService.createNotification({
+                        userId: user.id,
+                        type: NotificationType.PROMOTION,
+                        title: promotionData.title,
+                        message: promotionData.description,
+                        data: { url: promotionData.ctaUrl },
+                    })
+                )
+            );
+
+            // 2. Send bulk emails
+            const emails = users.map((u) => u.email);
+            // Assuming config.sendgrid.templates.promotion is available
+            await EmailService.sendBulk(emails, {
+                subject: promotionData.title,
+                templateId: config.sendgrid.templates.promotion,
+                dynamicData: promotionData,
+            });
+
+            logger.info(`✅ Promotion notification sent to ${userIds.length} users`);
+        } catch (error: any) {
+            logger.error('Failed to send promotion notification', { error: error.message });
         }
     }
 
@@ -169,11 +370,16 @@ export class EnhancedNotificationService {
     ): Promise<void> {
         try {
             console.log(`[Notification] Sending ${channel} to user ${userId}: ${subject}`);
+            const user = await prisma.user.findUnique({ where: { id: userId } });
 
-            // TODO: Integrate with actual notification services
+            if (!user) {
+                console.error(`User ${userId} not found for notification`);
+                return;
+            }
+
             switch (channel) {
                 case 'email':
-                    // await this.emailService.send(userId, subject, message, data);
+                    await EmailService.sendCustom(user.email, subject, `<p>${message}</p>`, message);
                     break;
                 case 'push':
                     // await this.pushService.send(userId, subject, message, data);
@@ -184,8 +390,8 @@ export class EnhancedNotificationService {
             }
 
             await this.trackNotificationSent(userId, channel, subject, type);
-        } catch (error) {
-            console.error(`[Notification] Failed to send ${channel}:`, error);
+        } catch (error: any) {
+            logger.error(`[Notification] Failed to send ${channel}:`, error);
             throw error;
         }
     }
@@ -195,7 +401,7 @@ export class EnhancedNotificationService {
      */
     private async queueForLater(params: SendNotificationParams): Promise<void> {
         // TODO: Implement queue system (e.g., Bull, Redis Queue)
-        console.log('[Notification] Queued for later:', params);
+        logger.info('[Notification] Queued for later:', params);
     }
 
     /**
@@ -247,7 +453,7 @@ export class EnhancedNotificationService {
                 reason
             }
         });
-        console.log(`[Analytics] Notification suppressed: ${userId}, ${type}, ${reason}`);
+        logger.info(`[Analytics] Notification suppressed: ${userId}, ${type}, ${reason}`);
     }
 
     /**
@@ -268,7 +474,7 @@ export class EnhancedNotificationService {
                 reason: subject // Using subject as extra info in history
             }
         });
-        console.log(`[Analytics] Notification sent: ${userId}, ${channel}, ${subject}`);
+        logger.info(`[Analytics] Notification sent: ${userId}, ${channel}, ${subject}`);
     }
 }
 

@@ -1,8 +1,9 @@
 import { PrismaClient, Order, OrderItem, OrderStatus, PaymentStatus, Prisma } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { CartService } from './cart.service';
-import { NotificationService } from './notification.service';
+import { EnhancedNotificationService } from './enhancedNotification.service';
 import { prisma } from '../config/database';
+import logger from '../utils/logger';
 
 export interface Address {
     fullName: string;
@@ -109,8 +110,25 @@ export class OrderService {
         });
 
         // Send Notification
-        await NotificationService.notifyOrderStatus(userId, order.id, OrderStatus.PENDING).catch(err => {
-            console.error('Failed to send order notification:', err);
+        await EnhancedNotificationService.sendOrderConfirmation(
+            userId,
+            order.id,
+            {
+                orderNumber: order.orderNumber,
+                orderDate: order.createdAt,
+                items: cart.items.map(item => ({
+                    name: item.product.name,
+                    quantity: item.quantity,
+                    price: Number(item.price)
+                })),
+                subtotal: subtotal,
+                shipping: shippingCost,
+                tax: tax,
+                total: total,
+                shippingAddress: orderData.shippingAddress
+            }
+        ).catch(err => {
+            logger.error('Failed to send order notification:', err);
         });
 
         return order;
@@ -232,6 +250,22 @@ export class OrderService {
             data: updateData,
             include: { items: true }
         });
+
+        // Send Notification if Shipped
+        if (status === OrderStatus.SHIPPED) {
+            await EnhancedNotificationService.sendOrderShipped(
+                updatedOrder.userId,
+                updatedOrder.id,
+                {
+                    orderNumber: updatedOrder.orderNumber,
+                    trackingNumber: metadata?.trackingNumber,
+                    carrier: 'Carrier', // TODO: Add carrier to metadata
+                    estimatedDelivery: updatedOrder.estimatedDelivery
+                }
+            ).catch(err => {
+                logger.error('Failed to send shipped notification:', err);
+            });
+        }
 
         return updatedOrder as OrderWithItems;
     }
