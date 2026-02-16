@@ -222,6 +222,14 @@ export default function CheckoutScreen() {
           </View>
         </>
       )}
+      {placing ? (
+        <View style={styles.overlay} pointerEvents="auto">
+          <View style={styles.overlayCard}>
+            <ActivityIndicator />
+            <Text style={styles.overlayText}>Processing payment</Text>
+          </View>
+        </View>
+      ) : null}
     </View>
   );
 }
@@ -236,6 +244,9 @@ function createStyles(theme: any) {
     navBtn: { paddingHorizontal: 14, paddingVertical: 12, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light },
     navText: { color: theme.colors.text.primary, fontWeight: "800" },
     navPrimary: { paddingHorizontal: 16, paddingVertical: 12, borderRadius: 10, backgroundColor: theme.colors.accent.emerald },
-    navPrimaryText: { color: theme.colors.text.inverse, fontWeight: "900" }
+    navPrimaryText: { color: theme.colors.text.inverse, fontWeight: "900" },
+    overlay: { position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center", backgroundColor: "rgba(0,0,0,0.35)" },
+    overlayCard: { minWidth: 200, borderRadius: 12, padding: 16, alignItems: "center", justifyContent: "center", gap: 10, backgroundColor: theme.colors.background.elevated },
+    overlayText: { color: theme.colors.text.primary, fontWeight: "800" }
   });
 }

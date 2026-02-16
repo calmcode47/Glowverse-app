@@ -5,6 +5,8 @@ import { ENV } from "../../config/environment";
 import { config } from "../../constants/config";
 import { handleAPIError } from "@utils/apiHelper";
 import { analytics } from "../analytics.service";
+import { ENABLE_VERBOSE_LOGS } from "../../utils/debugFlags";
+import { logger } from "../../utils/logger";
 let Sentry: any = null;
 try {
   const name: any = "@sentry/react-native";
@@ -115,9 +117,8 @@ client.interceptors.request.use(async (cfg) => {
   if (cfg.__retryCount === undefined) cfg.__retryCount = 0;
   if (cfg.retry === undefined) cfg.retry = 3;
   if (cfg.retryDelayMs === undefined) cfg.retryDelayMs = 1000;
-  if (__DEV__) {
-    // eslint-disable-next-line no-console
-    console.log(`[API Request] ${String(cfg.method || "GET").toUpperCase()} ${cfg.baseURL || ""}${cfg.url}`, {
+  if (__DEV__ && ENABLE_VERBOSE_LOGS) {
+    logger.debug(`[API Request] ${String(cfg.method || "GET").toUpperCase()} ${cfg.baseURL || ""}${cfg.url}`, {
       params: cfg.params,
       data: cfg.data
     });
@@ -129,12 +130,11 @@ client.interceptors.response.use(
   (res: AxiosResponse) => {
     const cfg = res.config as AxiosRequestConfig;
     const latency = cfg.__startTimeMs ? Date.now() - cfg.__startTimeMs : undefined;
-    if (__DEV__) {
-      // eslint-disable-next-line no-console
-      console.log(`[API Response] ${String(res.config.method || "GET").toUpperCase()} ${res.config.url}`, {
+    if (__DEV__ && ENABLE_VERBOSE_LOGS) {
+      logger.debug(`[API Response] ${String(res.config.method || "GET").toUpperCase()} ${res.config.url}`, {
         status: res.status,
         latency
-      });
+      } as any);
     }
     if (latency !== undefined) {
       analytics.logEvent({
@@ -187,9 +187,8 @@ client.interceptors.response.use(
       const finalDelay = Math.max(0, Math.round(delay + jitter));
       cfg.__retryCount = attempt + 1;
       cfg.retry = (cfg.retry ?? 0) - 1;
-      if (__DEV__) {
-        // eslint-disable-next-line no-console
-        console.log(`[API Retry] attempt ${cfg.__retryCount} in ${finalDelay}ms for ${cfg.url}`);
+      if (__DEV__ && ENABLE_VERBOSE_LOGS) {
+        logger.debug(`[API Retry] attempt ${cfg.__retryCount} in ${finalDelay}ms for ${cfg.url}`);
       }
       await new Promise((r) => setTimeout(r, finalDelay));
       return client.request(cfg);

@@ -8,6 +8,7 @@
  */
 
 import type { PerformanceMetrics } from '../../modules/ar-sdk/types';
+import { logger } from '../../utils/logger';
 
 /**
  * Performance level presets
@@ -56,7 +57,7 @@ export class PerformanceMonitor {
         this.isMonitoring = true;
         this.fpsHistory = [];
 
-        console.log('[PerformanceMonitor] Started');
+        logger.info('[PerformanceMonitor] Started');
     }
 
     /**
@@ -69,7 +70,7 @@ export class PerformanceMonitor {
         this.metrics = null;
         this.fpsHistory = [];
 
-        console.log('[PerformanceMonitor] Stopped');
+        logger.info('[PerformanceMonitor] Stopped');
     }
 
     /**
@@ -178,7 +179,7 @@ export class PerformanceMonitor {
         }
 
         if (previousLevel !== this.performanceLevel) {
-            console.log(`[PerformanceMonitor] Downgraded: ${previousLevel} → ${this.performanceLevel}`);
+            logger.warn(`[PerformanceMonitor] Downgraded: ${previousLevel} → ${this.performanceLevel}`);
             // TODO: Emit event for quality adjustment
         }
     }
@@ -196,7 +197,7 @@ export class PerformanceMonitor {
         }
 
         if (previousLevel !== this.performanceLevel) {
-            console.log(`[PerformanceMonitor] Upgraded: ${previousLevel} → ${this.performanceLevel}`);
+            logger.info(`[PerformanceMonitor] Upgraded: ${previousLevel} → ${this.performanceLevel}`);
             // TODO: Emit event for quality adjustment
         }
     }

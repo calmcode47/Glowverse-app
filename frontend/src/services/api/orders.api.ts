@@ -118,6 +118,10 @@ export async function getOrderById(orderId: string): Promise<Order> {
   }
 }
 
+export async function getOrderDetails(orderId: string): Promise<Order> {
+  return await getOrderById(orderId);
+}
+
 export async function createOrder(payload: CreateOrderRequest): Promise<Order> {
   try {
     const res = await client.post("/api/v1/orders", payload);
@@ -150,9 +154,19 @@ export async function createOrder(payload: CreateOrderRequest): Promise<Order> {
   }
 }
 
-export async function cancelOrder(orderId: string): Promise<Order> {
-  const res = await client.patch(`/api/v1/orders/${encodeURIComponent(orderId)}`, { status: "cancelled" });
-  return mapOrder(res.data.order || res.data);
+export async function cancelOrder(orderId: string, reason?: string): Promise<Order> {
+  try {
+    const res = await client.patch(`/api/v1/orders/${encodeURIComponent(orderId)}`, { status: "cancelled", reason });
+    return mapOrder(res.data.order || res.data);
+  } catch {
+    const raw = await AsyncStorage.getItem("demo_orders");
+    const arr = raw ? JSON.parse(raw) : [];
+    const idx = arr.findIndex((o: any) => String(o.id) === String(orderId));
+    if (idx === -1) throw new Error("Order not found");
+    arr[idx].status = "cancelled";
+    await AsyncStorage.setItem("demo_orders", JSON.stringify(arr));
+    return mapOrder(arr[idx]);
+  }
 }
 
 export async function getUserAddresses(userId: string): Promise<Address[]> {
@@ -164,6 +178,56 @@ export async function getUserAddresses(userId: string): Promise<Address[]> {
     const raw = await AsyncStorage.getItem(`demo_addresses_${userId}`);
     const arr = raw ? JSON.parse(raw) : [];
     return arr.map(mapAddress);
+  }
+}
+
+export function subscribeToOrderUpdates(orderId: string, onUpdate: (o: Order) => void): () => void {
+  let cancelled = false;
+  let lastStatus: string | undefined;
+  const poll = async () => {
+    if (cancelled) return;
+    try {
+      const o = await getOrderById(orderId);
+      if (o.status !== lastStatus) {
+        lastStatus = o.status;
+        onUpdate(o);
+      }
+    } catch {}
+    if (!cancelled) setTimeout(poll, 30000);
+  };
+  poll();
+  return () => {
+    cancelled = true;
+  };
+}
+
+export async function trackShipment(orderId: string): Promise<{ trackingUrl?: string; trackingNumber?: string | null }> {
+  const order = await getOrderById(orderId);
+  const num = order.trackingNumber || null;
+  if (!num) return { trackingNumber: null };
+  const trackingUrl = num.startsWith("1Z")
+    ? `https://www.ups.com/track?tracknum=${num}`
+    : /^\d{12,14}$/.test(num)
+    ? `https://www.fedex.com/fedextrack/?tracknumbers=${num}`
+    : /^\d{20,22}$/.test(num)
+    ? `https://tools.usps.com/go/TrackConfirmAction?tLabels=${num}`
+    : `https://www.ups.com/track?tracknum=${num}`;
+  return { trackingUrl, trackingNumber: num };
+}
+
+export async function reorder(orderId: string): Promise<number> {
+  try {
+    const order = await getOrderById(orderId);
+    const items = Array.isArray(order.items) ? order.items : [];
+    let added = 0;
+    const { addItem } = await import("./cart.api");
+    for (const it of items) {
+      await addItem({ productId: it.productId, variantId: it.variantId, quantity: it.quantity });
+      added += it.quantity;
+    }
+    return added;
+  } catch {
+    return 0;
   }
 }
 

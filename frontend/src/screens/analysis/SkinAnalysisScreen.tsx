@@ -197,7 +197,7 @@ export default function SkinAnalysisScreen() {
         </View>
 
         <View style={styles.captureBar}>
-          <CaptureButton onPress={onCapture} disabled={loading} />
+          <CaptureButton onPress={onCapture} disabled={loading} testID="upload-photo-button" />
         </View>
 
         {loading && (

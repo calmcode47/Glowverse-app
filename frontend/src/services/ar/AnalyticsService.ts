@@ -12,6 +12,8 @@ import type {
     PerformanceMetrics,
     ARError,
 } from '../../modules/ar-sdk/types';
+import { ENABLE_VERBOSE_LOGS } from '../../utils/debugFlags';
+import { logger } from '../../utils/logger';
 
 /**
  * Analytics event types
@@ -156,9 +158,10 @@ export class AnalyticsService {
      * Send event to analytics backend
      */
     private track(event: AnalyticsEvent): void {
-        // TODO: Integrate with Firebase Analytics, Segment, orother analytics service
-
-        console.log('[Analytics]', event);
+        // TODO: Integrate with Firebase Analytics, Segment, or other analytics service
+        if (ENABLE_VERBOSE_LOGS && __DEV__) {
+            logger.debug('[Analytics]', event as any);
+        }
 
         // Example Firebase Analytics integration:
         // import analytics from '@react-native-firebase/analytics';

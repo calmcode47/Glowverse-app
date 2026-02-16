@@ -1,4 +1,6 @@
 import { analytics } from "../services/analytics.service";
+import { ENABLE_VERBOSE_LOGS } from "./debugFlags";
+import { logger } from "./logger";
 
 export function measureScreenLoad(screenName: string) {
   const start = Date.now();
@@ -14,8 +16,9 @@ export function measureScreenLoad(screenName: string) {
         data: { screenName, loadTime: ms }
       });
     } catch {}
-    // eslint-disable-next-line no-console
-    console.log(`Screen load: ${screenName} - ${ms}ms`);
+    if (ENABLE_VERBOSE_LOGS && __DEV__) {
+      logger.debug(`Screen load: ${screenName} - ${ms}ms`);
+    }
   };
 }
 
@@ -25,8 +28,9 @@ export function measureRenderTime(componentName: string) {
     const endTime = (globalThis.performance?.now?.() as number) || Date.now();
     const renderTime = endTime - startTime;
     if (renderTime > 16) {
-      // eslint-disable-next-line no-console
-      console.warn(`Slow render: ${componentName} took ${Math.round(renderTime)}ms`);
+      if (ENABLE_VERBOSE_LOGS && __DEV__) {
+        logger.warn(`Slow render: ${componentName} took ${Math.round(renderTime)}ms`);
+      }
       analytics.logEvent({
         name: "performance_issue",
         properties: {

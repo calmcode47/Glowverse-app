@@ -195,6 +195,10 @@ export default function CartScreen() {
             keyExtractor={(it) => it.id}
             contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16, gap: 12 }}
             refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+            initialNumToRender={8}
+            maxToRenderPerBatch={10}
+            windowSize={7}
+            removeClippedSubviews
             renderItem={({ item }: { item: CartAPI.CartItem }) => (
               <CartItem
                 item={item}

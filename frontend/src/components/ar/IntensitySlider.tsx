@@ -11,7 +11,7 @@ type Props = {
 
 export default function IntensitySlider({ value, onChange, onReset }: Props) {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} testID="intensity-slider">
       <Text>Intensity</Text>
       <Slider value={value} onChange={onChange} min={0} max={100} step={1} showValue />
       <Button onPress={onReset}>Reset</Button>

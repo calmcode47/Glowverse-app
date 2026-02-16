@@ -19,6 +19,10 @@ export default function CategoryScreen() {
         keyExtractor={(item: any) => item.id}
         numColumns={2}
         columnWrapperStyle={{ gap: 12, paddingHorizontal: 16, marginBottom: 12 }}
+        initialNumToRender={8}
+        windowSize={7}
+        maxToRenderPerBatch={10}
+        removeClippedSubviews
         renderItem={({ item }) => (
           <TouchableOpacity
             style={[styles.card, { width: CARD }]}

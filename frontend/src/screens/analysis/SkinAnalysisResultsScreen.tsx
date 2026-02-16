@@ -14,6 +14,8 @@ import ErrorBoundary from "../../components/common/ErrorBoundary";
 import { analytics } from "../../services/analytics.service";
 import * as AnalysisAPI from "../../services/api/analysis.api";
 import { skinAnalysisAPI } from "../../services/ai/skinAnalysisAPI.service";
+import SkinConcernOverlay from "../../components/ai/SkinConcernOverlay";
+import SkinProgressChart from "../../components/ai/SkinProgressChart";
 import type { SkinAnalysisResult, SkinConcern, ProductRecommendation } from "../../services/ai/types";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
@@ -36,6 +38,8 @@ export default function SkinAnalysisResultsScreen() {
   const [result, setResult] = React.useState<any>(null);
   const [previous, setPrevious] = React.useState<any | null>(null);
   const [recs, setRecs] = React.useState<ProductRecommendation[]>([]);
+  const [activeConcern, setActiveConcern] = React.useState<string | undefined>(undefined);
+  const [history, setHistory] = React.useState<SkinAnalysisResult[]>([]);
 
   const width = Dimensions.get("window").width - 32;
 
@@ -62,6 +66,11 @@ export default function SkinAnalysisResultsScreen() {
         }
         const recommended = await fetchRecommendations(r);
         setRecs(recommended as any);
+        try {
+          const hist = await skinAnalysisAPI.getAnalysisHistory(1, 8);
+          const arr: SkinAnalysisResult[] = Array.isArray((hist as any)?.analyses) ? (hist as any).analyses : [];
+          setHistory(arr);
+        } catch {}
       } catch (e: any) {
         setError(e.message || "Failed to load analysis");
       } finally {
@@ -102,7 +111,7 @@ export default function SkinAnalysisResultsScreen() {
 
   return (
     <ErrorBoundary onRetry={() => onRefresh()}>
-      <View style={styles.container}>
+      <View style={styles.container} testID="analysis-results-screen">
         <ScrollView
           contentContainerStyle={styles.content}
           refreshControl={<RefreshControl refreshing={loading} onRefresh={onRefresh} />}
@@ -116,7 +125,9 @@ export default function SkinAnalysisResultsScreen() {
                 <Chip style={styles.badge} accessibilityLabel={`Skin type ${result.skinType}`}>{String(result.skinType).toUpperCase()}</Chip>
               ) : null}
             </View>
-            <ScoreDisplay score={result?.scores?.overall ?? 0} />
+            <View testID="skin-score">
+              <ScoreDisplay score={result?.scores?.overall ?? 0} />
+            </View>
           </View>
 
           {/* Comparison */}
@@ -131,6 +142,20 @@ export default function SkinAnalysisResultsScreen() {
             </>
           ) : null}
 
+          {/* Hero with overlay */}
+          {result?.imageUrl ? (
+            <>
+              <SectionTitle>Overview</SectionTitle>
+              <SkinConcernOverlay
+                imageUri={result.imageUrl}
+                concerns={(result?.concerns || []) as any}
+                activeConcern={activeConcern}
+                onConcernToggle={(c) => setActiveConcern((prev) => (prev === c ? undefined : c))}
+                height={240}
+              />
+            </>
+          ) : null}
+
           {/* Concerns */}
           <SectionTitle>Concerns</SectionTitle>
           {result?.concerns && result.concerns.length > 0 ? (
@@ -139,6 +164,7 @@ export default function SkinAnalysisResultsScreen() {
               keyExtractor={(c, i) => `${c.type}-${i}`}
               renderItem={({ item }: { item: SkinConcern }) => <ConcernCard item={item} onLongPressShare={onLongPressConcern} />}
               contentContainerStyle={{ gap: 8 }}
+              testID="concerns-list"
             />
           ) : (
             <View style={styles.empty}>
@@ -174,13 +200,23 @@ export default function SkinAnalysisResultsScreen() {
             />
           </View>
 
+          {/* Progress Tracking */}
+          {history.length > 1 ? (
+            <>
+              <SectionTitle>Progress</SectionTitle>
+              <SkinProgressChart analyses={history} selectedConcerns={(result?.concerns || []).slice(0, 2).map((c: any) => c.type)} />
+            </>
+          ) : null}
+
           {/* Recommendations */}
           <SectionTitle>Recommendations</SectionTitle>
-          <View style={{ gap: 8 }}>
+          <View style={{ gap: 8 }} testID="recommendations-section">
             {recs && recs.length > 0 ? (
-              recs.slice(0, 8).map((r: ProductRecommendation) => (
-                <RecommendationCard key={r.productId} product={{ id: r.productId, name: r.name, image: undefined, price: 0 } as any} reason={r.reason} />
-              ))
+              <View testID="product-recommendations">
+                {recs.slice(0, 8).map((r: ProductRecommendation) => (
+                  <RecommendationCard key={r.productId} product={{ id: r.productId, name: r.name, image: undefined, price: 0 } as any} reason={r.reason} />
+                ))}
+              </View>
             ) : (
               <View style={styles.empty}>
                 <Text style={styles.emptyTitle}>No recommendations</Text>
@@ -193,6 +229,7 @@ export default function SkinAnalysisResultsScreen() {
           <View style={styles.actions}>
             <Button mode="contained" onPress={shareResult} accessibilityLabel="Share results">Share</Button>
             <Button mode="outlined" onPress={() => navigation.goBack()} accessibilityLabel="Back">Done</Button>
+            <Button onPress={() => navigation.navigate("SkinAnalysis" as any)} accessibilityLabel="Analyze Again">Analyze Again</Button>
           </View>
         </ScrollView>
         <LoadingOverlay visible={loading} message="Loading results..." />

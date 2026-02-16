@@ -226,13 +226,17 @@ export class ARErrorHandler {
      */
     static logError(error: ARError, context?: Record<string, any>): void {
         // TODO: Send to analytics service
-        console.log('[AR Error Log]', {
+        const payload = {
             type: error.type,
             message: error.message,
             details: error.details,
             code: error.code,
             platform: Platform.OS,
             ...context,
-        });
+        };
+        try {
+            const { logger } = require('../../utils/logger');
+            logger.error('[AR Error Log]', new Error(payload.message));
+        } catch {}
     }
 }

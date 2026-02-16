@@ -6,6 +6,7 @@ import type { Product } from "../../data/products";
 import * as CartAPI from "../../services/api/cart.api";
 import { useNavigation } from "@react-navigation/native";
 import OptimizedImage from "../common/OptimizedImage";
+import { formatPrice } from "../../utils/formatting";
 
 type Props = {
   product: Product;
@@ -23,7 +24,7 @@ export default function RecommendationCard({ product, reason }: Props) {
         <Text style={styles.name} numberOfLines={1}>{product.name}</Text>
         <Text style={styles.reason}>{reason || "Recommended for you"}</Text>
         <View style={styles.row}>
-          <Text style={styles.price}>${product.price?.toFixed?.(2) || product.price}</Text>
+          <Text style={styles.price}>{formatPrice(Number(product.price || 0))}</Text>
       <Button mode="outlined" onPress={() => navigation.navigate("ProductDetail", { productId: product.id, product })} accessibilityLabel={`View ${product.name}`} accessibilityRole="button">View</Button>
           <Button mode="contained" compact onPress={() => CartAPI.addItem({ productId: product.id, quantity: 1 })}>Add</Button>
         </View>

@@ -71,6 +71,26 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
 
 ---
 
+## 📊 Status & Remaining Work
+
+- Completion: ≈ 90%
+- Implemented:
+  - Auth with token refresh, catalog, product detail, cart, orders
+  - AR virtual try‑on, AI skin analysis, recommendations
+  - Notification center with preferences; referrals with share
+  - Admin analytics dashboards (Sales, Engagement, AR/AI) with data export (CSV/JSON, best‑effort XLSX) and share
+  - Offline queue and caching; analytics instrumentation; performance optimizations
+- Remaining:
+  - Stripe 3DS and webhook‑driven order state alignment
+  - Wire admin dashboards to backend aggregation endpoints
+  - Device‑matrix validation for AR/AI (prod SDK config)
+  - Expand E2E tests for error/edge scenarios and a11y audit
+
+See the cross‑project report for a complete summary and go‑live checklist:
+[Project Status Report](../project_report.md)
+
+---
+
 ## 📁 Project Structure
 
 ```
@@ -198,6 +218,37 @@ npx eas build --platform android
 npx eas submit --platform ios
 npx eas submit --platform android
 ```
+
+---
+
+## 🧰 Maintenance & Developer Workflow
+
+- Code quality
+  - Lint: `npm run lint`
+  - Types: `npm run types:check`
+  - Format: `npm run format`
+- Unused code analysis
+  - Exports: `npx ts-prune`
+  - Dependencies: `npx depcheck`
+- Security
+  - `npm audit` and `npm audit fix`
+
+### Admin Analytics & Export
+
+- Dashboards:
+  - Sales: revenue, orders, AOV, category breakdown, trends
+  - Engagement: user growth, active users, retention/churn
+  - AR/AI: sessions, conversions, segments, top tried products
+- Export:
+  - Formats: CSV, JSON, best-effort XLSX
+  - UI: floating export button + modal on analytics screens
+  - Files saved to app cache and shared via native share sheet
+
+### AR/AI
+
+- AR Try-On integrated with modular bridge
+- AI Skin Analysis with preprocessing and results overlay
+- Performance and quality managers guide device-tuned settings
 
 > See `eas.json` for build profiles (development, preview, production).
 

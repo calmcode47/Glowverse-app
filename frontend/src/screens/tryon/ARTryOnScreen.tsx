@@ -20,6 +20,8 @@ import { ARSDKError, ARErrorCode } from '../../services/ar/errors';
 import { ARAnalytics } from '../../services/ar/AnalyticsService';
 import { useARFrameProcessor } from '../../services/ar/frameProcessor';
 import ErrorBoundary from '../../components/common/ErrorBoundary';
+import { ARAnalyticsProvider, useARAnalyticsContext } from '../../contexts/ARAnalyticsContext';
+import { ARPerformanceMonitor } from '../../services/arPerformanceMonitor';
 import { ARSDKModule } from '../../modules/ar-sdk';
 
 function ARTryOnScreenInner({ route, navigation }: any) {
@@ -70,10 +72,13 @@ function ARTryOnScreenInner({ route, navigation }: any) {
         }
     };
 
+    const { startSession, endSession, trackProductTryOn, trackScreenshot, trackProductAddedToCart } = useARAnalyticsContext();
+
     const startTryOnSession = async () => {
         try {
             const session = await TryOnAPI.createSession(productId);
             setSessionId(session.id);
+            startSession('product_page');
         } catch (error) {
             console.error('Session error:', error);
             // Fallback or alert
@@ -97,6 +102,7 @@ function ARTryOnScreenInner({ route, navigation }: any) {
         return () => {
             mounted = false;
             stop().catch(() => undefined);
+            endSession();
         };
     }, []);
 
@@ -126,10 +132,7 @@ function ARTryOnScreenInner({ route, navigation }: any) {
             if (sessionId) {
                 await TryOnAPI.applyProduct(sessionId, productId);
             }
-            ARAnalytics.trackProductApplied(
-                { id: productId, name: productId, category: 'lipstick', color: '#FF6B9D', finish: 'glossy', opacity: 0.8 },
-                0.8
-            );
+            trackProductTryOn(productId);
         } catch (e) {
             const err = e as ARSDKError;
             setError(err);
@@ -149,6 +152,7 @@ function ARTryOnScreenInner({ route, navigation }: any) {
                 imageUri: screenshot.uri,
                 productId,
             });
+            trackScreenshot([productId], false);
         } catch (e) {
             const err = e as ARSDKError;
             setError(err);
@@ -182,6 +186,7 @@ function ARTryOnScreenInner({ route, navigation }: any) {
                 isActive={true}
                 photo={true}
                 frameProcessor={frameProcessor as any}
+                testID="ar-camera-view"
             />
 
             <FaceDetectionIndicator
@@ -240,7 +245,10 @@ function ARTryOnScreenInner({ route, navigation }: any) {
 
                             <TouchableOpacity
                                 style={styles.secondaryButton}
-                                onPress={() => navigation.navigate('ProductDetail', { productId })}
+                                onPress={() => {
+                                  trackProductAddedToCart(productId);
+                                  navigation.navigate('ProductDetail', { productId });
+                                }}
                                 accessibilityLabel="Open cart"
                                 testID="tryon-cart"
                             >
@@ -276,7 +284,9 @@ function ARTryOnScreenInner({ route, navigation }: any) {
 export default function ARTryOnScreen(props: any) {
     return (
         <ErrorBoundary onRetry={() => {}}>
+          <ARAnalyticsProvider>
             <ARTryOnScreenInner {...props} />
+          </ARAnalyticsProvider>
         </ErrorBoundary>
     );
 }

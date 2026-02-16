@@ -33,6 +33,8 @@ import { conflictQueue } from "./src/services/conflictQueue.service";
 import { offlineQueue } from "./src/services/offlineQueue.service";
 import { networkMonitor } from "./src/services/sync/NetworkMonitor";
 import { OfflineBanner } from "./src/components/offline/OfflineBanner";
+import { ARSDKService } from "./src/services/ar/ARSDKService";
+import { isAREnabled } from "./src/modules/ar-sdk/config";
 
 // Optimize navigation performance
 try {
@@ -197,6 +199,17 @@ export default function App() {
         })
         .catch(() => {});
     }
+  }, []);
+
+  React.useEffect(() => {
+    if (!isAREnabled()) return;
+    const cancel = InteractionManager.runAfterInteractions(() => {
+      ARSDKService.initialize().catch(() => {});
+    });
+    return () => {
+      // @ts-ignore
+      cancel?.cancel?.();
+    };
   }, []);
 
   React.useEffect(() => {

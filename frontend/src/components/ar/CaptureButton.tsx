@@ -4,13 +4,13 @@ import { LinearGradient } from "expo-linear-gradient";
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import { useTheme } from "../../theme/themeContext";
 
-type Props = { onPress: () => void; disabled?: boolean };
+type Props = { onPress: () => void; disabled?: boolean; testID?: string };
 
-export default function CaptureButton({ onPress, disabled }: Props) {
+export default function CaptureButton({ onPress, disabled, testID }: Props) {
   const { theme } = useTheme();
   const styles = createStyles(theme);
   return (
-    <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.wrap, disabled && { opacity: 0.6 }]}>
+    <TouchableOpacity onPress={onPress} disabled={disabled} style={[styles.wrap, disabled && { opacity: 0.6 }]} testID={testID}>
       <View style={styles.inner}>
         <LinearGradient colors={theme.colors.gradients.primary} style={styles.gradient}>
           <MaterialCommunityIcons name="camera" size={28} color={theme.colors.text.inverse} />

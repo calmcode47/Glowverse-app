@@ -1,11 +1,14 @@
 import React from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert, Linking } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, ActivityIndicator, Image, Alert, Linking, Share } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 import ProfessionalBackground from "../../components/animated/ProfessionalBackground";
 import * as OrdersAPI from "../../services/api/orders.api";
 import { useRoute } from "@react-navigation/native";
 import OrderStatusTimeline from "../../components/orders/OrderStatusTimeline";
 import * as CartAPI from "../../services/api/cart.api";
+import { analytics } from "../../services/analytics.service";
+import { generateInvoicePdf, shareInvoice } from "../../utils/invoiceGenerator";
+import { deepLinkingService } from "../../services/deepLinking.service";
 
 export default function OrderDetailScreen() {
   const { theme } = useTheme();
@@ -16,6 +19,7 @@ export default function OrderDetailScreen() {
   const [loading, setLoading] = React.useState(true);
   const [updating, setUpdating] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const intervalRef = React.useRef<any>(null);
 
   const load = React.useCallback(async () => {
     try {
@@ -34,6 +38,27 @@ export default function OrderDetailScreen() {
     load();
   }, [load]);
 
+  React.useEffect(() => {
+    if (orderId) {
+      analytics.logEvent({ name: "order_details_viewed", properties: { order_id: orderId } }).catch(() => {});
+    }
+  }, [orderId]);
+
+  React.useEffect(() => {
+    intervalRef.current = setInterval(async () => {
+      try {
+        const current = await OrdersAPI.getOrderById(orderId);
+        setOrder((prev) => {
+          if (prev && prev.status !== current.status) {
+            analytics.logEvent({ name: "order_status_changed", properties: { order_id: current.id, status: current.status } }).catch(() => {});
+          }
+          return current;
+        });
+      } catch {}
+    }, 30000);
+    return () => clearInterval(intervalRef.current);
+  }, [orderId]);
+
   const cancel = async () => {
     if (!order) return;
     Alert.alert("Cancel Order", "Are you sure? Refund policy may apply.", [
@@ -43,8 +68,9 @@ export default function OrderDetailScreen() {
         onPress: async () => {
           try {
             setUpdating(true);
-            const o = await OrdersAPI.cancelOrder(order.id);
+            const o = await OrdersAPI.cancelOrder(order.id, "user_requested");
             setOrder(o);
+            analytics.logEvent({ name: "order_cancelled", properties: { order_id: order.id } }).catch(() => {});
           } catch (e: any) {
             Alert.alert("Error", e?.message || "Failed to cancel");
           } finally {
@@ -57,14 +83,13 @@ export default function OrderDetailScreen() {
 
   const reorder = async () => {
     if (!order) return;
-    let added = 0;
-    for (const it of order.items) {
-      try {
-        await CartAPI.addItem({ productId: it.productId, variantId: it.variantId, quantity: it.quantity });
-        added += it.quantity;
-      } catch { }
+    try {
+      const added = await OrdersAPI.reorder(order.id);
+      Alert.alert("Reorder", `${added} items added to cart`);
+      analytics.logEvent({ name: "reorder_clicked", properties: { order_id: order.id, items: added } }).catch(() => {});
+    } catch {
+      Alert.alert("Reorder", "Failed to add items");
     }
-    Alert.alert("Reorder", `${added} items added to cart`);
   };
 
   const contactSupport = () => {
@@ -72,6 +97,28 @@ export default function OrderDetailScreen() {
     const subject = `Order Support Request - ${order.number || order.id.slice(0, 8)}`;
     const body = `Order ID: ${order.id}\nOrder Number: ${order.number || 'N/A'}\nStatus: ${order.status}\n\nPlease describe your issue:\n\n`;
     Linking.openURL(`mailto:support@glowverse.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`);
+  };
+
+  const downloadInvoice = async () => {
+    if (!order) return;
+    try {
+      const file = await generateInvoicePdf(order);
+      await analytics.logEvent({ name: "invoice_downloaded", properties: { order_id: order.id } });
+      await Share.share({ url: file.uri, title: "Invoice" });
+    } catch {
+      try {
+        await shareInvoice(order);
+      } catch {}
+    }
+  };
+
+  const shareTracking = async () => {
+    if (!order) return;
+    const link = deepLinkingService.createUniversalLink(`orders/${order.id}/track`);
+    try {
+      await Share.share({ message: `Track my order ${order.number || order.id}: ${link}` });
+      await analytics.logEvent({ name: "tracking_viewed", properties: { order_id: order.id } });
+    } catch {}
   };
 
   return (
@@ -188,6 +235,22 @@ export default function OrderDetailScreen() {
             </TouchableOpacity>
           </View>
 
+          <View style={{ flexDirection: "row", gap: 8, marginTop: 8 }}>
+            <TouchableOpacity onPress={downloadInvoice} style={styles.btnOutline}>
+              <Text style={styles.btnOutlineText}>Download Invoice</Text>
+            </TouchableOpacity>
+            {(order.status === "shipped" || order.status === "delivered") ? (
+              <TouchableOpacity onPress={shareTracking} style={styles.btnOutline}>
+                <Text style={styles.btnOutlineText}>Share Tracking</Text>
+              </TouchableOpacity>
+            ) : null}
+            {order.status === "delivered" ? (
+              <TouchableOpacity onPress={() => Alert.alert("Rate Order", "Thanks for your purchase! Ratings coming soon.")} style={styles.btnOutline}>
+                <Text style={styles.btnOutlineText}>Rate Order</Text>
+              </TouchableOpacity>
+            ) : null}
+          </View>
+
           {/* Contact Support Button */}
           <TouchableOpacity onPress={contactSupport} style={styles.btnSupport}>
             <Text style={styles.btnSupportText}>📧 Contact Support</Text>
@@ -208,8 +271,10 @@ function toStep(status: OrdersAPI.Order["status"]) {
       return "shipped";
     case "processing":
       return "processing";
+    case "placed":
+      return "placed";
     default:
-      return "ordered";
+      return "payment_confirmed";
   }
 }
 

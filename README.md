@@ -367,8 +367,8 @@ docker-compose -f docker-compose.production.yml up -d
 - [Environment Setup (AWS)](backend/docs/ENVIRONMENT_SETUP.md)
 
 ### Frontend
-- [Frontend README](frontend/README.md) — Architecture, features, testing
-- [Project Report](project_report.md) — Completion %, gaps, and next steps
+- [Frontend README](frontend/README.md) — Architecture, features, testing, status
+- [Project Status Report](project_report.md) — Completion %, gaps, and next steps
 
 ---
 

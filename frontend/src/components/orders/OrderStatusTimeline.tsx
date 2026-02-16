@@ -2,14 +2,14 @@ import React from "react";
 import { View, Text, StyleSheet } from "react-native";
 import { useTheme } from "../../theme/themeContext";
 
-type Step = "ordered" | "processing" | "shipped" | "out_for_delivery" | "delivered";
+type Step = "placed" | "payment_confirmed" | "processing" | "shipped" | "out_for_delivery" | "delivered";
 
 type Props = {
   current: Step;
   timestamps?: Partial<Record<Step, string>>;
 };
 
-const steps: Step[] = ["ordered", "processing", "shipped", "out_for_delivery", "delivered"];
+const steps: Step[] = ["placed", "payment_confirmed", "processing", "shipped", "out_for_delivery", "delivered"];
 
 export default function OrderStatusTimeline({ current, timestamps = {} }: Props) {
   const { theme } = useTheme();
@@ -47,8 +47,10 @@ export default function OrderStatusTimeline({ current, timestamps = {} }: Props)
 
 function getIcon(s: Step): string {
   switch (s) {
-    case "ordered":
+    case "placed":
       return "📝";
+    case "payment_confirmed":
+      return "💳";
     case "processing":
       return "⚙️";
     case "shipped":
@@ -62,8 +64,10 @@ function getIcon(s: Step): string {
 
 function label(s: Step) {
   switch (s) {
-    case "ordered":
-      return "Ordered";
+    case "placed":
+      return "Order Placed";
+    case "payment_confirmed":
+      return "Payment Confirmed";
     case "processing":
       return "Processing";
     case "shipped":

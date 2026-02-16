@@ -4,9 +4,11 @@ import { CardField } from "@stripe/stripe-react-native";
 import { useStripePaymentService } from "../../services/stripe.service";
 import { usePlatformPayments } from "../../services/platformPayments.service";
 import { useTheme } from "../../theme/themeContext";
+import Checkbox from "../ui/Checkbox";
 import { TestIDs } from "../../constants/testIDs";
 import { useTestID } from "../../hooks/useTestID";
 import { usePaymentAnalytics } from "../../hooks/analytics/usePaymentAnalytics";
+import { getDefaultSavedPaymentMethodId, listSavedPaymentMethods, removeSavedPaymentMethod, setDefaultSavedPaymentMethodId, upsertSavedPaymentMethod, type SavedPaymentMethod } from "../../services/payments/savedPaymentMethods";
 
 type Method = "card" | "paypal" | "applepay" | "googlepay";
 
@@ -27,6 +29,10 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
   const [cardValid, setCardValid] = React.useState(false);
   const [processing, setProcessing] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [saveForFuture, setSaveForFuture] = React.useState(true);
+  const [savedMethods, setSavedMethods] = React.useState<SavedPaymentMethod[]>([]);
+  const [defaultSavedId, setDefaultSavedId] = React.useState<string | null>(null);
+  const [selectedSavedId, setSelectedSavedId] = React.useState<string | null>(null);
   const [applePayAvailable, setApplePayAvailable] = React.useState(false);
   const [googlePayAvailable, setGooglePayAvailable] = React.useState(false);
   React.useEffect(() => {
@@ -36,7 +42,50 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
       setGooglePayAvailable(g);
     })();
   }, []);
+  React.useEffect(() => {
+    (async () => {
+      const [methods, def] = await Promise.all([listSavedPaymentMethods(), getDefaultSavedPaymentMethodId()]);
+      setSavedMethods(methods);
+      setDefaultSavedId(def);
+      if (def && methods.some((m) => m.id === def)) {
+        setSelectedSavedId(def);
+      }
+    })();
+  }, []);
+
+  React.useEffect(() => {
+    if (selected !== "card") return;
+    const id = selectedSavedId || null;
+    if (id) onPaymentMethodReady?.(id);
+  }, [onPaymentMethodReady, selected, selectedSavedId]);
+
+  async function selectSaved(paymentMethodId: string) {
+    setSelectedSavedId(paymentMethodId);
+    setDefaultSavedId(paymentMethodId);
+    await setDefaultSavedPaymentMethodId(paymentMethodId);
+    onPaymentMethodReady?.(paymentMethodId);
+  }
+
+  async function deleteSaved(paymentMethodId: string) {
+    setProcessing(true);
+    try {
+      await removeSavedPaymentMethod(paymentMethodId);
+      const [methods, def] = await Promise.all([listSavedPaymentMethods(), getDefaultSavedPaymentMethodId()]);
+      setSavedMethods(methods);
+      setDefaultSavedId(def);
+      if (selectedSavedId === paymentMethodId) {
+        setSelectedSavedId(def && methods.some((m) => m.id === def) ? def : methods[0]?.id || null);
+      }
+    } finally {
+      setProcessing(false);
+    }
+  }
+
   async function save() {
+    if (selectedSavedId) {
+      onPaymentMethodReady?.(selectedSavedId);
+      return;
+    }
     if (!cardValid) {
       setError("Please enter valid card details");
       return;
@@ -49,6 +98,23 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
     } else if (res.paymentMethod?.id) {
       onPaymentMethodReady?.(res.paymentMethod.id);
       trackAdded("card", res.paymentMethod.id);
+      if (saveForFuture) {
+        const card = (res.paymentMethod as any).card || {};
+        const record: SavedPaymentMethod = {
+          id: res.paymentMethod.id,
+          brand: card.brand,
+          last4: card.last4,
+          expMonth: typeof card.expiryMonth === "number" ? card.expiryMonth : card.exp_month,
+          expYear: typeof card.expiryYear === "number" ? card.expiryYear : card.exp_year,
+          addedAt: new Date().toISOString()
+        };
+        await upsertSavedPaymentMethod(record);
+        await setDefaultSavedPaymentMethodId(record.id);
+        const [methods, def] = await Promise.all([listSavedPaymentMethods(), getDefaultSavedPaymentMethodId()]);
+        setSavedMethods(methods);
+        setDefaultSavedId(def);
+        setSelectedSavedId(record.id);
+      }
     }
     setProcessing(false);
   }
@@ -113,6 +179,49 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
       ))}
       {selected === "card" ? (
         <View style={styles.cardSection}>
+          {savedMethods.length ? (
+            <View style={styles.savedSection}>
+              <Text style={styles.label}>Saved cards</Text>
+              {savedMethods.map((m: SavedPaymentMethod) => {
+                const selected = selectedSavedId === m.id || (!selectedSavedId && defaultSavedId === m.id);
+                const title = `${(m.brand || "Card").toUpperCase()} •••• ${m.last4 || "••••"}`;
+                const subtitle =
+                  m.expMonth && m.expYear ? `Exp ${String(m.expMonth).padStart(2, "0")}/${String(m.expYear).slice(-2)}` : "Saved payment method";
+                return (
+                  <View key={m.id} style={styles.savedRow}>
+                    <TouchableOpacity
+                      onPress={() => selectSaved(m.id)}
+                      disabled={processing}
+                      style={[styles.savedCard, selected && { borderColor: theme.colors.accent.emerald }]}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Use saved card ending ${m.last4 || ""}`}
+                    >
+                      <Text style={styles.savedTitle}>{title}</Text>
+                      <Text style={styles.note}>{subtitle}</Text>
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      onPress={() => deleteSaved(m.id)}
+                      disabled={processing}
+                      style={styles.deleteBtn}
+                      accessibilityRole="button"
+                      accessibilityLabel={`Delete saved card ending ${m.last4 || ""}`}
+                    >
+                      <Text style={styles.deleteText}>Delete</Text>
+                    </TouchableOpacity>
+                  </View>
+                );
+              })}
+              <TouchableOpacity
+                onPress={() => setSelectedSavedId(null)}
+                disabled={processing}
+                style={[styles.useNewBtn, !selectedSavedId && { opacity: 0.7 }]}
+                accessibilityRole="button"
+                accessibilityLabel="Use a new card"
+              >
+                <Text style={styles.useNewText}>Use a new card</Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
           <CardField
             {...useTestID(TestIDs.CHECKOUT.PAYMENT_CARD_NUMBER)}
             postalCodeEnabled
@@ -126,11 +235,16 @@ export default function PaymentStep({ selected, onSelect, onPaymentMethodReady, 
               if (error) setError(null);
             }}
           />
+          <Checkbox
+            label="Save for future purchases"
+            checked={saveForFuture}
+            onPress={() => setSaveForFuture((v: boolean) => !v)}
+          />
           {error ? <Text style={[styles.note, { color: theme.colors.error }]}>{error}</Text> : null}
           <TouchableOpacity
             onPress={save}
-            disabled={!cardValid || processing}
-            style={[styles.saveBtn, (!cardValid || processing) && { opacity: 0.6 }]}
+            disabled={(!selectedSavedId && !cardValid) || processing}
+            style={[styles.saveBtn, ((!selectedSavedId && !cardValid) || processing) && { opacity: 0.6 }]}
           >
             <Text style={styles.saveText}>{processing ? "Processing..." : "Save Card"}</Text>
           </TouchableOpacity>
@@ -170,6 +284,14 @@ function createStyles(theme: any) {
     saveText: { color: theme.colors.text.inverse, fontWeight: "900" },
     express: { gap: 10, paddingVertical: 8 },
     payBtn: { paddingVertical: 12, alignItems: "center", borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light, backgroundColor: theme.colors.background.elevated },
-    payText: { color: theme.colors.text.primary, fontWeight: "800" }
+    payText: { color: theme.colors.text.primary, fontWeight: "800" },
+    savedSection: { gap: 8 },
+    savedRow: { flexDirection: "row", alignItems: "stretch", gap: 10 },
+    savedCard: { flex: 1, borderWidth: 1, borderColor: theme.colors.border.light, backgroundColor: theme.colors.background.elevated, borderRadius: 12, padding: 12 },
+    savedTitle: { color: theme.colors.text.primary, fontWeight: "900" },
+    deleteBtn: { alignSelf: "center", paddingHorizontal: 10, paddingVertical: 8, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light },
+    deleteText: { color: theme.colors.text.primary, fontWeight: "800" },
+    useNewBtn: { alignSelf: "flex-start", paddingHorizontal: 12, paddingVertical: 10, borderRadius: 10, borderWidth: 1, borderColor: theme.colors.border.light },
+    useNewText: { color: theme.colors.text.primary, fontWeight: "800" }
   });
 }

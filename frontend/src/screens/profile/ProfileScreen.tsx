@@ -115,6 +115,7 @@ export default function ProfileScreen() {
             <MenuItem icon="account-edit" label="Edit Personal Info" onPress={() => navigation.navigate('EditProfile')} styles={styles} />
             <MenuItem icon="home-city" label="Addresses" onPress={() => navigation.navigate('Addresses')} styles={styles} />
             <MenuItem icon="gift-outline" label="Refer & Earn" onPress={() => navigation.navigate('Referrals')} styles={styles} />
+            <MenuItem icon="face-man" label="Skin Analysis" onPress={() => navigation.navigate('SkinAnalysis')} styles={styles} testID="skin-analysis-button" />
             <MenuItem
               icon="face-man-shimmer"
               label="Skin Analysis History"
@@ -368,16 +369,17 @@ function StatCard({ icon, value, label, onPress, styles }: {
   );
 }
 
-function MenuItem({ icon, label, onPress, badge, styles }: {
+function MenuItem({ icon, label, onPress, badge, styles, testID }: {
   icon: string;
   label: string;
   onPress: () => void;
   badge?: string;
   styles: any;
+  testID?: string;
 }) {
   const { theme } = useTheme();
   return (
-    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity style={styles.menuItem} onPress={onPress} activeOpacity={0.7} testID={testID}>
       <View style={styles.menuItemLeft}>
         <View style={[styles.menuIconContainer, { backgroundColor: theme.colors.accent.emerald + '15' }]}>
           <MaterialCommunityIcons name={icon as any} size={20} color={theme.colors.accent.emerald} />

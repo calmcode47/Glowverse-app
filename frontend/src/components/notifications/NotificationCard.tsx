@@ -16,13 +16,18 @@ export default function NotificationCard({ item, onPress, onDelete }: Props) {
   const styles = createStyles(theme);
   const icon = iconFor(item.type);
   const color = colorFor(item.type, theme);
+  const Left = () => (
+    <View style={[styles.read, { borderColor: theme.colors.border.light }]}>
+      <MaterialCommunityIcons name={item.read ? "email-open-outline" : "email-check-outline"} size={22} color={theme.colors.accent.emerald} />
+    </View>
+  );
   const Right = () => (
     <View style={[styles.delete, { borderColor: theme.colors.border.light }]}>
       <MaterialCommunityIcons name="delete-outline" size={22} color={theme.colors.error} />
     </View>
   );
   return (
-    <Swipeable renderRightActions={Right} onSwipeableOpen={onDelete}>
+    <Swipeable renderRightActions={Right} renderLeftActions={Left} onSwipeableLeftOpen={onPress} onSwipeableRightOpen={onDelete}>
       <TouchableOpacity
         onPress={onPress}
         style={[styles.card, { backgroundColor: theme.colors.background.elevated, borderColor: theme.colors.border.light }]}
@@ -97,6 +102,7 @@ function createStyles(theme: any) {
     time: { marginLeft: 8, fontSize: 12 },
     dot: { width: 8, height: 8, borderRadius: 4, marginLeft: 6 },
     msg: { marginTop: 4 },
-    delete: { width: 56, alignItems: "center", justifyContent: "center", borderLeftWidth: 1 }
+    delete: { width: 56, alignItems: "center", justifyContent: "center", borderLeftWidth: 1 },
+    read: { width: 56, alignItems: "center", justifyContent: "center", borderRightWidth: 1 }
   });
 }

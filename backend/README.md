@@ -159,6 +159,29 @@ backend/
 
 ---
 
+## ✅ Completion & What’s Left
+
+**Overall completion:** ≈ 88%
+
+- Implemented
+  - JWT auth and refresh, users/profile/preferences
+  - Products/catalog/search; cart and orders flows
+  - Promotions and referrals (code generation, usage, stats)
+  - Notifications API and preferences; guides and fitness modules
+  - Uploads with Cloudinary/Sharp; PerfectCorp integration shell
+  - Redis caching, security middleware, rate limiting and DDoS protections
+  - CI/CD with build/test/deploy and backup workflows; performance baselines and runbooks
+- Remaining
+  - Payments: Stripe 3DS and webhook orchestration with idempotent order state updates
+  - Admin analytics: aggregation endpoints for revenue by category/product/status, engagement KPIs, and AR usage metrics
+  - Notification delivery integrations (email/push) and background queue hardening
+  - Additional integration tests for edge cases; final production migrations and seeds
+
+For cross‑project status and the go‑live checklist see:
+[Project Status Report](../project_report.md)
+
+---
+
 ## 🔌 API Endpoints (65+)
 
 **Base URL:** `/api/v1`
