@@ -24,7 +24,7 @@ module.exports = {
   expo: {
     name: "Glowverse",
     slug: "glowverse",
-    version: "1.0.0",
+    version: "1.0.1",
     orientation: "portrait",
     icon: "./assets/icon.png",
     userInterfaceStyle: "light",
@@ -53,7 +53,7 @@ module.exports = {
         "applinks:glowverse.com",
         "applinks:www.glowverse.com"
       ],
-      buildNumber: "1",
+      buildNumber: "2",
       infoPlist: {
         NSCameraUsageDescription: "Glowverse needs access to your camera for virtual try-on and skin analysis.",
         NSPhotoLibraryUsageDescription: "Glowverse needs access to your photos to save and share try-on results.",
@@ -65,7 +65,7 @@ module.exports = {
     android: {
       permissions: ["CAMERA", "READ_MEDIA_IMAGES", "INTERNET"],
       ...(hasGoogleServices ? { googleServicesFile: "./google-services.json" } : {}),
-      versionCode: 1,
+      versionCode: 2,
       intentFilters: [
         {
           action: "VIEW",
