@@ -106,13 +106,15 @@ cd frontend
 # Install dependencies
 npm install
 
-# Start Expo development server
+# Start Expo development server (Auto-detects OS & IP)
 npm start
 
-# Or run on specific platform
-npm run web      # Web browser
-npm run ios      # iOS simulator (macOS only)
-npm run android  # Android emulator
+# Specific connection modes
+npm run start:tunnel # For remote/tunnel connections
+npm run start:lan    # Force LAN mode
+npm run web          # Web browser
+npm run ios          # iOS simulator (macOS only)
+npm run android      # Android emulator
 ```
 
 **Frontend running at:** `http://localhost:8081`

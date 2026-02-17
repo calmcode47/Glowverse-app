@@ -61,7 +61,10 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
 ## 🚀 Quick Start
 
 - Install dependencies: `npm install`
-- Start dev server: `npm start`
+- Start dev server: `npm start` (Unified script for Windows/macOS)
+- Connection options:
+  - `npm run start:tunnel` (Tunnel mode)
+  - `npm run start:lan` (LAN mode)
 - Run on platforms:
   - `npm run web`
   - `npm run ios`
