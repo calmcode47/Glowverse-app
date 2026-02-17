@@ -4,15 +4,31 @@ const os = require('os');
 const path = require('path');
 
 function getLanIPv4() {
+  if (process.env.REACT_NATIVE_PACKAGER_HOSTNAME) {
+    return process.env.REACT_NATIVE_PACKAGER_HOSTNAME.trim();
+  }
+
   const ifs = os.networkInterfaces();
+  const candidates = [];
+
   for (const name of Object.keys(ifs)) {
     for (const net of ifs[name] || []) {
+      // Skip internal (127.0.0.1) and non-IPv4
       if (net.family === 'IPv4' && !net.internal) {
-        return net.address;
+        // Prioritize likely physical interfaces
+        const isPriority = name.toLowerCase().includes('wi-fi') ||
+          name.toLowerCase().includes('eth') ||
+          name.toLowerCase().includes('en0');
+
+        candidates.push({ address: net.address, priority: isPriority ? 1 : 0 });
       }
     }
   }
-  return '127.0.0.1';
+
+  // Sort by priority (descending)
+  candidates.sort((a, b) => b.priority - a.priority);
+
+  return candidates.length > 0 ? candidates[0].address : '127.0.0.1';
 }
 
 const lanIP = getLanIPv4();
