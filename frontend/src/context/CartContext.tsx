@@ -11,7 +11,7 @@ export type CartContextType = {
 
 const CartContext = React.createContext<CartContextType>({
   count: 0,
-  setCount: () => {}
+  setCount: () => { }
 });
 
 export function CartProvider({ children }: { children: React.ReactNode }) {

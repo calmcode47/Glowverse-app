@@ -6,7 +6,7 @@ let FastImage: any = null;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires
   FastImage = require("react-native-fast-image");
-} catch {}
+} catch { }
 
 type Props = {
   uri: string;
@@ -32,7 +32,7 @@ function hasCloudinaryTransform(u: string): boolean {
     if (idx !== -1 && parts[idx + 1]) {
       return parts[idx + 1].includes("c_");
     }
-  } catch {}
+  } catch { }
   return false;
 }
 

@@ -70,11 +70,4 @@ export default function Button({
       {children}
     </PaperButton>
   );
-}
 
-const styles = StyleSheet.create({
-  small: { height: 36 },
-  medium: { height: 44 },
-  large: { height: 52 },
-  fullWidth: { alignSelf: "stretch" }
-});

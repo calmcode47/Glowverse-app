@@ -16,6 +16,7 @@ import FilterModal from "../../components/shop/FilterModal";
 import { focusManagement } from "../../utils/focusManagement";
 import { useFilterAnalytics } from "../../hooks/analytics/useFilterAnalytics";
 import { imagePreloader } from "../../services/imagePreloader.service";
+import debounce from "lodash/debounce";
 import Animated, { useSharedValue, useAnimatedScrollHandler, useAnimatedStyle, interpolate, Extrapolate } from "react-native-reanimated";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -181,15 +182,20 @@ export default function ShopScreen() {
     return { length, offset: length * index, index };
   }, []);
 
-  const onViewableItemsChanged = React.useRef(({ viewableItems }: { viewableItems: Array<{ index: number | null }> }) => {
-    if (!Array.isArray(viewableItems) || viewableItems.length === 0) return;
-    const indices = viewableItems.map((v) => (typeof v.index === "number" ? v.index : -1)).filter((i) => i >= 0);
-    if (indices.length === 0) return;
-    const start = Math.min(...indices);
-    const end = Math.max(...indices);
-    imagePreloader.preloadForList(items as any, { start, end }, 2);
-  }).current;
-  const viewabilityConfig = React.useRef({ minimumViewTime: 50, viewAreaCoveragePercentThreshold: 20 }).current;
+  /* eslint-disable-next-line react-hooks/exhaustive-deps */
+  const onViewableItemsChanged = React.useCallback(
+    debounce(({ viewableItems }: { viewableItems: Array<{ index: number | null }> }) => {
+      if (!Array.isArray(viewableItems) || viewableItems.length === 0) return;
+      const indices = viewableItems.map((v) => (typeof v.index === "number" ? v.index : -1)).filter((i) => i >= 0);
+      if (indices.length === 0) return;
+      const start = Math.min(...indices);
+      const end = Math.max(...indices);
+      imagePreloader.preloadForList(items as any, { start, end }, 2);
+    }, 300),
+    [items]
+  );
+
+  const viewabilityConfig = React.useRef({ minimumViewTime: 100, viewAreaCoveragePercentThreshold: 20 }).current;
 
   return (
     <View style={styles.container}>

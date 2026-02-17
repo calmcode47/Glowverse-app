@@ -54,7 +54,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
       const data = response.notification.request.content.data as any;
       handleNotificationNavigation(data);
     });
-    refreshNotifications().catch(() => {});
+    refreshNotifications().catch(() => { });
   }, []);
 
   async function initializePush() {
@@ -140,7 +140,7 @@ export function NotificationsProvider({ children }: { children: React.ReactNode 
     // Update state even if the backend call fails during dev/offline
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
     setUnreadCount(0);
-    try { await notificationService.clearBadge(); } catch {}
+    try { await notificationService.clearBadge(); } catch { }
   }
 
   async function deleteNotification(id: string) {

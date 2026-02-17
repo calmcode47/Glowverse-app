@@ -15,10 +15,10 @@ export type FavoritesContextType = {
 const Ctx = React.createContext<FavoritesContextType>({
   favorites: [],
   isFavorite: () => false,
-  add: async () => {},
-  removeByProductId: async () => {},
-  clearAll: async () => {},
-  reload: async () => {},
+  add: async () => { },
+  removeByProductId: async () => { },
+  clearAll: async () => { },
+  reload: async () => { },
   loading: true
 });
 
@@ -36,7 +36,7 @@ export function FavoritesProvider({ children }: { children: React.ReactNode }) {
           const parsed = JSON.parse(cached) as FavoritesAPI.Favorite[];
           setFavorites(parsed);
         }
-      } catch {}
+      } catch { }
       try {
         const list = await FavoritesAPI.getFavorites();
         setFavorites(list);

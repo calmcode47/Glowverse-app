@@ -46,15 +46,15 @@ export default function Input({
         left={
           leftIconName
             ? ((props: { size: number; color: string }) => (
-                <MaterialCommunityIcons name={leftIconName as any} size={props.size} color={props.color} />
-              )) as any
+              <MaterialCommunityIcons name={leftIconName as any} size={props.size} color={props.color} />
+            )) as any
             : undefined
         }
         right={
           rightIconName
             ? ((props: { size: number; color: string }) => (
-                <MaterialCommunityIcons name={rightIconName as any} size={props.size} color={props.color} />
-              )) as any
+              <MaterialCommunityIcons name={rightIconName as any} size={props.size} color={props.color} />
+            )) as any
             : undefined
         }
       />
