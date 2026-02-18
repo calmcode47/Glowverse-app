@@ -18,40 +18,43 @@ if ($ipObj) {
     Write-Host "[-] Could not auto-detect Wi-Fi/Ethernet IP. Using default." -ForegroundColor Yellow
 }
 
-# 2. Add Firewall Rule (Requires Admin)
-$ruleName = "Node.js Expo Bundler (8081)"
+# 2. Open Required Firewall Ports (Requires Admin)
+$ports = @(
+    @{ Name = "Glowverse Expo Metro (8081)"; Port = 8081; Desc = "Expo Metro bundler (JS)" },
+    @{ Name = "Glowverse Expo Dev Server (19000)"; Port = 19000; Desc = "Expo dev server (manifest)" },
+    @{ Name = "Glowverse Expo Web (19001)"; Port = 19001; Desc = "Expo web dev server" },
+    @{ Name = "Glowverse Expo DevTools (19002)"; Port = 19002; Desc = "Expo DevTools UI" }
+)
 
-# Check if rule exists
-$existingRule = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
-
-if ($existingRule) {
-    Write-Host "[*] Updating existing firewall rule..." -ForegroundColor Yellow
-    Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
-} else {
-    Write-Host "[*] Creating new firewall rule..." -ForegroundColor Yellow
-}
-
-try {
-    # Create a new rule allowing Inbound traffic on TCP 8081 for ALL profiles
-    New-NetFirewallRule -DisplayName $ruleName `
-                        -Direction Inbound `
-                        -LocalPort 8081 `
-                        -Protocol TCP `
-                        -Action Allow `
-                        -Profile Any `
-                        -Description "Allows incoming connections for Expo Go on port 8081" `
-                        -ErrorAction Stop
-
-    Write-Host "[+] Firewall Rule Successfully Applied (Port 8081, All Profiles)." -ForegroundColor Green
-} catch {
-    Write-Host "[-] Failed to add Firewall rule." -ForegroundColor Red
-    Write-Host "    Error: $($_.Exception.Message)" -ForegroundColor Red
-    Write-Host "    -> Please run this script as Administrator." -ForegroundColor Yellow
+foreach ($p in $ports) {
+    $existing = Get-NetFirewallRule -DisplayName $p.Name -ErrorAction SilentlyContinue
+    if ($existing) {
+        Write-Host "[*] Updating firewall rule: $($p.Name)" -ForegroundColor Yellow
+        Remove-NetFirewallRule -DisplayName $p.Name -ErrorAction SilentlyContinue
+    } else {
+        Write-Host "[*] Creating firewall rule: $($p.Name)" -ForegroundColor Yellow
+    }
+    try {
+        New-NetFirewallRule -DisplayName $p.Name `
+                            -Direction Inbound `
+                            -LocalPort $p.Port `
+                            -Protocol TCP `
+                            -Action Allow `
+                            -Profile Any `
+                            -Description $p.Desc `
+                            -ErrorAction Stop | Out-Null
+        Write-Host "[+] Allowed TCP $($p.Port) ($($p.Desc))." -ForegroundColor Green
+    } catch {
+        Write-Host "[-] Failed to add rule for port $($p.Port)." -ForegroundColor Red
+        Write-Host "    Error: $($_.Exception.Message)" -ForegroundColor Red
+        Write-Host "    -> Please run this script as Administrator." -ForegroundColor Yellow
+    }
 }
 
 # 3. Clean and Start
 Write-Host "[*] Clearing Metro Cache..." -ForegroundColor Yellow
 Write-Host "Starting Expo..." -ForegroundColor Cyan
 
-# Clean cache and start
-npm start -- --reset-cache
+# 4. Clean cache and start in LAN mode (optional)
+Write-Host "[*] Starting Expo in LAN mode..." -ForegroundColor Cyan
+npm run start:lan -- --reset-cache
