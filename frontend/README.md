@@ -72,6 +72,16 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
 
 **App running at:** `http://localhost:8081`
 
+### 🔧 Troubleshooting (Windows)
+If the app fails to bundle or download on your physical device:
+1.  **Firewall**: Run the fix script as **Administrator**:
+    ```powershell
+    powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1
+    ```
+    This script automatically allows Node.js through the firewall and sets the correct IP address.
+2.  **Network**: Ensure your PC and phone are on the same Wi-Fi network.
+3.  **VPN**: Disconnect any VPNs or disable virtual network adapters (Hyper-V, WSL) that might mask your local IP.
+
 ---
 
 ## 📊 Status & Remaining Work

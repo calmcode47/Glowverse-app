@@ -23,24 +23,40 @@ function getLocalIP() {
         for (const net of ifs[name] || []) {
             // Skip internal (127.0.0.1) and non-IPv4
             if (net.family === 'IPv4' && !net.internal) {
-                // Prioritize likely physical interfaces
                 const lowerName = name.toLowerCase();
-                let priority = 0;
+                
+                // Detailed Scoring System
+                let score = 0;
 
-                if (lowerName.includes('wi-fi') || lowerName.includes('wlan')) priority = 10;
-                else if (lowerName.includes('eth')) priority = 9;
-                else if (lowerName.includes('en0')) priority = 8;
-                else if (lowerName.includes('wsl') || lowerName.includes('vEthernet')) priority = 1; // Lower priority for virtual adapters
+                // 1. High Priority: Wi-Fi and Ethernet
+                if (lowerName.includes('wi-fi') || lowerName.includes('wlan')) score += 100;
+                else if (lowerName.includes('eth') || lowerName.includes('en0')) score += 90;
 
-                candidates.push({ name, address: net.address, priority });
+                // 2. Penalize Virtual/VPN Adapters
+                if (lowerName.includes('vethernet')) score -= 50; // Hyper-V
+                if (lowerName.includes('wsl')) score -= 50;       // WSL
+                if (lowerName.includes('virtual')) score -= 40;   // VirtualBox/VMware
+                if (lowerName.includes('vpn') || lowerName.includes('tun') || lowerName.includes('tap')) score -= 60; 
+
+                // 3. Prefer private IP ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
+                if (net.address.startsWith('192.168.')) score += 20;
+                else if (net.address.startsWith('10.')) score += 10;
+                else if (net.address.match(/^172\.(1[6-9]|2[0-9]|3[0-1])\./)) score += 10;
+
+                candidates.push({ name, address: net.address, score });
             }
         }
     }
 
-    // Sort by priority (descending)
-    candidates.sort((a, b) => b.priority - a.priority);
+    // Sort by score (descending)
+    candidates.sort((a, b) => b.score - a.score);
 
     if (candidates.length > 0) {
+        // Log all candidates for debugging
+        if (process.env.DEBUG_IP) {
+            console.log(colors.yellow, "\n[?] Discovered Network Interfaces:");
+            candidates.forEach(c => console.log(`    - ${c.name}: ${c.address} (Score: ${c.score})`));
+        }
         return candidates[0].address;
     }
     return '127.0.0.1';

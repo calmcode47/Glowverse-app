@@ -20,19 +20,33 @@ if ($ipObj) {
 
 # 2. Add Firewall Rule (Requires Admin)
 $ruleName = "Node.js Expo Bundler (8081)"
-$ruleExists = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
 
-if (-not $ruleExists) {
-    Write-Host "[*] Attempting to add Firewall Rule for Port 8081..." -ForegroundColor Yellow
-    try {
-        New-NetFirewallRule -DisplayName $ruleName -Direction Inbound -LocalPort 8081 -Protocol TCP -Action Allow -ErrorAction Stop
-        Write-Host "[+] Firewall Rule Added Successfully." -ForegroundColor Green
-    } catch {
-        Write-Host "[-] Failed to add Firewall rule. Run as Administrator to fix automatically." -ForegroundColor Red
-        Write-Host "    Or manually allow port 8081 in Windows Defender Firewall." -ForegroundColor Gray
-    }
+# Check if rule exists
+$existingRule = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
+
+if ($existingRule) {
+    Write-Host "[*] Updating existing firewall rule..." -ForegroundColor Yellow
+    Remove-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
 } else {
-    Write-Host "[+] Firewall Rule for Port 8081 already exists." -ForegroundColor Green
+    Write-Host "[*] Creating new firewall rule..." -ForegroundColor Yellow
+}
+
+try {
+    # Create a new rule allowing Inbound traffic on TCP 8081 for ALL profiles
+    New-NetFirewallRule -DisplayName $ruleName `
+                        -Direction Inbound `
+                        -LocalPort 8081 `
+                        -Protocol TCP `
+                        -Action Allow `
+                        -Profile Any `
+                        -Description "Allows incoming connections for Expo Go on port 8081" `
+                        -ErrorAction Stop
+
+    Write-Host "[+] Firewall Rule Successfully Applied (Port 8081, All Profiles)." -ForegroundColor Green
+} catch {
+    Write-Host "[-] Failed to add Firewall rule." -ForegroundColor Red
+    Write-Host "    Error: $($_.Exception.Message)" -ForegroundColor Red
+    Write-Host "    -> Please run this script as Administrator." -ForegroundColor Yellow
 }
 
 # 3. Clean and Start
