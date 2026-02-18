@@ -1,6 +1,6 @@
 import bcrypt from "bcryptjs";
 import jwt, { SignOptions } from "jsonwebtoken";
-import { randomUUID } from "crypto";
+import { randomUUID, randomBytes, createHash } from "crypto";
 import { User } from "@prisma/client";
 import prisma from "@config/database";
 import env from "@config/env";
@@ -173,6 +173,10 @@ export class AuthService {
     await prisma.user.delete({ where: { id: userId } });
   }
 
+  /**
+   * Request password reset — generates a secure token, hashes it,
+   * stores the hash in the DB, and emails the plain token to the user.
+   */
   static async requestPasswordReset(email: string): Promise<void> {
     const user = await prisma.user.findUnique({ where: { email } });
     if (!user) {
@@ -180,18 +184,119 @@ export class AuthService {
       return;
     }
 
-    const resetToken = randomUUID();
-    const expiresIn = new Date();
-    expiresIn.setHours(expiresIn.getHours() + 1);
+    // Generate secure random token
+    const resetToken = randomBytes(32).toString("hex");
 
-    // TODO: Store reset token in database (needs schema update)
-    // For now, we'll just send the email with the token
+    // Hash the token before storing (never store plain tokens)
+    const hashedToken = createHash("sha256").update(resetToken).digest("hex");
 
-    // Send Password Reset Email
-    await EnhancedNotificationService.sendPasswordReset(user.email, user.name || 'User', resetToken).catch(err => {
-      logger.error('Failed to send password reset email:', err);
+    // Set expiry (1 hour from now)
+    const resetTokenExpiry = new Date(Date.now() + 3600000);
+
+    // Store hashed token in database
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        resetToken: hashedToken,
+        resetTokenExpiry,
+      },
     });
+
+    logger.info("Password reset token generated", {
+      userId: user.id,
+      email: user.email,
+      expiresAt: resetTokenExpiry,
+    });
+
+    // Send reset email with the plain token (not the hash)
+    await EnhancedNotificationService.sendPasswordReset(
+      user.email,
+      user.name || "User",
+      resetToken
+    ).catch((err) => {
+      logger.error("Failed to send password reset email:", err);
+    });
+  }
+
+  /**
+   * Reset password using a valid reset token.
+   */
+  static async resetPassword(token: string, newPassword: string): Promise<void> {
+    // Hash the provided token to match against the stored hash
+    const hashedToken = createHash("sha256").update(token).digest("hex");
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: hashedToken,
+        resetTokenExpiry: { gte: new Date() },
+      },
+    });
+
+    if (!user) {
+      throw new AppError("Invalid or expired reset token", 400);
+    }
+
+    const hashedPassword = await this.hashPassword(newPassword);
+
+    // Update password and clear reset token (single-use)
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        password: hashedPassword,
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    // Invalidate all existing sessions
+    await this.logoutAll(user.id);
+
+    logger.info("Password reset successful", { userId: user.id, email: user.email });
+  }
+
+  /**
+   * Verify reset token validity without resetting the password.
+   */
+  static async verifyResetToken(token: string): Promise<{ valid: boolean; email?: string }> {
+    const hashedToken = createHash("sha256").update(token).digest("hex");
+
+    const user = await prisma.user.findFirst({
+      where: {
+        resetToken: hashedToken,
+        resetTokenExpiry: { gte: new Date() },
+      },
+      select: { id: true, email: true },
+    });
+
+    if (!user) {
+      return { valid: false };
+    }
+
+    return { valid: true, email: user.email };
+  }
+
+  /**
+   * Clean up expired reset tokens. Intended to run as a scheduled job.
+   */
+  static async cleanupExpiredTokens(): Promise<number> {
+    const result = await prisma.user.updateMany({
+      where: {
+        resetTokenExpiry: { lt: new Date() },
+        resetToken: { not: null },
+      },
+      data: {
+        resetToken: null,
+        resetTokenExpiry: null,
+      },
+    });
+
+    if (result.count > 0) {
+      logger.info("Expired reset tokens cleaned up", { count: result.count });
+    }
+
+    return result.count;
   }
 }
 
 export default AuthService;
+

@@ -12,6 +12,7 @@ import app from "./app";
 import { config } from './config';
 import prisma from "@config/database";
 import logger from "@utils/logger";
+import { startTokenCleanupScheduler } from "./jobs/cleanup-tokens.job";
 
 const PORT = config.server.port;
 const HOST = config.server.host;
@@ -20,6 +21,9 @@ const server = app.listen(PORT, HOST, () => {
   logger.info(`🚀 Server running in ${config.server.env} mode`);
   logger.info(`📡 API: http://${HOST}:${PORT}/api/v1`);
   logger.info(`🏥 Health: http://${HOST}:${PORT}/health`);
+
+  // Start background jobs
+  startTokenCleanupScheduler();
 });
 
 const gracefulShutdown = async (signal: string) => {

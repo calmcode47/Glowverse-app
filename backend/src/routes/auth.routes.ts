@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { body } from "express-validator";
+import { body, param } from "express-validator";
 import AuthController from "@controllers/auth.controller";
 import { validate } from "@middleware/validation";
 import { authenticate } from "@middleware/auth";
@@ -50,4 +50,30 @@ router.post(
 );
 router.delete("/account", authenticate, validate([body("password").notEmpty()]), AuthController.deleteAccount);
 
+// Password reset routes
+router.post(
+  "/forgot-password",
+  AdaptiveRateLimiter.createBurstLimiter(3), // 3 per minute
+  validate([body("email").isEmail().normalizeEmail()]),
+  AuthController.forgotPassword
+);
+
+router.get(
+  "/reset-password/:token",
+  AdaptiveRateLimiter.createBurstLimiter(10),
+  validate([param("token").isString().isLength({ min: 1 })]),
+  AuthController.verifyResetToken
+);
+
+router.post(
+  "/reset-password",
+  AdaptiveRateLimiter.createBurstLimiter(5),
+  validate([
+    body("token").isString().notEmpty(),
+    body("password").isLength({ min: 8 }).matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+  ]),
+  AuthController.resetPassword
+);
+
 export default router;
+

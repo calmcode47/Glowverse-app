@@ -29,6 +29,8 @@ export interface OrderWithItems extends Order {
     items: OrderItem[];
 }
 
+import PromotionService from './promotion.service';
+
 export class OrderService {
     /**
      * Create a new order from user's cart
@@ -49,8 +51,34 @@ export class OrderService {
         const subtotal = Number(cart.subtotal);
         const tax = subtotal * 0.08; // 8% tax rule
         const shippingCost = subtotal >= 50 ? 0 : 5.99;
-        const discount = 0; // TODO: Implement promotion logic
-        const total = subtotal + tax + shippingCost - discount;
+
+        // Promotion Logic
+        let discount = 0;
+        let promotionId: string | undefined;
+
+        if (orderData.promotionCode) {
+            const validation = await PromotionService.validatePromotion(
+                orderData.promotionCode,
+                userId,
+                {
+                    subtotal,
+                    items: cart.items.map(item => ({
+                        productId: item.productId,
+                        category: item.product.category
+                    }))
+                }
+            );
+
+            if (!validation.isValid) {
+                // If code is provided but invalid/expired, block checking out
+                throw new AppError(validation.error || 'Invalid promotion code', 400);
+            }
+
+            discount = validation.discount || 0;
+            promotionId = validation.promotion?.id;
+        }
+
+        const total = Math.max(0, subtotal + tax + shippingCost - discount);
 
         // 3. Generate Order Number
         const orderNumber = this.generateOrderNumber();
@@ -97,6 +125,16 @@ export class OrderService {
                 });
             }
 
+            // Record Promotion Usage if applied
+            if (promotionId && discount > 0) {
+                await PromotionService.applyPromotion(
+                    promotionId,
+                    userId,
+                    order.id,
+                    discount
+                );
+            }
+
             // Clear Cart
             await tx.cartItem.deleteMany({
                 where: { cartId: cart.id }
@@ -125,6 +163,7 @@ export class OrderService {
                 shipping: shippingCost,
                 tax: tax,
                 total: total,
+                discount: discount > 0 ? discount : undefined,
                 shippingAddress: orderData.shippingAddress
             }
         ).catch(err => {

@@ -83,7 +83,41 @@ const AuthController = {
     const { password } = req.body as { password: string };
     await AuthService.deleteAccount(req.user.userId, password);
     return res.status(200).json({ message: "Account deleted successfully" });
-  }
+  },
+
+  async forgotPassword(req: Request, res: Response) {
+    const { email } = req.body as { email: string };
+    await AuthService.requestPasswordReset(email);
+    // Always return success to prevent email enumeration
+    return res.status(200).json({
+      success: true,
+      message: "If an account exists with this email, a password reset link has been sent.",
+    });
+  },
+
+  async verifyResetToken(req: Request, res: Response) {
+    const { token } = req.params;
+    const result = await AuthService.verifyResetToken(token);
+
+    if (!result.valid) {
+      return res.status(400).json({
+        success: false,
+        error: { message: "Invalid or expired reset token", code: "INVALID_TOKEN" },
+      });
+    }
+
+    return res.status(200).json({ success: true, data: { email: result.email } });
+  },
+
+  async resetPassword(req: Request, res: Response) {
+    const { token, password } = req.body as { token: string; password: string };
+    await AuthService.resetPassword(token, password);
+    return res.status(200).json({
+      success: true,
+      message: "Password reset successful. You can now log in with your new password.",
+    });
+  },
 };
 
 export default AuthController;
+

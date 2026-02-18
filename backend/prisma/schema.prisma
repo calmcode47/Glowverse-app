@@ -155,6 +155,11 @@ model User {
   role          String    @default("USER")
   isVerified    Boolean   @default(false)
   isActive      Boolean   @default(true)
+  
+  // Password reset
+  resetToken       String?   @unique
+  resetTokenExpiry DateTime?
+  
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   lastLoginAt   DateTime?
