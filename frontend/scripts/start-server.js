@@ -24,7 +24,7 @@ function getLocalIP() {
             // Skip internal (127.0.0.1) and non-IPv4
             if (net.family === 'IPv4' && !net.internal) {
                 const lowerName = name.toLowerCase();
-                
+
                 // Detailed Scoring System
                 let score = 0;
 
@@ -36,7 +36,7 @@ function getLocalIP() {
                 if (lowerName.includes('vethernet')) score -= 50; // Hyper-V
                 if (lowerName.includes('wsl')) score -= 50;       // WSL
                 if (lowerName.includes('virtual')) score -= 40;   // VirtualBox/VMware
-                if (lowerName.includes('vpn') || lowerName.includes('tun') || lowerName.includes('tap')) score -= 60; 
+                if (lowerName.includes('vpn') || lowerName.includes('tun') || lowerName.includes('tap')) score -= 60;
 
                 // 3. Prefer private IP ranges (192.168.x.x, 10.x.x.x, 172.16-31.x.x)
                 if (net.address.startsWith('192.168.')) score += 20;
@@ -65,6 +65,7 @@ function getLocalIP() {
 const args = process.argv.slice(2);
 const isTunnel = args.includes('--tunnel');
 const isLan = args.includes('--lan');
+const isOffline = args.includes('--offline');
 const isResetHelp = args.includes('--reset-cache');
 
 log(colors.cyan, "==========================================");
@@ -80,7 +81,8 @@ process.env.REACT_NATIVE_PACKAGER_HOSTNAME = localIP;
 // Construct Expo command
 let expoArgs = ['start'];
 if (isTunnel) expoArgs.push('--tunnel');
-if (isLan) expoArgs.push('--lan');
+if (isLan && !isOffline) expoArgs.push('--lan');
+if (isOffline) expoArgs.push('--offline');
 if (isResetHelp) expoArgs.push('--reset-cache');
 
 // Always clear cache on start to prevent bundling issues

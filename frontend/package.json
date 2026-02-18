@@ -10,6 +10,7 @@
     "start:tunnel": "node scripts/start-server.js --tunnel",
     "start:lan": "node scripts/start-server.js --lan",
     "start:windows": "node scripts/start-server.js",
+    "start:fix": "node scripts/start-server.js --offline",
     "types:api": "openapi-typescript https://api.glowverse.com/openapi.json -o src/types/api.ts",
     "types:generate": "openapi-typescript http://localhost:3000/api/openapi.json -o src/types/api-generated.ts",
     "types:generate:prod": "openapi-typescript https://api.glowverse.com/api/openapi.json -o src/types/api-generated.ts",
