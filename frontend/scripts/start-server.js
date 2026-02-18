@@ -67,6 +67,7 @@ const isTunnel = args.includes('--tunnel');
 const isLan = args.includes('--lan');
 const isOffline = args.includes('--offline');
 const isResetHelp = args.includes('--reset-cache');
+const isWindows = process.platform === 'win32';
 
 log(colors.cyan, "==========================================");
 log(colors.cyan, "     Glowverse Unified Start Script");
@@ -84,6 +85,11 @@ if (isTunnel) expoArgs.push('--tunnel');
 if (isLan && !isOffline) expoArgs.push('--lan');
 if (isOffline) expoArgs.push('--offline');
 if (isResetHelp) expoArgs.push('--reset-cache');
+
+if (isWindows && !isTunnel && !isLan && !isOffline) {
+    expoArgs.push('--tunnel');
+    log(colors.yellow, "[*] Windows detected: defaulting to --tunnel for device connectivity");
+}
 
 // Always clear cache on start to prevent bundling issues
 if (!isResetHelp) {

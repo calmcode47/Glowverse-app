@@ -51,6 +51,17 @@ npm run dev
 **Server:** `http://localhost:5000`
 **Health:** `http://localhost:5000/health`
 
+### Frontend (Windows & macOS)
+To run the mobile app locally:
+```bash
+cd ../frontend
+npm install
+npm start           # Unified start; Windows defaults to tunnel
+npm run ios         # macOS only (simulator)
+npm run android     # Android emulator
+```
+For LAN mode on Windows: `npm run start:lan` (ensure same Wi‑Fi; VPNs off). If blocked, use the optional fix script: `powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1`.
+
 ---
 
 ## 🎯 Phase 4: Performance Optimization (NEW)

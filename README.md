@@ -106,15 +106,18 @@ cd frontend
 # Install dependencies
 npm install
 
-# Start Expo development server (Auto-detects OS & IP)
+# Start Expo development server (Windows & macOS)
 npm start
 
-# Specific connection modes
-npm run start:tunnel # For remote/tunnel connections
-npm run start:lan    # Force LAN mode
-npm run web          # Web browser
-npm run ios          # iOS simulator (macOS only)
-npm run android      # Android emulator
+# Platform launchers
+npm run web
+npm run ios          # macOS only
+npm run android
+
+# Connectivity modes
+# Windows defaults to tunnel automatically for reliable device pairing
+npm run start:tunnel # Force tunnel on any OS
+npm run start:lan    # Prefer LAN (same Wi‑Fi, VPNs off)
 ```
 
 **Frontend running at:** `http://localhost:8081`

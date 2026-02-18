@@ -61,26 +61,29 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
 ## 🚀 Quick Start
 
 - Install dependencies: `npm install`
-- Start dev server: `npm start` (Unified script for Windows/macOS)
-- Connection options:
-  - `npm run start:tunnel` (Tunnel mode)
-  - `npm run start:lan` (LAN mode)
-- Run on platforms:
+- Start dev server: `npm start` — unified for Windows and macOS
+- Platform launchers:
   - `npm run web`
   - `npm run ios`
   - `npm run android`
+- Connectivity:
+  - Windows defaults to tunnel mode automatically for reliable device pairing
+  - Use `npm run start:lan` to prefer LAN; ensure phone and PC are on the same Wi‑Fi
+  - Use `npm run start:tunnel` to force tunnel on any OS
 
 **App running at:** `http://localhost:8081`
 
-### 🔧 Troubleshooting (Windows)
-If the app fails to bundle or download on your physical device:
-1.  **Firewall**: Run the fix script as **Administrator**:
+### 🖥️ Windows & macOS Setup
+- Windows:
+  - `npm start` uses tunnel by default; scan the QR with Expo Go
+  - For LAN mode: `npm run start:lan`. If blocked, run:
     ```powershell
     powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1
     ```
-    This script automatically allows Node.js through the firewall and sets the correct IP address.
-2.  **Network**: Ensure your PC and phone are on the same Wi-Fi network.
-3.  **VPN**: Disconnect any VPNs or disable virtual network adapters (Hyper-V, WSL) that might mask your local IP.
+    This opens port 8081 and sets the correct bundler host.
+- macOS:
+  - `npm start`, then press `i` to open the iOS simulator or scan the QR with the Camera app
+  - If using LAN, ensure both devices are on the same Wi‑Fi and VPN is off
 
 ---
 
