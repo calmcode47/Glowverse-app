@@ -1,0 +1,3 @@
+@echo off
+echo Installing ngrok for tunnel access...
+echo Y | npx expo start --tunnel --reset-cache

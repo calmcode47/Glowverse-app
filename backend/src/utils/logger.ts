@@ -1,5 +1,4 @@
 import winston from "winston";
-import env from "@config/env";
 
 const levels = {
   error: 0,
@@ -10,6 +9,8 @@ const levels = {
 };
 
 const level = () => {
+  // Lazy load env to avoid circular dependency
+  const env = require("@config/env").default;
   const isDevelopment = env.nodeEnv === "development";
   return isDevelopment ? "debug" : "warn";
 };

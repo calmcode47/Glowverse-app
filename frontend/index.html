@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Glowverse Frontend</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            box-shadow: 0 8px 32px rgba(31, 38, 135, 0.37);
+        }
+        h1 {
+            font-size: 3em;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .status {
+            font-size: 1.2em;
+            margin: 20px 0;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 10px;
+        }
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #ee5a24);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 25px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+        }
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+        }
+        .success { color: #4CAF50; }
+        .error { color: #f44336; }
+        .loading { color: #FFC107; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 Glowverse</h1>
+        <p>AI-Powered Beauty & Skincare Analysis Platform</p>
+        
+        <div class="status">
+            <div>Backend Status: <span id="backend-status" class="loading">Checking...</span></div>
+            <div>Frontend Status: <span class="success">✅ Running</span></div>
+        </div>
+        
+        <button onclick="testBackend()">Test Backend Connection</button>
+        <button onclick="testApi()">Test API Endpoint</button>
+        
+        <div id="response" style="margin-top: 20px; font-family: monospace; background: rgba(0,0,0,0.3); padding: 15px; border-radius: 10px; text-align: left;"></div>
+    </div>
+
+    <script>
+        function updateStatus(elementId, status, className) {
+            const element = document.getElementById(elementId);
+            element.textContent = status;
+            element.className = className;
+        }
+
+        function displayResponse(data) {
+            document.getElementById('response').innerHTML = `<strong>Response:</strong><br><pre>${JSON.stringify(data, null, 2)}</pre>`;
+        }
+
+        async function testBackend() {
+            updateStatus('backend-status', 'Testing...', 'loading');
+            try {
+                const response = await fetch('http://localhost:3000/health');
+                const data = await response.json();
+                
+                if (response.ok) {
+                    updateStatus('backend-status', '✅ Connected', 'success');
+                    displayResponse(data);
+                } else {
+                    updateStatus('backend-status', '❌ Error', 'error');
+                    displayResponse({ error: 'Backend returned error status' });
+                }
+            } catch (error) {
+                updateStatus('backend-status', '❌ Disconnected', 'error');
+                displayResponse({ error: error.message });
+            }
+        }
+
+        async function testApi() {
+            try {
+                const response = await fetch('http://localhost:3000/api/test');
+                const data = await response.json();
+                displayResponse(data);
+            } catch (error) {
+                displayResponse({ error: error.message });
+            }
+        }
+
+        // Test backend on page load
+        window.onload = function() {
+            setTimeout(testBackend, 1000);
+        };
+    </script>
+</body>
+</html>
