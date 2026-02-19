@@ -86,10 +86,10 @@ export class AdaptiveRateLimiter {
                     }
 
                     // Increment user counter
-                    const multi = redis.multi();
-                    multi.incrby(userKey, cost);
-                    multi.expire(userKey, 900); // 15 minutes
-                    await multi.exec();
+                    const pipeline = (redis as any).pipeline();
+                    pipeline.incrby(userKey, cost);
+                    pipeline.expire(userKey, 900);
+                    await pipeline.exec();
                 }
 
                 // Check IP limit (always)
@@ -111,10 +111,10 @@ export class AdaptiveRateLimiter {
                 }
 
                 // Increment IP counter
-                const multi = redis.multi();
-                multi.incrby(ipKey, cost);
-                multi.expire(ipKey, 900);
-                await multi.exec();
+                const pipeline = (redis as any).pipeline();
+                pipeline.incrby(ipKey, cost);
+                pipeline.expire(ipKey, 900);
+                await pipeline.exec();
 
                 // Add rate limit headers
                 res.setHeader('X-RateLimit-Tier', tierLimits.name);

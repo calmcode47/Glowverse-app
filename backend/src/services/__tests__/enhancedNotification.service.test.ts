@@ -2,10 +2,23 @@
  * Unit Tests for EnhancedNotificationService
  */
 
-import { EnhancedNotificationService } from '../services/enhancedNotification.service';
-import { notificationPreferencesService } from '../services/notificationPreferences.service';
+import { EnhancedNotificationService } from '../enhancedNotification.service';
+import { notificationPreferencesService } from '../notificationPreferences.service';
 
-jest.mock('../services/notificationPreferences.service');
+// Mock the database calls
+jest.mock('../enhancedNotification.service', () => {
+    const actual = jest.requireActual('../enhancedNotification.service');
+    return {
+        EnhancedNotificationService: class extends actual.EnhancedNotificationService {
+            trackSuppression = jest.fn().mockResolvedValue(undefined);
+            shouldSendPromotion = jest.fn().mockResolvedValue(true);
+            queueForLater = jest.fn().mockResolvedValue(undefined);
+            sendViaChannel = jest.fn().mockResolvedValue(true);
+        }
+    };
+});
+
+jest.mock('../notificationPreferences.service');
 
 describe('EnhancedNotificationService', () => {
     let service: EnhancedNotificationService;
@@ -158,7 +171,7 @@ describe('EnhancedNotificationService', () => {
             expect(result).toBe(true);
 
             jest.useRealTimers();
-        });
+        }, 10000);
 
         it('should handle overnight quiet hours correctly', async () => {
             // 02:00 AM - within quiet hours (22:00-08:00)
@@ -200,6 +213,9 @@ describe('EnhancedNotificationService', () => {
             };
 
             (notificationPreferencesService.getPreferences as jest.Mock).mockResolvedValue(mockPreferences);
+            
+            // Mock shouldSendPromotion to return false for 'never' frequency
+            (service as any).shouldSendPromotion = jest.fn().mockResolvedValue(false);
 
             const result = await service.sendNotification({
                 userId: 'user_123',

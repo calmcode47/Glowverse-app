@@ -54,7 +54,7 @@ export class NotificationController {
             const userId = req.user!.userId;
             const { id } = req.params;
 
-            const notification = await NotificationService.markAsRead(userId, id);
+            const notification = await NotificationService.markAsRead(userId, id as string);
 
             return res.json({
                 success: true,
@@ -92,7 +92,7 @@ export class NotificationController {
             const userId = req.user!.userId;
             const { id } = req.params;
 
-            await NotificationService.deleteNotification(userId, id);
+            await NotificationService.deleteNotification(userId, id as string);
 
             return res.json({
                 success: true,

@@ -12,8 +12,9 @@ module.exports = {
         '^@services/(.*)$': '<rootDir>/src/services/$1',
         '^@utils/(.*)$': '<rootDir>/src/utils/$1',
         '^@app-types/(.*)$': '<rootDir>/src/types/$1',
+        '^@sendgrid/mail$': '<rootDir>/__tests__/mocks/sendgrid-mail.ts',
     },
-    // setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
+    setupFilesAfterEnv: ['<rootDir>/__tests__/setup.ts'],
     collectCoverageFrom: [
         'src/**/*.ts',
         '!src/**/*.d.ts',

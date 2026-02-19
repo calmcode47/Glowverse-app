@@ -12,7 +12,8 @@ jest.mock("../../src/config/database", () => {
         },
         promotionUsage: {
             findFirst: jest.fn(),
-            create: jest.fn()
+            create: jest.fn(),
+            count: jest.fn()
         },
         $transaction: jest.fn((callback: any) => callback(mockPrisma))
     };
@@ -33,8 +34,13 @@ describe("PromotionService", () => {
                 id: "promo-1",
                 code: "TEST10",
                 type: "GENERAL",
+                description: "Test promotion",
                 discountType: "PERCENTAGE",
                 discountValue: 10,
+                maxDiscount: null,
+                minOrderValue: null,
+                applicableCategories: "[]",
+                applicableProducts: "[]",
                 startDate: new Date("2023-01-01"),
                 endDate: new Date("2099-12-31"),
                 isActive: true,
@@ -43,7 +49,9 @@ describe("PromotionService", () => {
             };
 
             (prisma.promotion.findUnique as jest.Mock).mockResolvedValue(mockPromo);
+            (prisma.promotionUsage.count as jest.Mock).mockResolvedValue(0); // No usage count
             (prisma.promotionUsage.findFirst as jest.Mock).mockResolvedValue(null); // Not used by user yet
+            (prisma.promotionUsage.count as jest.Mock).mockResolvedValue(0); // No usage count
 
             const result = await PromotionService.validatePromotion("TEST10", "user-1", {
                 subtotal: 100,
@@ -68,10 +76,13 @@ describe("PromotionService", () => {
 
             (prisma.promotion.findUnique as jest.Mock).mockResolvedValue(mockPromo);
 
-            await expect(PromotionService.validatePromotion("EXPIRED", "user-1", {
+            const result = await PromotionService.validatePromotion("EXPIRED", "user-1", {
                 subtotal: 100,
                 items: []
-            })).rejects.toThrow(AppError);
+            });
+
+            expect(result.isValid).toBe(false);
+            expect(result.error).toContain("expired");
         });
 
         it("should return invalid if usage limit reached", async () => {
@@ -86,11 +97,15 @@ describe("PromotionService", () => {
             };
 
             (prisma.promotion.findUnique as jest.Mock).mockResolvedValue(mockPromo);
+            (prisma.promotionUsage.count as jest.Mock).mockResolvedValue(0); // No usage count
 
-            await expect(PromotionService.validatePromotion("FULL", "user-1", {
+            const result = await PromotionService.validatePromotion("FULL", "user-1", {
                 subtotal: 100,
                 items: []
-            })).rejects.toThrow(AppError);
+            });
+
+            expect(result.isValid).toBe(false);
+            expect(result.error).toContain("usage limit");
         });
     });
 });

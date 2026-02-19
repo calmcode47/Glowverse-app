@@ -1,13 +1,13 @@
 import { Request, Response, NextFunction } from "express";
 import { AppError } from "@utils/errors";
 import { sendError } from "@utils/response";
-import env from "@config/env";
+import { config } from "@config/index";
 
 export const errorHandler = (err: Error | AppError, req: Request, res: Response, next: NextFunction) => {
   void next;
   console.error("Error:", {
     message: err.message,
-    stack: env.nodeEnv === "development" ? err.stack : undefined,
+    stack: config.server.isDevelopment ? err.stack : undefined,
     path: req.path,
     method: req.method
   });
@@ -15,7 +15,7 @@ export const errorHandler = (err: Error | AppError, req: Request, res: Response,
   if (err instanceof AppError) {
     return sendError(res, {
       message: err.message,
-      error: err.errors || (env.nodeEnv === "development" ? err.stack : undefined),
+      error: err.errors || (config.server.isDevelopment ? err.stack : undefined),
       statusCode: err.statusCode
     });
   }
@@ -23,7 +23,7 @@ export const errorHandler = (err: Error | AppError, req: Request, res: Response,
   if (err.name === "PrismaClientKnownRequestError") {
     return sendError(res, {
       message: "Database operation failed",
-      error: env.nodeEnv === "development" ? err.message : undefined,
+      error: config.server.isDevelopment ? err.message : undefined,
       statusCode: 400
     });
   }
@@ -42,7 +42,7 @@ export const errorHandler = (err: Error | AppError, req: Request, res: Response,
 
   return sendError(res, {
     message: "Internal server error",
-    error: env.nodeEnv === "development" ? err.message : undefined,
+    error: config.server.isDevelopment ? err.message : undefined,
     statusCode: 500
   });
 };

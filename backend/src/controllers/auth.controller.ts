@@ -97,7 +97,8 @@ const AuthController = {
 
   async verifyResetToken(req: Request, res: Response) {
     const { token } = req.params;
-    const result = await AuthService.verifyResetToken(token);
+    const resetToken = Array.isArray(token) ? token[0] : token;
+    const result = await AuthService.verifyResetToken(resetToken);
 
     if (!result.valid) {
       return res.status(400).json({

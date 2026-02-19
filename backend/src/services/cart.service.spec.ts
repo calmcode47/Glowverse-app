@@ -2,8 +2,17 @@
 import { CartService } from "../../src/services/cart.service";
 import { AppError } from "../../src/utils/errors";
 
+// Mock ProductService
+jest.mock("../../src/services/product.service", () => ({
+    ProductService: {
+        checkStock: jest.fn(),
+        getProductById: jest.fn()
+    }
+}));
+
 // Mock dependencies
 import { prisma } from "../../src/config/database";
+import { ProductService } from "../../src/services/product.service";
 const mockPrisma = prisma as any;
 
 // Mock prisma default export
@@ -16,6 +25,7 @@ jest.mock("../../src/config/database", () => {
         },
         cartItem: {
             findFirst: jest.fn(),
+            findMany: jest.fn(),
             create: jest.fn(),
             update: jest.fn(),
             delete: jest.fn()
@@ -74,7 +84,13 @@ describe("CartService", () => {
 
     describe("addToCart", () => {
         it("should add item to new cart", async () => {
-            (prisma.product.findUnique as jest.Mock).mockResolvedValue({
+            // Mock ProductService methods
+            (ProductService.checkStock as jest.Mock).mockResolvedValue({
+                available: true,
+                currentStock: 10,
+                requested: 1
+            });
+            (ProductService.getProductById as jest.Mock).mockResolvedValue({
                 id: "prod-1",
                 price: 100,
                 stock: 10,
@@ -82,31 +98,25 @@ describe("CartService", () => {
             });
 
             (prisma.cart.findUnique as jest.Mock).mockResolvedValue(null); // No cart yet
-
-            // Mock transaction or create flow
-            (prisma.product.findUnique as jest.Mock).mockResolvedValue({
-                id: "prod-1",
-                price: 100,
-                stock: 10,
-                isActive: true
-            });
-            (prisma.cart.findUnique as jest.Mock).mockResolvedValue(null); // No existing cart
             (prisma.cart.create as jest.Mock).mockResolvedValue({ id: "new-cart", items: [] });
-            (prisma.cartItem.create as jest.Mock).mockResolvedValue({ id: "item-1" });
+            (prisma.cartItem.create as jest.Mock).mockResolvedValue({ id: "item-1", subtotal: 100 });
+            (prisma.cartItem.findMany as jest.Mock).mockResolvedValue([{ id: "item-1", subtotal: 100 }]);
+            (prisma.cart.update as jest.Mock).mockResolvedValue({ id: "new-cart", subtotal: 100 });
 
             await CartService.addToCart("user-1", "prod-1", 1);
 
-            expect(prisma.product.findUnique).toHaveBeenCalled();
+            expect(ProductService.checkStock).toHaveBeenCalled();
+            expect(ProductService.getProductById).toHaveBeenCalled();
             expect(prisma.cart.create).toHaveBeenCalled();
             expect(prisma.cartItem.create).toHaveBeenCalled();
         });
 
         it("should throw error if product out of stock", async () => {
-            (prisma.product.findUnique as jest.Mock).mockResolvedValue({
-                id: "prod-1",
-                price: 100,
-                stock: 0, // Out of stock
-                isActive: true
+            // Mock ProductService to return out of stock
+            (ProductService.checkStock as jest.Mock).mockResolvedValue({
+                available: false,
+                currentStock: 0,
+                requested: 1
             });
 
             await expect(CartService.addToCart("user-1", "prod-1", 1))

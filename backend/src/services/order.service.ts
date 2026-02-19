@@ -260,11 +260,9 @@ export class OrderService {
 
         if (metadata) {
             if (metadata.paymentIntentId) updateData.paymentIntentId = metadata.paymentIntentId;
-            if (metadata.chargeId) updateData.chargeId = metadata.chargeId;
 
-            if (status === OrderStatus.PROCESSING || metadata.paidAt) {
+            if (status === OrderStatus.PROCESSING) {
                 updateData.paymentStatus = PaymentStatus.PAID;
-                updateData.paidAt = metadata.paidAt || new Date();
             }
 
             if (status === OrderStatus.SHIPPED) {
@@ -277,7 +275,7 @@ export class OrderService {
                 updateData.deliveredAt = new Date();
             } else if (status === OrderStatus.CANCELLED) {
                 updateData.cancelledAt = metadata.canceledAt || new Date();
-                updateData.paymentStatus = PaymentStatus.CANCELLED;
+                updateData.paymentStatus = PaymentStatus.FAILED;
             } else if (status === OrderStatus.REFUNDED) {
                 updateData.paymentStatus = PaymentStatus.REFUNDED;
                 updateData.internalNotes = `Refunded: ${metadata.refundedAmount} ${metadata.currency || ''}`;
@@ -394,11 +392,11 @@ export class OrderService {
     }
 
     /**
-     * Find order by Stripe Charge ID
+     * Find order by Stripe Payment Intent ID
      */
-    static async findByChargeId(chargeId: string): Promise<OrderWithItems | null> {
+    static async findByPaymentIntentId(paymentIntentId: string): Promise<OrderWithItems | null> {
         const order = await prisma.order.findFirst({
-            where: { chargeId },
+            where: { paymentIntentId },
             include: { items: true }
         });
         return order as OrderWithItems | null;

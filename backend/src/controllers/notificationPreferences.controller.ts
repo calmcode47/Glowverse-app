@@ -110,7 +110,7 @@ export class NotificationPreferencesController {
                 message: 'Preferences reset to defaults',
             });
         } catch (error) {
-            this.handleError(error);
+            this.handleError(error, res);
         }
     }
 

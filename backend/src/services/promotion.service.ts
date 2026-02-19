@@ -44,11 +44,11 @@ class PromotionService {
         });
 
         // Filter out promotions that have exceeded their usage limit (Prisma can't compare two columns)
-        const available = promotions.filter(p =>
+        const available = promotions.filter((p: any) =>
             p.usageLimit === null || p.usageCount < p.usageLimit
         );
 
-        return available.map(p => this.formatPromotion(p));
+        return available.map((p: any) => this.formatPromotion(p));
     }
 
     /**

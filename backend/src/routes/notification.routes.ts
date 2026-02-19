@@ -1,11 +1,9 @@
 import { Router, Request, Response } from "express";
 import { NotificationController } from "@controllers/notification.controller";
 import { NotificationPreferencesController } from "@controllers/notificationPreferences.controller";
-import { NotificationPreferencesService } from "@services/notificationPreferences.service";
 import { authenticate } from "@middleware/auth";
 
-const preferencesService = new NotificationPreferencesService();
-const preferencesController = new NotificationPreferencesController(preferencesService);
+const preferencesController = new NotificationPreferencesController();
 
 const router = Router();
 

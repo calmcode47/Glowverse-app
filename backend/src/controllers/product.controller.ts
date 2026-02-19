@@ -55,7 +55,7 @@ export class ProductController {
      */
     static async getProductById(req: Request, res: Response, next: NextFunction) {
         try {
-            const product = await ProductService.getProductById(req.params.id);
+            const product = await ProductService.getProductById(req.params.id as string);
             res.status(200).json({
                 success: true,
                 data: product
@@ -71,7 +71,7 @@ export class ProductController {
      */
     static async getProductBySlug(req: Request, res: Response, next: NextFunction) {
         try {
-            const product = await ProductService.getProductBySlug(req.params.slug);
+            const product = await ProductService.getProductBySlug(req.params.slug as string);
             res.status(200).json({
                 success: true,
                 data: product
@@ -183,7 +183,7 @@ export class ProductController {
     static async getRelatedProducts(req: Request, res: Response, next: NextFunction) {
         try {
             const limit = req.query.limit ? Number(req.query.limit) : 6;
-            const products = await ProductService.getRelatedProducts(req.params.id, limit);
+            const products = await ProductService.getRelatedProducts(req.params.id as string, limit);
             res.status(200).json({
                 success: true,
                 data: products

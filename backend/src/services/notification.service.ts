@@ -324,7 +324,7 @@ export class NotificationService {
     }): Promise<Notification> {
         // Simple mapping for demonstration
         let nt = NotificationType.GENERAL;
-        if (data.type === 'order') nt = NotificationType.ORDER_PLACED;
+        if (data.type === 'order') nt = NotificationType.GENERAL;
 
         return this.createNotification({
             userId: data.userId,

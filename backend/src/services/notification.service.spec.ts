@@ -71,7 +71,10 @@ describe("NotificationService", () => {
 
             expect(prisma.notification.update).toHaveBeenCalledWith({
                 where: { id: "notif-1" },
-                data: { isRead: true }
+                data: expect.objectContaining({
+                    isRead: true,
+                    readAt: expect.any(Date)
+                })
             });
         });
     });

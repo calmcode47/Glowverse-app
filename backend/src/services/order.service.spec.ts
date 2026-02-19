@@ -2,7 +2,17 @@
 import { OrderService } from "../../src/services/order.service";
 import { AppError } from "../../src/utils/errors";
 
+// Mock CartService
+jest.mock("../../src/services/cart.service", () => ({
+    CartService: {
+        validateCart: jest.fn(),
+        getOrCreateCart: jest.fn()
+    }
+}));
+
+// Mock dependencies
 import { prisma } from "../../src/config/database";
+import { CartService } from "../../src/services/cart.service";
 const mockPrisma = prisma as any;
 
 // Mock dependencies
@@ -15,7 +25,12 @@ jest.mock("../../src/config/database", () => {
             findMany: jest.fn()
         },
         cart: {
-            findUnique: jest.fn()
+            findUnique: jest.fn(),
+            update: jest.fn(),
+            deleteMany: jest.fn()
+        },
+        cartItem: {
+            deleteMany: jest.fn()
         },
         product: {
             update: jest.fn(),
@@ -39,6 +54,12 @@ describe("OrderService", () => {
 
     describe("createOrder", () => {
         it("should create order from cart", async () => {
+            // Mock CartService methods
+            (CartService.validateCart as jest.Mock).mockResolvedValue({
+                valid: true,
+                issues: []
+            });
+
             const mockCart = {
                 id: "cart-1",
                 userId: "user-1",
@@ -52,6 +73,7 @@ describe("OrderService", () => {
                     }
                 ]
             };
+            (CartService.getOrCreateCart as jest.Mock).mockResolvedValue(mockCart);
 
             (prisma.cart.findUnique as jest.Mock).mockResolvedValue(mockCart);
             (prisma.order.create as jest.Mock).mockResolvedValue({
@@ -67,12 +89,17 @@ describe("OrderService", () => {
 
             expect(result).toBeDefined();
             expect(result.id).toBe("order-1");
-            expect(prisma.cart.findUnique).toHaveBeenCalled();
+            expect(CartService.validateCart).toHaveBeenCalled();
+            expect(CartService.getOrCreateCart).toHaveBeenCalled();
             expect(prisma.order.create).toHaveBeenCalled();
         });
 
         it("should throw error if cart is empty", async () => {
-            (prisma.cart.findUnique as jest.Mock).mockResolvedValue({ id: "c1", items: [] });
+            (CartService.validateCart as jest.Mock).mockResolvedValue({
+                valid: true,
+                issues: []
+            });
+            (CartService.getOrCreateCart as jest.Mock).mockResolvedValue({ id: "c1", items: [] });
 
             await expect(OrderService.createOrder("user-1", {} as any))
                 .rejects.toThrow(AppError);
@@ -81,15 +108,24 @@ describe("OrderService", () => {
 
     describe("updateStatus", () => {
         it("should update order status", async () => {
-            (prisma.order.findUnique as jest.Mock).mockResolvedValue({ id: "o1", status: "PENDING" });
-            (prisma.order.update as jest.Mock).mockResolvedValue({ id: "o1", status: "SHIPPED" });
+            (prisma.order.findUnique as jest.Mock).mockResolvedValue({ 
+                id: "o1", 
+                status: "PENDING",
+                items: []
+            });
+            (prisma.order.update as jest.Mock).mockResolvedValue({ 
+                id: "o1", 
+                status: "SHIPPED",
+                items: []
+            });
 
             const result = await OrderService.updateOrderStatus("o1", "SHIPPED");
 
             expect(result.status).toBe("SHIPPED");
             expect(prisma.order.update).toHaveBeenCalledWith({
                 where: { id: "o1" },
-                data: { status: "SHIPPED" }
+                data: { status: "SHIPPED" },
+                include: { items: true }
             });
         });
     });

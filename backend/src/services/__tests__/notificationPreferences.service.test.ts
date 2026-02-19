@@ -2,19 +2,31 @@
  * Unit Tests for NotificationPreferencesService
  */
 
-import { NotificationPreferencesService } from '../services/notificationPreferences.service';
-import { PrismaClient } from '@prisma/client';
+// Mock Prisma at module level
+jest.mock('@prisma/client', () => {
+    const mockPrisma = {
+        notificationPreferences: {
+            findUnique: jest.fn(),
+            create: jest.fn(),
+            update: jest.fn(),
+            upsert: jest.fn()
+        }
+    };
+    return {
+        PrismaClient: jest.fn(() => mockPrisma)
+    };
+});
 
-// Mock Prisma
-jest.mock('@prisma/client');
+import { NotificationPreferencesService } from '../notificationPreferences.service';
+import { PrismaClient } from '@prisma/client';
 
 describe('NotificationPreferencesService', () => {
     let service: NotificationPreferencesService;
-    let mockPrisma: jest.Mocked<PrismaClient>;
+    let mockPrisma: any;
 
     beforeEach(() => {
         service = new NotificationPreferencesService();
-        mockPrisma = new PrismaClient() as jest.Mocked<PrismaClient>;
+        mockPrisma = new PrismaClient() as any;
     });
 
     describe('getPreferences', () => {

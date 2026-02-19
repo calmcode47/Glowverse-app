@@ -1,5 +1,4 @@
 import { PrismaClient } from '@prisma/client';
-import logger from '../utils/logger';
 
 /**
  * Calculate optimal connection pool size based on environment

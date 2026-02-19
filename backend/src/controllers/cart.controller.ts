@@ -53,7 +53,7 @@ export class CartController {
             const userId = req.user!.userId;
             const { itemId } = req.params;
             const { quantity } = req.body;
-            const cart = await CartService.updateCartItem(userId, itemId, quantity);
+            const cart = await CartService.updateCartItem(userId, itemId as string, quantity);
             res.status(200).json({
                 success: true,
                 data: cart
@@ -71,7 +71,7 @@ export class CartController {
         try {
             const userId = req.user!.userId;
             const { itemId } = req.params;
-            const cart = await CartService.removeFromCart(userId, itemId);
+            const cart = await CartService.removeFromCart(userId, itemId as string);
             res.status(200).json({
                 success: true,
                 data: cart

@@ -55,12 +55,12 @@ app.get("/health", (req, res) => {
     success: true,
     message: "Server is running",
     timestamp: new Date().toISOString(),
-    environment: env.nodeEnv,
-    version: env.apiVersion
+    environment: config.server.env,
+    version: "v1"
   });
 });
 
-const API_PREFIX = `/api/${env.apiVersion}`;
+const API_PREFIX = "/api/v1";
 
 // All routes are registered through the central registerRoutes function
 registerRoutes(app, API_PREFIX);

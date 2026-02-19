@@ -5,7 +5,7 @@ import TestHelpers from "../../src/utils/test-helpers";
 import MockPerfectCorpService from "../../src/utils/perfectcorp-mock";
 
 // Mock the actual service calls
-jest.mock("../../src/services/perfect-corp.service", () => {
+jest.mock("../../src/services/perfectcorp.service", () => {
     return {
         PerfectCorpService: class {
             static async detectFace(imageUrl: string) {

@@ -82,7 +82,7 @@ export class EmailService {
             logger.info('✅ Email sent successfully', {
                 to: template.to,
                 subject: template.subject,
-                messageId: response[0].headers['x-message-id'],
+                messageId: response[0]?.headers?.['x-message-id'],
             });
 
             return true;

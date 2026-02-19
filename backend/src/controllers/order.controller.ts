@@ -76,7 +76,7 @@ export class OrderController {
     static async getOrderById(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            const order = await OrderService.getOrderById(userId, req.params.id);
+            const order = await OrderService.getOrderById(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 data: order
@@ -94,7 +94,7 @@ export class OrderController {
         try {
             const userId = req.user!.userId;
             const { reason } = req.body;
-            const order = await OrderService.cancelOrder(userId, req.params.id, reason);
+            const order = await OrderService.cancelOrder(userId, req.params.id as string, reason);
             res.status(200).json({
                 success: true,
                 message: 'Order cancelled successfully',
@@ -113,7 +113,7 @@ export class OrderController {
         try {
             const { status, trackingNumber, trackingUrl } = req.body;
             const order = await OrderService.updateOrderStatus(
-                req.params.id,
+                req.params.id as string,
                 status,
                 trackingNumber,
                 trackingUrl

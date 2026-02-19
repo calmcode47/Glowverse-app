@@ -6,7 +6,7 @@ import MockPerfectCorpService from "../../src/utils/perfectcorp-mock";
 
 // Mocks
 jest.mock("cloudinary", () => require("../../src/utils/cloudinary-mock"));
-jest.mock("../../src/services/perfect-corp.service", () => ({
+jest.mock("../../src/services/perfectcorp.service", () => ({
     PerfectCorpService: class {
         static async detectFace(imageUrl: string) { return MockPerfectCorpService.detectFace(imageUrl); }
         static async tryOnMakeup(imageUrl: string, items: any[]) { return MockPerfectCorpService.tryOnMakeup(imageUrl, items); }

@@ -9,9 +9,8 @@ const levels = {
 };
 
 const level = () => {
-  // Lazy load env to avoid circular dependency
-  const env = require("@config/env").default;
-  const isDevelopment = env.nodeEnv === "development";
+  const { config } = require("@config/index");
+  const isDevelopment = config.server.isDevelopment;
   return isDevelopment ? "debug" : "warn";
 };
 
