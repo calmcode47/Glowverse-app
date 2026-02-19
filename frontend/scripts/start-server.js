@@ -16,6 +16,8 @@ function log(color, message) {
 }
 
 function getLocalIP() {
+    const override = process.env.HOST_IP;
+    if (override && override.trim()) return override.trim();
     const ifs = os.networkInterfaces();
     const candidates = [];
 
@@ -68,6 +70,7 @@ const isLan = args.includes('--lan');
 const isOffline = args.includes('--offline');
 const isResetHelp = args.includes('--reset-cache');
 const isWindows = process.platform === 'win32';
+const isMac = process.platform === 'darwin';
 
 log(colors.cyan, "==========================================");
 log(colors.cyan, "     Glowverse Unified Start Script");
@@ -90,6 +93,10 @@ if (isWindows && !isTunnel && !isLan && !isOffline) {
     expoArgs.push('--tunnel');
     log(colors.yellow, "[*] Windows detected: defaulting to --tunnel for device connectivity");
 }
+if (isMac && !isTunnel && !isLan && !isOffline) {
+    expoArgs.push('--tunnel');
+    log(colors.yellow, "[*] macOS detected: defaulting to --tunnel for device connectivity");
+}
 
 // Always clear cache on start to prevent bundling issues
 if (!isResetHelp) {
@@ -98,18 +105,38 @@ if (!isResetHelp) {
 }
 
 const cmd = process.platform === 'win32' ? 'npx.cmd' : 'npx';
+const fallbackArgs = expoArgs.includes('--tunnel')
+    ? (() => {
+        const next = expoArgs.filter((a) => a !== '--tunnel');
+        if (!next.includes('--lan') && !isOffline) next.push('--lan');
+        return next;
+    })()
+    : null;
+let retried = false;
 
-log(colors.cyan, `[+] Starting Expo on ${localIP}...`);
-log(colors.cyan, `[>] Command: ${cmd} expo ${expoArgs.join(' ')}`);
+function runExpo(args) {
+    log(colors.cyan, `[+] Starting Expo on ${localIP}...`);
+    log(colors.cyan, `[>] Command: ${cmd} expo ${args.join(' ')}`);
+    const expoProcess = spawn(cmd, ['expo', ...args], {
+        stdio: 'inherit',
+        shell: true,
+        env: {
+            ...process.env,
+            REACT_NATIVE_PACKAGER_HOSTNAME: localIP,
+            EXPO_PACKAGER_HOSTNAME: localIP,
+            EXPO_DEV_SERVER_HOST: localIP
+        }
+    });
+    expoProcess.on('close', (code) => {
+        if (code !== 0) {
+            log(colors.red, `[-] Expo process exited with code ${code}`);
+            if (!retried && fallbackArgs && args === expoArgs) {
+                retried = true;
+                log(colors.yellow, "[*] Tunnel failed. Retrying with LAN mode for device connectivity");
+                runExpo(fallbackArgs);
+            }
+        }
+    });
+}
 
-const expoProcess = spawn(cmd, ['expo', ...expoArgs], {
-    stdio: 'inherit',
-    shell: true,
-    env: { ...process.env, REACT_NATIVE_PACKAGER_HOSTNAME: localIP }
-});
-
-expoProcess.on('close', (code) => {
-    if (code !== 0) {
-        log(colors.red, `[-] Expo process exited with code ${code}`);
-    }
-});
+runExpo(expoArgs);

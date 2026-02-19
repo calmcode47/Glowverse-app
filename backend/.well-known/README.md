@@ -159,3 +159,5 @@ curl https://glowverse.app/.well-known/assetlinks.json
 - [Android App Links Documentation](https://developer.android.com/training/app-links)
 - [AASA Validator](https://search.developer.apple.com/appsearch-validation-tool/)
 - [Asset Links Tester](https://developers.google.com/digital-asset-links/tools/generator)
+
+Last Updated: February 19, 2026

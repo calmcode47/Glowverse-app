@@ -11,3 +11,5 @@ Create EAS secrets for sensitive environment variables:
 Example:
 - eas secret:create --scope project --name PRODUCTION_STRIPE_KEY --value pk_live_***
 - eas secret:create --scope project --name SENTRY_DSN --value https://***
+
+Last Updated: February 19, 2026

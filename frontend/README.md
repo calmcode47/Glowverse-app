@@ -61,15 +61,17 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
 ## 🚀 Quick Start
 
 - Install dependencies: `npm install`
-- Start dev server: `npm start` — unified for Windows and macOS
+- Start dev server: `npm start` — unified for Windows and macOS (tunnel with LAN fallback)
 - Platform launchers:
   - `npm run web`
   - `npm run ios`
   - `npm run android`
 - Connectivity:
-  - Windows defaults to tunnel mode automatically for reliable device pairing
+  - Windows and macOS default to tunnel mode with automatic LAN fallback
   - Use `npm run start:lan` to prefer LAN; ensure phone and PC are on the same Wi‑Fi
   - Use `npm run start:tunnel` to force tunnel on any OS
+  - Force a specific LAN IP if QR is still unreachable:
+    - `HOST_IP=YOUR_MAC_IP npm run start:lan`
 
 **App running at:** `http://localhost:8081`
 
@@ -83,6 +85,7 @@ Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Bui
     This opens port 8081 and sets the correct bundler host.
 - macOS:
   - `npm start`, then press `i` to open the iOS simulator or scan the QR with the Camera app
+  - If tunnel fails, the script retries LAN automatically
   - If using LAN, ensure both devices are on the same Wi‑Fi and VPN is off
 
 ---
@@ -295,10 +298,14 @@ See also: [docs/EAS.md](./docs/EAS.md) for secrets, submit configuration, and CI
 - API base URL, analytics ID, Sentry DSN, and Stripe keys are configured via `app.json` extras and the ENV layer.
 - Example:
 ```env
-EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
-EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
-EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_***
-EXPO_PUBLIC_SENTRY_DSN=https://***
+API_BASE_URL=http://localhost:5000/api/v1
+CLOUDINARY_CLOUD_NAME=dev-cloud
+ENVIRONMENT=development
+STRIPE_PUBLISHABLE_KEY=pk_test_***
+STRIPE_MERCHANT_ID=merchant.com.glowverse.dev
+PERFECT_CORP_API_KEY=replace_me_dev
+ANALYTICS_ID=dev-analytics
+SENTRY_DSN=
 ```
 
 ---
@@ -375,4 +382,4 @@ EXPO_PUBLIC_SENTRY_DSN=https://***
 
 ---
 
-*Last Updated: February 14, 2026 (post analytics, performance, a11y, API reliability updates)*
+*Last Updated: February 19, 2026 (QR connectivity and env updates)*

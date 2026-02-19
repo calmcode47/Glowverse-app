@@ -236,6 +236,8 @@ Build and run on Android emulator:
 npx expo run:android
 ```
 
+Last Updated: February 19, 2026
+
 Or build via EAS:
 ```bash
 eas build --profile development --platform android

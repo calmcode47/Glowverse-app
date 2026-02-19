@@ -56,11 +56,11 @@ To run the mobile app locally:
 ```bash
 cd ../frontend
 npm install
-npm start           # Unified start; Windows defaults to tunnel
+npm start           # Unified start; Windows/macOS default to tunnel with LAN fallback
 npm run ios         # macOS only (simulator)
 npm run android     # Android emulator
 ```
-For LAN mode on Windows: `npm run start:lan` (ensure same Wi‑Fi; VPNs off). If blocked, use the optional fix script: `powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1`.
+For LAN mode: `npm run start:lan` (ensure same Wi‑Fi; VPNs off). If needed, force a specific IP: `HOST_IP=YOUR_MAC_IP npm run start:lan`. On Windows, if blocked, use: `powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1`.
 
 ---
 
