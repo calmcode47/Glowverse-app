@@ -45,3 +45,5 @@ Optimization
 Notes
 - Ensure icon/splash references in app.json point to the final files placed under frontend/assets if used in-app, and keep store submission versions in this folder.
 - Verify color space is sRGB or Display P3 as required by stores.
+
+Last Updated: February 19, 2026

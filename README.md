@@ -115,9 +115,11 @@ npm run ios          # macOS only
 npm run android
 
 # Connectivity modes
-# Windows defaults to tunnel automatically for reliable device pairing
+# Windows and macOS default to tunnel; auto-fallback to LAN if tunnel fails
 npm run start:tunnel # Force tunnel on any OS
 npm run start:lan    # Prefer LAN (same Wi‑Fi, VPNs off)
+# Force a specific LAN IP if needed
+HOST_IP=YOUR_MAC_IP npm run start:lan
 ```
 
 **Frontend running at:** `http://localhost:8081`

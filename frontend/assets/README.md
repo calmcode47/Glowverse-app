@@ -17,3 +17,4 @@ Run verification:
 - npm run screenshots:verify
 - npm run eas:verify
 
+Last Updated: February 19, 2026

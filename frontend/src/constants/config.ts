@@ -1,4 +1,4 @@
-import Constants from "expo-constants";
+import { ENV } from "../config/environment";
 
 export type ApiConfig = {
   baseUrl: string;
@@ -20,7 +20,7 @@ export type ApiConfig = {
 };
 
 export const config: ApiConfig = {
-  baseUrl: (Constants.expoConfig?.extra?.apiBaseUrl as string) || "http://localhost:5000/api/v1",
+  baseUrl: ENV.apiBaseUrl,
   timeoutMs: 20000,
   imageQuality: {
     jpegQuality: 0.85,
