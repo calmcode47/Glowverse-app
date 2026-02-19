@@ -1,113 +1,110 @@
 # Glowverse Frontend — React Native Mobile App
 
-[![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo%20SDK-54-black.svg)](https://expo.dev/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-blue.svg)](https://www.typescriptlang.org/)
+<div align="center">
 
-Cross‑platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web. Includes 76+ reusable components, 30+ screens, advanced animations, AR try‑on, AI analysis, robust testing, analytics, and offline capabilities.
+[![React Native](https://img.shields.io/badge/React%20Native-0.81-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo SDK](https://img.shields.io/badge/Expo%20SDK-54-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.9-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Stripe](https://img.shields.io/badge/Stripe-0.33-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://stripe.com/)
+[![Firebase](https://img.shields.io/badge/Firebase-23-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
+
+**Cross-platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web — featuring 76+ reusable components, 30+ screens, AR virtual try-on, AI skin analysis, offline-first architecture, and comprehensive analytics.**
+
+</div>
 
 ---
 
 ## 📊 Status
 
 | Area | Status | Details |
-|------|--------|---------|
-| Components | ✅ 76+ | 12 categories |
-| Screens | ✅ 30+ | 17 categories |
-| Navigation | ✅ Done | React Navigation 7 |
-| Theming | ✅ Done | Custom design system (light/dark) |
-| API Integration | ✅ Enhanced | Axios client + auth/refresh + backoff + dedupe |
-| State | ✅ Done | Context + hooks |
-| Analytics | ✅ Extended | Firebase events incl. wishlist/filters/payment/reviews |
-| Offline | ✅ Done | Request queue, optimistic cart, caching |
-| Testing | ✅ Done | Unit + Detox E2E |
-| AR Features | ✅ Done | Virtual try‑on + capture |
-| Performance | ✅ Optimized | Image preloading, FlatList tuning, lazy load |
-| Accessibility | ✅ Improved | Labels, focus mgmt, touch targets |
-| Build & Release | ✅ Configured | EAS profiles, CI for PR/production & budgets |
+|------|:------:|---------|
+| Components | ✅ | 76+ across 12 categories |
+| Screens | ✅ | 30+ across 17 categories |
+| Navigation | ✅ | React Navigation 7 with deep links |
+| Design System | ✅ | Custom tokens, light/dark themes |
+| API Integration | ✅ | Axios client with retry/backoff, deduplication |
+| State Management | ✅ | React Context + TanStack Query |
+| Analytics | ✅ | Firebase — commerce, AR/AI, notifications, referrals |
+| Offline Support | ✅ | Request queue, optimistic cart, product caching |
+| AR / Try-On | ✅ | Virtual try-on with frame capture & overlays |
+| Performance | ✅ | Image preloading, FlatList tuning, lazy-loaded screens |
+| Accessibility | ✅ | Labels, focus management, touch-target enforcement |
+| Testing | ✅ | Jest unit tests + Detox E2E suites |
+| Build & Release | ✅ | EAS profiles (dev/preview/prod), CI workflows, store assets |
+| Payments | 🚧 | Stripe webhook-driven order state — in progress |
+| AR/AI Hardening | 🚧 | Native SDK linkage & device QA pass — in progress |
 
 ---
 
 ## ✨ Features
 
-- Authentication with token refresh and secure storage
-- Product catalog, detail pages with image galleries
-- Cart and checkout with card, Apple Pay, Google Pay
-- Promotions and order creation with order confirmation
-- AR virtual try‑on flow with capture and overlays
-- AI skin analysis screens and results
-- Global search with filters and sorting
-- Favorites, profile, addresses, orders
-- Theming with design tokens and light/dark modes
-- Deep links and universal links navigation
-- Error boundaries and graceful network handling
-- Analytics instrumentation
-  - Screen views, product views, search, add/remove cart
-  - Begin checkout and purchase events
-  - AR start/complete and analysis start/complete
-  - Share, referral, and promo events
-  - New: wishlist add/remove, filter apply/remove/sort, notification received/opened/dismissed, payment method selected/added, review started/submitted
-- Offline capabilities
-  - AsyncStorage queue for non‑GET requests while offline
-  - Automatic synchronization on reconnect with retry/backoff
-  - Optimistic UI updates for cart
-  - Product caching for offline detail view
-- Testing
-  - Jest unit tests with coverage thresholds
-  - Detox E2E tests for shopping, profile/orders, AR/analysis
+### E-Commerce
+- Full product catalog with image galleries, variants, and rich filters
+- Cart management with offline optimistic updates
+- Multi-step checkout — shipping → payment → review → confirmation
+- Stripe card, Apple Pay, and Google Pay integration
+- Orders list and details, address CRUD
+
+### AI & AR
+- Virtual try-on powered by PerfectCorp with live frame capture and overlays
+- AI skin analysis with preprocessing and annotated results
+- Device-performance-tuned quality and frame-rate managers
+
+### Discovery & Content
+- Global search with filters, sorting, and trending suggestions
+- Beauty guides with step-by-step tutorials, likes, and bookmarks
+- Fitness activity dashboard with goal tracking and progress charts
+- Promotions with coupon-style copy UI and one-tap application
+- Referral code sharing via native system share sheet
+
+### Platform & Infrastructure
+- **Offline-first:** AsyncStorage request queue with automatic replay on reconnect
+- **Analytics:** Comprehensive Firebase events (screens, products, cart, checkout, AR, referrals, filters, payments, reviews)
+- **API reliability:** Exponential backoff retries, request deduplication, health monitoring, Sentry tagging
+- **Design system:** Design tokens, light/dark mode, Reanimated micro-interactions, glassmorphism components
 
 ---
 
 ## 🚀 Quick Start
 
-- Install dependencies: `npm install`
-- Start dev server: `npm start` — unified for Windows and macOS (tunnel with LAN fallback)
-- Platform launchers:
-  - `npm run web`
-  - `npm run ios`
-  - `npm run android`
-- Connectivity:
-  - Windows and macOS default to tunnel mode with automatic LAN fallback
-  - Use `npm run start:lan` to prefer LAN; ensure phone and PC are on the same Wi‑Fi
-  - Use `npm run start:tunnel` to force tunnel on any OS
-  - Force a specific LAN IP if QR is still unreachable:
-    - `HOST_IP=YOUR_MAC_IP npm run start:lan`
+```bash
+# Install dependencies
+npm install
 
-**App running at:** `http://localhost:8081`
+# Start Expo dev server
+# Windows & macOS: defaults to tunnel with automatic LAN fallback
+npm start
 
-### 🖥️ Windows & macOS Setup
-- Windows:
-  - `npm start` uses tunnel by default; scan the QR with Expo Go
-  - For LAN mode: `npm run start:lan`. If blocked, run:
-    ```powershell
-    powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1
-    ```
-    This opens port 8081 and sets the correct bundler host.
-- macOS:
-  - `npm start`, then press `i` to open the iOS simulator or scan the QR with the Camera app
-  - If tunnel fails, the script retries LAN automatically
-  - If using LAN, ensure both devices are on the same Wi‑Fi and VPN is off
+# Platform launchers
+npm run web       # Open in browser
+npm run android   # Android emulator / device
+npm run ios       # iOS simulator (macOS only)
+```
 
----
+> **Dev server:** `http://localhost:8081`
 
-## 📊 Status & Remaining Work
+### Connectivity Modes
 
-- **Status:** 🚀 Production Ready
-- **Completion:** 98%
-- **Implemented:**
-  - Complete E-commerce flow (Browse, Cart, Checkout, Payments)
-  - Interactive AR virtual try-on with high-performance frame processing
-  - AI-powered skin analysis with real-time feedback
-  - Robust Authentication and User Profile management
-  - Offline-first architecture with request queuing and caching
-  - Comprehensive Analytics dashboard for Admin insights
-- **Optimized:**
-  - High-performance image loading with placeholders and caching
-  - Smooth 60fps animations using Reanimated
-  - Memory-efficient list rendering for large catalogs
+| Command | Mode | When to Use |
+|---------|------|-------------|
+| `npm start` | Tunnel (auto) | Default — works anywhere |
+| `npm run start:tunnel` | Tunnel (forced) | Explicit tunnel on any OS |
+| `npm run start:lan` | LAN | Fastest — same Wi-Fi, VPN off |
+| `HOST_IP=x.x.x.x npm run start:lan` | LAN (fixed IP) | When QR shows wrong address |
 
-See the cross‑project report for a complete summary and go‑live checklist:
-[Project Status Report](../project_report.md)
+### Windows Setup
+If LAN mode is blocked by the Windows Firewall, run:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1
+```
+This opens port 8081 and corrects the bundler host binding.
+
+### macOS Setup
+```bash
+npm start       # Tunnel by default; press 'i' for iOS simulator
+npm run ios     # Direct iOS simulator launch
+```
+If tunnel fails, the startup script retries LAN automatically.
 
 ---
 
@@ -115,59 +112,71 @@ See the cross‑project report for a complete summary and go‑live checklist:
 
 ```
 frontend/
-├── App.tsx                    # App entry point
-├── index.ts                   # Expo entry
+├── App.tsx                         # App entry point & global providers
+├── index.ts                        # Expo entry registration
 ├── src/
-│   ├── components/            # 76+ reusable components
-│   │   ├── animated/          # Animated wrappers
-│   │   ├── animations/        # Animation components
-│   │   ├── ar/                # AR/camera overlays
-│   │   ├── camera/            # Camera components
-│   │   ├── common/            # Shared UI (buttons, cards, modals)
-│   │   ├── history/           # History/timeline components
-│   │   ├── home/              # Home screen widgets
-│   │   ├── navigation/        # Navigation components
-│   │   ├── products/          # Product cards, lists
-│   │   ├── profile/           # Profile components
-│   │   ├── results/           # Analysis result views
-│   │   └── ui/                # Base UI primitives
-│   ├── screens/               # 30+ screens
-│   │   ├── auth/              # Login, register, forgot password
-│   │   ├── home/              # Home, dashboard
-│   │   ├── shop/              # Product catalog, details, cart
-│   │   ├── ar/                # Virtual try-on, camera
-│   │   ├── analysis/          # Skin analysis
-│   │   ├── fitness/           # Activity tracking, goals
-│   │   ├── guide/             # Beauty tutorials
-│   │   ├── profile/           # User profile, settings
-│   │   ├── search/            # Global search
-│   │   ├── notifications/     # Notification center
-│   │   ├── promotions/        # Promo codes, offers
-│   │   ├── wishlist/          # Saved products
-│   │   ├── history/           # Order & scan history
-│   │   ├── results/           # Analysis results
-│   │   ├── stats/             # Statistics & analytics
-│   │   ├── camera/            # Camera screen
-│   │   └── onboarding/        # First-launch onboarding
-│   ├── navigation/            # React Navigation config
-│   ├── services/              # API, analytics, offline
-│   ├── hooks/                 # Custom React hooks
-│   ├── context/               # React context providers
-│   ├── config/                # App configuration
-│   ├── constants/             # App constants
-│   ├── theme/                 # Design system & colors
-│   ├── data/                  # Static/mock data
-│   └── utils/                 # Utility functions
-├── assets/                    # Images, fonts, Lottie animations
-├── app-store-assets/          # Store screenshots (device‑specific)
-├── e2e/                       # Detox test suite & config
-├── types/                     # TypeScript type definitions
-├── __tests__/                 # Test files
-├── app.json                   # Expo configuration
-├── eas.json                   # EAS Build configuration
-├── babel.config.js            # Babel with module resolver
-├── tsconfig.json              # TypeScript configuration
-└── jest.config.js             # Jest test configuration
+│   ├── components/                 # 76+ reusable components
+│   │   ├── animated/               # Animated wrapper components
+│   │   ├── animations/             # Standalone animation components
+│   │   ├── ar/                     # AR/camera view overlays
+│   │   ├── camera/                 # Camera access components
+│   │   ├── common/                 # Shared UI — buttons, cards, modals, badges
+│   │   ├── history/                # History & timeline components
+│   │   ├── home/                   # Home screen widgets
+│   │   ├── navigation/             # Navigation-related components
+│   │   ├── products/               # Product cards, lists, carousels
+│   │   ├── profile/                # Profile & account components
+│   │   ├── results/                # AI analysis result views
+│   │   └── ui/                     # Base UI primitives
+│   ├── screens/                    # 30+ screens
+│   │   ├── auth/                   # Login, register, forgot password
+│   │   ├── home/                   # Home & dashboard
+│   │   ├── shop/                   # Catalog, product detail, cart
+│   │   ├── ar/                     # Virtual try-on, camera
+│   │   ├── analysis/               # Skin analysis flow
+│   │   ├── fitness/                # Activity tracking & goals
+│   │   ├── guide/                  # Beauty tutorial screens
+│   │   ├── profile/                # User profile, settings, addresses
+│   │   ├── search/                 # Global search
+│   │   ├── notifications/          # Notification centre with preferences
+│   │   ├── promotions/             # Promo codes & offers
+│   │   ├── wishlist/               # Saved / favourites
+│   │   ├── history/                # Order & scan history
+│   │   ├── results/                # Analysis results display
+│   │   ├── stats/                  # Analytics & statistics
+│   │   ├── camera/                 # Dedicated camera screen
+│   │   └── onboarding/             # First-launch onboarding flow
+│   ├── navigation/                 # React Navigation 7 configuration
+│   ├── services/
+│   │   ├── api/                    # Typed Axios client + auth interceptors
+│   │   ├── analytics.service.ts    # Firebase Analytics helper
+│   │   ├── analytics/              # Extended event types & hooks
+│   │   ├── offlineQueue.service.ts # Offline request queue
+│   │   ├── cache.service.ts        # Product detail cache
+│   │   ├── imagePreloader.service.ts # Image prefetching
+│   │   └── apiHealthMonitor.ts     # API health & latency tracking
+│   ├── hooks/                      # Custom React hooks
+│   ├── context/                    # AuthContext, CartContext, ThemeContext
+│   ├── config/                     # App-level configuration
+│   ├── constants/                  # Shared constants
+│   ├── theme/                      # Design tokens, colours, typography
+│   ├── data/                       # Static & mock data
+│   └── utils/                      # Utility functions
+├── e2e/                            # Detox E2E test suites
+│   ├── shopping.e2e.js             # Browse, cart, checkout, search, filter
+│   ├── profile.e2e.js              # Orders, profile edit, addresses
+│   └── ar-analysis.e2e.js          # Try-on flow & skin analysis
+├── __tests__/                      # Jest unit tests
+├── assets/                         # Images, fonts, Lottie animations
+├── app-store-assets/               # App Store / Play Store screenshots
+├── types/                          # Shared TypeScript type definitions
+├── app.json                        # Expo configuration
+├── app.config.js                   # Dynamic Expo config (env injection)
+├── eas.json                        # EAS Build profiles
+├── babel.config.js                 # Babel with module-resolver
+├── tsconfig.json                   # TypeScript configuration
+├── jest.config.js                  # Jest + jest-expo configuration
+└── metro.config.js                 # Metro bundler configuration
 ```
 
 ---
@@ -176,210 +185,196 @@ frontend/
 
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| React Native | 0.81 | Mobile framework |
-| Expo SDK | 54 | Development & build platform |
+| React Native | 0.81.5 | Cross-platform mobile framework |
+| Expo SDK | 54 | Build & development platform |
 | TypeScript | 5.9 | Type safety |
-| React Navigation | 7 | Routing & navigation |
-| React Native Paper | 5 | Material Design components |
-| React Native Reanimated | 4.1 | Smooth animations |
-| React Native Gesture Handler | 2.28 | Touch gestures |
-| Expo Camera | 17 | Camera access |
-| Expo Image Picker | 17 | Photo selection |
+| React Navigation | 7 | Stack & tab routing, deep links |
+| React Native Reanimated | 4.1 | 60fps animations & gestures |
+| React Native Gesture Handler | 2.28 | Touch & gesture recognition |
+| React Native Paper | 5 | Material Design component library |
+| TanStack Query | 5 | Server state, caching, sync |
+| Axios | 1.13 | HTTP client with interceptors |
+| Expo Camera | 17 | Camera access for AR/analysis |
+| Expo Image Picker | 17 | Photo selection from gallery |
+| Expo Secure Store | 13 | Encrypted token storage |
+| Expo Notifications | 0.29 | Push notification handling |
 | Expo Linear Gradient | 15 | Gradient backgrounds |
-| Expo Blur | 15 | Blur effects |
-| Lottie React Native | 7.3 | Lottie animations |
-| Axios | 1.13 | HTTP client |
-| AsyncStorage | 2.2 | Local data persistence |
-| NetInfo | 11.4 | Connectivity status |
-| Firebase Analytics | 8 | Analytics and events |
-| Stripe RN | 0.33 | Payments (card/Apple Pay/Google Pay) |
-| Detox | 20 | E2E tests |
+| Expo Blur | 15 | Glassmorphism blur effects |
+| Lottie React Native | 7.3 | Lottie animation playback |
+| React Native MMKV | 4.1 | High-performance key-value storage |
+| AsyncStorage | 2.2 | Offline queue persistence |
+| NetInfo | 12 | Connectivity state monitoring |
+| Firebase | 23 | Analytics & push messaging |
+| Stripe React Native | 0.33 | Card, Apple Pay, Google Pay |
+| Sentry React Native | 8 | Error tracking & performance |
+| Detox | 20 | E2E automation tests |
+| Fuse.js | 7.1 | Client-side fuzzy search |
 
 ---
 
 ## 🧪 Testing
 
-- Unit tests
-  - Run: `npm test`
-  - Coverage: `npm run test:coverage`
-  - Framework: jest‑expo + @testing‑library/react‑native
-  - Stable mocks for icons, navigation, SecureStore, Camera, Media Library, NetInfo
-- End‑to‑End tests (Detox)
-  - Build iOS: `npm run e2e:ios:build`
-  - Test iOS: `npm run e2e:ios:test`
-  - Build Android: `npm run e2e:android:build`
-  - Test Android: `npm run e2e:android:test`
-  - CI: `npm run e2e:test:ci`
-  - Config: `.detoxrc.json`, `e2e/config.json`
-  - Suites:
-    - `e2e/shopping.e2e.js` — browse, add to cart, checkout, search, filter
-    - `e2e/profile.e2e.js` — orders, order details, profile edit, addresses
-    - `e2e/ar-analysis.e2e.js` — try‑on flow and skin analysis
+### Unit Tests (Jest)
+```bash
+npm test                    # Run all unit tests
+npm run test:coverage       # With coverage report
+npm run test:watch          # Watch mode during development
+npm run test:ci             # CI mode (coverage + limited workers)
+```
 
-**Coverage gates:** per‑file line thresholds for critical logic (e.g., auth context and cart API).
+**Framework:** jest-expo + @testing-library/react-native  
+**Coverage gates:** Per-file thresholds on critical paths (auth context, cart API, services)
+
+### End-to-End Tests (Detox)
+```bash
+# iOS
+npm run e2e:ios:build       # Build the iOS test binary
+npm run e2e:ios:test        # Run iOS E2E suite
+
+# Android
+npm run e2e:android:build   # Build the Android test binary
+npm run e2e:android:test    # Run Android E2E suite
+
+# CI
+npm run e2e:test:ci         # iOS release, cleanup after run
+```
+
+**E2E suites:**
+| Suite | Coverage |
+|-------|---------|
+| `shopping.e2e.js` | Browse, add to cart, checkout, search, filter |
+| `profile.e2e.js` | Orders, order details, profile edit, addresses |
+| `ar-analysis.e2e.js` | Try-on flow, skin analysis, results |
 
 ---
 
-## 📱 Build & Deploy
+## 📱 Build & Deployment
 
-### Development
+### EAS Build
 ```bash
-npm start         # Start Expo dev server
+# Development build (dev client, hot reload)
+npm run build:dev
+
+# Production build (all platforms)
+npm run build:prod
 ```
 
-### EAS Build (Production)
+### EAS Submit (App Stores)
 ```bash
-npx eas build --platform ios
-npx eas build --platform android
+npm run submit:ios          # Submit to App Store Connect
+npm run submit:android      # Submit to Google Play Console
+npm run release             # Build prod + submit both platforms
 ```
 
-### EAS Submit
-```bash
-npx eas submit --platform ios
-npx eas submit --platform android
-```
-
----
-
-## 🧰 Maintenance & Developer Workflow
-
-- Code quality
-  - Lint: `npm run lint`
-  - Types: `npm run types:check`
-  - Format: `npm run format`
-- Unused code analysis
-  - Exports: `npx ts-prune`
-  - Dependencies: `npx depcheck`
-- Security
-  - `npm audit` and `npm audit fix`
-
-### Admin Analytics & Export
-
-- Dashboards:
-  - Sales: revenue, orders, AOV, category breakdown, trends
-  - Engagement: user growth, active users, retention/churn
-  - AR/AI: sessions, conversions, segments, top tried products
-- Export:
-  - Formats: CSV, JSON, best-effort XLSX
-  - UI: floating export button + modal on analytics screens
-  - Files saved to app cache and shared via native share sheet
-
-### AR/AI
-
-- AR Try-On integrated with modular bridge
-- AI Skin Analysis with preprocessing and results overlay
-- Performance and quality managers guide device-tuned settings
-
-> See `eas.json` for build profiles (development, preview, production).
-
-See also: [docs/EAS.md](./docs/EAS.md) for secrets, submit configuration, and CI.
-
-### Useful Scripts
-- Build (development): `npm run build:dev`
-- Build (production): `npm run build:prod`
-- Submit iOS: `npm run submit:ios`
-- Submit Android: `npm run submit:android`
-- Generate API types from OpenAPI (optional): `npm run types:api`
----
-
-## 🔐 Configuration & Environment
-
-### Expo config (app.json)
-- Name/slug: Glowverse / glowverse
-- iOS: `bundleIdentifier: com.glowverse.app`, `supportsTablet: false`, non‑exempt encryption false
-- Android: `package: com.glowverse.app`, `versionCode: 1`, adaptive icon, permissions
-- Icon/splash:
-  - Icon: `assets/icon.png` (provide 1024×1024 PNG, no transparency)
-  - Splash: `assets/splash-icon.png` (2048×2048 PNG, safe area)
-- EAS project: set `extra.eas.projectId`
-- Deep links: scheme `glowverse`, associated domains for iOS and intent filters for Android
-
-### Environment variables
-- API base URL, analytics ID, Sentry DSN, and Stripe keys are configured via `app.json` extras and the ENV layer.
-- Example:
-```env
-API_BASE_URL=http://localhost:5000/api/v1
-CLOUDINARY_CLOUD_NAME=dev-cloud
-ENVIRONMENT=development
-STRIPE_PUBLISHABLE_KEY=pk_test_***
-STRIPE_MERCHANT_ID=merchant.com.glowverse.dev
-PERFECT_CORP_API_KEY=replace_me_dev
-ANALYTICS_ID=dev-analytics
-SENTRY_DSN=
-```
+See [`eas.json`](eas.json) for profile configuration (development, preview, production).  
+📖 **EAS Guide:** [docs/EAS.md](docs/EAS.md)
 
 ---
 
 ## 🎨 Design System
 
-- **Theming:** Custom design tokens in `src/theme/`
-- **Colors:** Curated palette with light/dark mode support
-- **Typography:** Modern font system
-- **Animations:** Reanimated-powered micro-interactions
-- **Components:** Premium glassmorphism, gradients, parallax effects
+| Category | Implementation |
+|----------|---------------|
+| **Tokens** | `src/theme/` — spacing, typography, radius, shadows |
+| **Colours** | Curated light/dark palettes with semantic aliases |
+| **Typography** | Modern font stacks with size/weight scales |
+| **Animations** | Reanimated 4 — spring physics & shared element transitions |
+| **Components** | Glassmorphism cards, gradient headers, parallax effects |
+| **Micro-interactions** | Haptic feedback, press states, skeleton loaders |
 
 ---
 
-## 🧩 Implementations Summary
+## 🔐 Configuration & Environment
 
-- Analytics
-  - Service: `src/services/analytics.service.ts`
-  - Screen tracking via NavigationContainer
-  - Instrumented screens: Product detail, Cart, Checkout, Search, Virtual Try‑On, Auth login
-- Analytics Extension (new)
-  - Event types: `src/services/analytics/types.ts`
-  - Hooks: wishlist, promos, filters, payment, reviews
-  - Components integrated: ProductCard, FavoriteButton, Cart/Checkout, Promotions, Notifications
-- Performance Optimization (new)
-  - Image preloader: [imagePreloader.service.ts](file:///Users/mayank/Glowverse-app/frontend/src/services/imagePreloader.service.ts)
-  - FlatList tuning in Shop and Search lists
-  - Lazy-loading heavy screens in RootNavigator
-  - CI bundle-size budget: [.github/workflows/performance.yml](file:///Users/mayank/Glowverse-app/.github/workflows/performance.yml)
-- Accessibility (new)
-  - Alt text on product images, descriptive labels on cards/buttons
-  - Focus management and error announcements in AddressForm
-- API Reliability (new)
-  - Client: exponential backoff retries, latency analytics, Sentry tagging
-  - Request deduplication for product detail
-  - Health monitor: [apiHealthMonitor.ts](file:///Users/mayank/Glowverse-app/frontend/src/services/apiHealthMonitor.ts)
-- Offline Capabilities
-  - Queue: `src/services/offlineQueue.service.ts` with AsyncStorage persistence and NetInfo recovery
-  - API client interceptors queue non‑GET requests when offline
-  - OfflineIndicator: global banner for offline/syncing states
-  - Cache: `src/services/cache.service.ts` for product detail pages
-  - Optimistic cart add in `CartContext`
-- Testing
-  - Unit tests for cart API and others
-  - Detox suites: shopping, profile/orders, AR/analysis
-  - Stable jest setup and mocks
-- Checkout
-  - Multi‑step checkout (shipping → payment → review → confirmation)
-  - Stripe card and platform pay stubs integrated
-- App Store Readiness
-  - app.json finalized for name, identifiers, and permissions
-  - Screenshots folder scaffolded: `app-store-assets/`
-  - Icons/splash and screenshot structure documented at repo root
+### `app.json` / `app.config.js`
+
+| Setting | Value |
+|---------|-------|
+| iOS Bundle ID | `com.glowverse.app` |
+| Android Package | `com.glowverse.app` |
+| Tablet Support | Disabled |
+| Deep Link Scheme | `glowverse://` |
+| Universal Links | Configured for iOS associated domains |
+| Intent Filters | Configured for Android |
+
+### Environment Variables
+
+```env
+# Required
+EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
+
+# Optional — falls back to mock/demo mode if unset
+EXPO_PUBLIC_PERFECTCORP_API_KEY=your-perfectcorp-key
+STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
+STRIPE_MERCHANT_ID=merchant.com.glowverse.dev
+ANALYTICS_ID=your-firebase-analytics-id
+SENTRY_DSN=your-sentry-dsn
+```
+
+---
+
+## 🧰 Developer Workflow
+
+### Code Quality
+```bash
+npm run types:check         # TypeScript check (no emit)
+# Note: lint and format scripts are managed at the project root
+npx ts-prune               # Detect unused exports
+npx depcheck               # Detect unused dependencies
+npm audit                  # Security audit
+npm audit fix              # Auto-fix safe issues
+```
+
+### Useful Utilities
+```bash
+npm run assets:optimize     # Optimise images & assets
+npm run assets:verify       # Verify required assets exist
+npm run audit:api           # OpenAPI endpoint coverage audit
+npm run audit:contrast      # Accessibility contrast check
+npm run eas:verify          # Verify EAS project ID is set
+```
 
 ---
 
 ## 🗺️ Roadmap
 
-- Reliability & Types
-  - [ ] Adopt generated OpenAPI types across services
-  - [ ] Add Zod response validation on critical endpoints
-- Offline & Caching
-  - [ ] Broader offline caching for lists/search with stale‑while‑revalidate
-  - [ ] Conflict resolution UI for failed syncs
-- Analytics & QA
-  - [ ] Expand E2E to cover deep links, payments edge cases
-  - [ ] Add more analytics assertions and dashboards
-- Accessibility & Performance
-  - [ ] Complete a11y pass on remaining screens
-  - [ ] Add render-time monitors on heavy components
-- Store Readiness
-  - [ ] Finalize store assets and captions; link EAS projectId
-  - [ ] Automate App Store / Play Store submission via CI
+### In Progress
+- [ ] End-to-end Stripe payments with webhook-driven order state
+- [ ] AR/AI native SDK linkage and device QA pass (iOS & Android)
+
+### Planned
+- [ ] Offline conflict resolution UI for failed sync
+- [ ] OpenAPI-generated type adoption across all API services
+- [ ] Zod response validation on critical API endpoints
+- [ ] Expand E2E coverage: payment edge cases (3DS, timeout, network loss)
+- [ ] Finalise store assets and App Store / Play Store captions
+- [ ] Automate App Store submission via CI/CD
 
 ---
 
-*Last Updated: February 19, 2026 (QR connectivity and env updates)*
+## 📚 Documentation
+
+- [Project README](../README.md) — Full project overview and architecture
+- [EAS Build Guide](docs/EAS.md) — Build profiles, secrets, and CI submission
+- [Project Status Report](../project_report.md) — Completion %, gaps, go-live checklist
+
+---
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and add tests
+4. Run checks: `npm run types:check && npm test`
+5. Commit: `git commit -m 'feat: describe your change'`
+6. Push and open a Pull Request — CI runs automatically
+
+---
+
+## 📄 License
+
+This project is proprietary software developed for the Glowverse beauty platform. All rights reserved.
+
+---
+
+*Last updated: February 20, 2026*

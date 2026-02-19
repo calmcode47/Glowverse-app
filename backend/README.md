@@ -1,100 +1,63 @@
 # Glowverse Backend API
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3-blue.svg)](https://www.typescriptlang.org/)
-[![Express](https://img.shields.io/badge/Express-4.18-lightgrey.svg)](https://expressjs.com/)
-[![Prisma](https://img.shields.io/badge/Prisma-5.7-2D3748.svg)](https://www.prisma.io/)
-[![Jest](https://img.shields.io/badge/Jest-29.7-C21325.svg)](https://jestjs.io/)
+<div align="center">
 
-Production-ready Node.js + Express + TypeScript REST API powering the Glowverse AI/AR beauty platform. Features 60+ endpoints across 16 modules with JWT authentication, Prisma ORM, Redis caching, Sentry APM, adaptive rate limiting, auto-scaling, and full CI/CD automation.
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7%2B-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Express](https://img.shields.io/badge/Express-4.21-000000?style=for-the-badge&logo=express&logoColor=white)](https://expressjs.com/)
+[![Prisma](https://img.shields.io/badge/Prisma-6.3-2D3748?style=for-the-badge&logo=prisma&logoColor=white)](https://www.prisma.io/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7%2B-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![Jest](https://img.shields.io/badge/Jest-29.7-C21325?style=for-the-badge&logo=jest&logoColor=white)](https://jestjs.io/)
+
+**Production-ready Node.js + Express + TypeScript REST API powering the Glowverse AI/AR beauty platform. Features 65+ endpoints across 16 modules with JWT authentication, Prisma ORM, Redis caching, Sentry APM, adaptive rate limiting, DDoS protection, auto-scaling, and full CI/CD automation.**
+
+</div>
 
 ---
 
 ## 📊 Status
 
 | Area | Status | Details |
-|------|--------|---------|
-| API Endpoints | ✅ 65+ | 16 controllers, 20 route files |
-| Services | ✅ 21 | Business logic + performance services |
-| Database | ✅ 25+ models | Prisma ORM with PostgreSQL + indexes |
-| CI/CD | ✅ 7 workflows | GitHub Actions (test, build, deploy, backup, perf) |
-| Security | ✅ Enhanced | JWT, adaptive rate limiting, DDoS protection |
-| Caching | ✅ Optimized | Redis with intelligent invalidation |
-| Monitoring | ✅ Full APM | Sentry Performance + Profiling |
-| Performance | ✅ Optimized | Load tested, indexed, auto-scaling ready |
-| Documentation | ✅ 26 docs | API, deployment, performance, scaling |
-| Testing | ⚠️ 19 suites | 14 integration + 1 e2e + 4 unit |
-| Scripts | ✅ 12 | Backup, deploy, load test, optimization |
+|------|:------:|---------|
+| API Endpoints | ✅ | 65+ across 16 controllers, 20 route files |
+| Business Services | ✅ | 21 services (auth, products, orders, AI/AR, performance) |
+| Database | ✅ | 25+ Prisma models, PostgreSQL with optimised indexes |
+| CI/CD | ✅ | 7 GitHub Actions workflows |
+| Security | ✅ | JWT, adaptive rate limiting, DDoS protection, Helmet, CSRF |
+| Caching | ✅ | Redis intelligent caching with invalidation strategies |
+| Monitoring | ✅ | Sentry Performance + Profiling (APM) |
+| Performance | ✅ | Load tested, indexed, auto-scaling ready |
+| Documentation | ✅ | 26 docs including API reference, runbooks, scaling guides |
+| Testing | ⚠️ | 19 suites (14 integration · 1 e2e · 4 unit) — edge cases in progress |
+| Payments | 🚧 | Stripe 3DS & webhook orchestration (in progress) |
+| Notification Delivery | 🚧 | Email/push provider integrations (in progress) |
 
 ---
 
 ## 🚀 Quick Start
 
 ```bash
-# Install dependencies
+# 1. Install dependencies
 npm install
 
-# Setup environment
+# 2. Configure environment
 cp .env.example .env
-# Edit .env with your database and API keys
+# Edit .env with your database URL, JWT secrets, and API keys
 
-# Start PostgreSQL (Docker recommended)
-docker-compose up -d postgres
+# 3. Start infrastructure services (Docker recommended)
+docker-compose up -d postgres redis
 
-# Initialize database
-npm run db:setup
+# 4. Initialise the database
+npm run db:setup   # generate Prisma client → migrate → seed
 
-# Start development server
+# 5. Start the development server
 npm run dev
 ```
 
-**Server:** `http://localhost:5000`
-**Health:** `http://localhost:5000/health`
-
-### Frontend (Windows & macOS)
-To run the mobile app locally:
-```bash
-cd ../frontend
-npm install
-npm start           # Unified start; Windows/macOS default to tunnel with LAN fallback
-npm run ios         # macOS only (simulator)
-npm run android     # Android emulator
-```
-For LAN mode: `npm run start:lan` (ensure same Wi‑Fi; VPNs off). If needed, force a specific IP: `HOST_IP=YOUR_MAC_IP npm run start:lan`. On Windows, if blocked, use: `powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1`.
-
----
-
-## 🎯 Phase 4: Performance Optimization (NEW)
-
-### Rate Limiting & DDoS Protection
-- **Adaptive Rate Limiting**: Automatically adjusts limits based on user tier and behavior
-- **DDoS Protection**: Pattern detection, IP reputation tracking, automatic blocking
-- **Admin Dashboard**: Monitor rate limits, blocked IPs, and suspicious activity
-- **Endpoints**: `/api/v1/admin/rate-limits/*`
-
-### Application Performance Monitoring (APM)
-- **Sentry Performance**: 20% trace sampling in production
-- **Profiling**: 10% profile sampling for deep code analysis
-- **Custom Metrics**: Track business-critical operations
-- **Performance Regression Detection**: Automated CI checks against baselines
-
-### Database Optimization
-- **Indexes**: Optimized for common queries (products, orders, users)
-- **Query Analysis**: Scripts to identify slow queries and N+1 problems
-- **Connection Pooling**: Environment-based sizing (Prod: 20, Staging: 10, Dev: 5)
-
-### Load Testing
-- **Artillery Tests**: Scenarios for smoke, load, stress, and endurance testing
-- **Performance Baselines**: P50, P95, P99 latency targets documented
-- **Automated Analysis**: Scripts to analyze test results and generate reports
-
-### Auto-Scaling Configuration
-- **ECS Auto-Scaling**: CPU (70%), Memory (80%), Request-based (1000 req/instance)
-- **Kubernetes HPA**: Multi-metric scaling with intelligent policies
-- **Scheduled Scaling**: Peak hours (5-20 instances), Off-peak (2-10 instances)
-- **Cost Optimization**: ~45% potential savings through Reserved Instances and Spot capacity
-
-📖 **Performance Docs**: [RATE_LIMITING.md](docs/RATE_LIMITING.md) · [PERFORMANCE_DASHBOARD.md](docs/PERFORMANCE_DASHBOARD.md) · [AUTO_SCALING.md](docs/AUTO_SCALING.md)
+> **Server:** `http://localhost:5000`  
+> **Health Check:** `http://localhost:5000/health`  
+> **API Base URL:** `http://localhost:5000/api/v1`
 
 ---
 
@@ -103,93 +66,71 @@ For LAN mode: `npm run start:lan` (ensure same Wi‑Fi; VPNs off). If needed, fo
 ```
 backend/
 ├── src/
-│   ├── app.ts                          # Express app setup
-│   ├── server.ts                       # Server entry point
-│   ├── config/                         # Configuration
-│   │   ├── env.ts                      # Environment variables
-│   │   ├── database.ts                 # Prisma client + connection pool
-│   │   ├── redis.ts                    # Redis client
-│   │   ├── cloudinary.ts              # Image hosting
-│   │   ├── sentry.ts                  # Error tracking + APM
-│   │   └── tracing.ts                 # Performance tracing
-│   ├── controllers/                    # 16 controllers
-│   ├── services/                       # 21 services
-│   │   ├── ip-reputation.service.ts   # IP tracking for DDoS
-│   │   └── ...                        # Auth, products, orders, etc.
-│   ├── middleware/                     # Security & utility middleware
-│   │   ├── auth.ts                    # JWT authentication
-│   │   ├── adaptive-rate-limit.ts     # Smart rate limiting
-│   │   ├── ddos-protection.ts         # DDoS detection
-│   │   ├── cache.ts                   # Response caching
-│   │   ├── csrf.ts                    # CSRF protection
-│   │   └── ...
+│   ├── app.ts                          # Express app bootstrap & middleware stack
+│   ├── server.ts                       # HTTP server entry point
+│   ├── config/
+│   │   ├── env.ts                      # Validated environment variables
+│   │   ├── database.ts                 # Prisma client & connection pool
+│   │   ├── redis.ts                    # IORedis client
+│   │   ├── cloudinary.ts               # Cloudinary image hosting
+│   │   ├── sentry.ts                   # Sentry error tracking & APM
+│   │   └── tracing.ts                  # OpenTelemetry performance tracing
+│   ├── controllers/                    # 16 request/response controllers
+│   ├── services/                       # 21 business-logic services
+│   │   ├── ip-reputation.service.ts    # IP scoring for DDoS protection
+│   │   └── ...                         # auth, products, orders, AR, etc.
+│   ├── middleware/
+│   │   ├── auth.ts                     # JWT authentication & refresh
+│   │   ├── adaptive-rate-limit.ts      # Tier-based smart rate limiting
+│   │   ├── ddos-protection.ts          # Pattern detection & auto-blocking
+│   │   ├── cache.ts                    # Redis response caching
+│   │   ├── csrf.ts                     # CSRF token generation & validation
+│   │   └── ...                         # validation, sanitisation, logging
 │   ├── routes/                         # 20 route files
-│   │   ├── admin/                     # Admin-only routes
-│   │   │   └── rate-limits.routes.ts  # Rate limit management
-│   │   ├── metrics.routes.ts          # Performance metrics
+│   │   ├── admin/
+│   │   │   └── rate-limits.routes.ts   # Rate limit & blocked-IP management
+│   │   ├── metrics.routes.ts           # Performance metrics endpoint
+│   │   └── ...                         # auth, users, products, orders, etc.
+│   ├── utils/
+│   │   ├── performance.ts              # Performance monitoring utilities
+│   │   ├── db-metrics.ts               # Database query metrics
 │   │   └── ...
-│   ├── utils/                          # Utilities & helpers
-│   │   ├── performance.ts             # Performance monitoring
-│   │   ├── db-metrics.ts              # Database metrics
-│   │   └── ...
-│   └── types/                          # TypeScript types
+│   └── types/                          # Shared TypeScript types & interfaces
 ├── prisma/
-│   ├── schema.prisma                   # Database schema (25+ models)
+│   ├── schema.prisma                   # DB schema (25+ models)
 │   ├── migrations/                     # Migration history
-│   │   └── add_performance_indexes/   # Performance indexes
-│   └── seed.ts                         # Database seeder
-├── infrastructure/
-│   ├── ecs-autoscaling.tf             # AWS ECS auto-scaling (Terraform)
-│   └── k8s-hpa.yaml                   # Kubernetes HPA config
+│   └── seed.ts                         # Development data seeder
+├── __tests__/                          # Test suites
+│   ├── auth.test.ts
+│   ├── products.test.ts
+│   ├── cart.test.ts
+│   ├── orders.test.ts
+│   └── ...                             # 14 integration + 1 e2e + 4 unit
 ├── load-tests/
-│   ├── scenarios.yml                  # Load test scenarios
-│   ├── stress-test.yml                # Stress testing
-│   ├── endurance-test.yml             # Endurance testing
-│   └── helpers.js                     # Test utilities
+│   ├── scenarios.yml                   # Standard load scenarios
+│   ├── stress-test.yml                 # Stress & spike testing
+│   └── endurance-test.yml              # Long-running soak tests
+├── infrastructure/
+│   ├── ecs-autoscaling.tf              # Terraform — AWS ECS auto-scaling
+│   └── k8s-hpa.yaml                    # Kubernetes HPA configuration
 ├── scripts/
-│   ├── backup-database.sh             # Encrypted DB backup
-│   ├── deploy.sh                      # Manual deployment
-│   ├── run-load-tests.sh              # Execute load tests
-│   ├── analyze-load-tests.js          # Analyze test results
-│   ├── query-optimization-report.ts   # Query analysis
-│   ├── detect-performance-regression.ts # CI performance checks
-│   ├── optimize-resources.sh          # Resource usage analysis
-│   ├── cost-optimization-report.sh    # Cost analysis
-│   └── test-autoscaling.sh            # Auto-scaling verification
-├── docs/                              # 26 documentation files
-│   ├── RATE_LIMITING.md               # Rate limiting guide
-│   ├── PERFORMANCE_DASHBOARD.md       # APM setup
-│   ├── AUTO_SCALING.md                # Scaling configuration
-│   ├── PERFORMANCE_BASELINES.md       # Performance targets
-│   ├── RUM_SETUP.md                   # Real User Monitoring
-│   └── ...
-├── __tests__/                         # Test suites
-├── .github/workflows/                 # 7 CI/CD workflows
-└── docker-compose.yml                 # Local dev services
+│   ├── backup-database.sh              # GPG-encrypted DB backup to S3
+│   ├── deploy.sh                       # Manual deployment script
+│   ├── run-load-tests.sh               # Execute Artillery scenarios
+│   ├── analyze-load-tests.js           # Parse & report test results
+│   ├── query-optimization-report.ts    # Slow-query & N+1 analysis
+│   ├── detect-performance-regression.ts # CI performance gate
+│   ├── optimize-resources.sh           # Resource usage analysis
+│   └── cost-optimization-report.sh     # AWS cost analysis
+├── docs/                               # 26 documentation files
+├── .github/workflows/                  # 7 CI/CD workflows
+├── docker-compose.yml                  # Local development services
+├── docker-compose.production.yml       # Production Docker stack
+├── Dockerfile                          # Development image
+├── Dockerfile.production               # Optimised production image
+├── jest.config.js                      # Jest configuration
+└── tsconfig.json                       # TypeScript configuration
 ```
-
----
-
-## ✅ Completion & What’s Left
-
-**Overall completion:** ≈ 88%
-
-- Implemented
-  - JWT auth and refresh, users/profile/preferences
-  - Products/catalog/search; cart and orders flows
-  - Promotions and referrals (code generation, usage, stats)
-  - Notifications API and preferences; guides and fitness modules
-  - Uploads with Cloudinary/Sharp; PerfectCorp integration shell
-  - Redis caching, security middleware, rate limiting and DDoS protections
-  - CI/CD with build/test/deploy and backup workflows; performance baselines and runbooks
-- Remaining
-  - Payments: Stripe 3DS and webhook orchestration with idempotent order state updates
-  - Admin analytics: aggregation endpoints for revenue by category/product/status, engagement KPIs, and AR usage metrics
-  - Notification delivery integrations (email/push) and background queue hardening
-  - Additional integration tests for edge cases; final production migrations and seeds
-
-For cross‑project status and the go‑live checklist see:
-[Project Status Report](../project_report.md)
 
 ---
 
@@ -198,44 +139,101 @@ For cross‑project status and the go‑live checklist see:
 **Base URL:** `/api/v1`
 
 | Module | Routes | Auth | Description |
-|--------|--------|------|-------------|
-| `/auth` | 4 | No | Register, login, refresh, logout |
-| `/users` | 5 | Yes | Profile CRUD, preferences, avatar |
-| `/products` | 4 | Mixed | Catalog, search, categories, details |
-| `/cart` | 4 | Yes | View, add, update, remove |
-| `/orders` | 4 | Yes | Create, list, details, cancel |
-| `/favorites` | 3 | Yes | Add, remove, list |
-| `/notifications` | 4 | Yes | List, read, mark all, delete |
-| `/promotions` | 4 | Mixed | Validate, apply, list, create |
-| `/referrals` | 4 | Yes | Generate, validate, redeem, stats |
-| `/fitness` | 6+ | Yes | Activities, goals, progress, stats |
-| `/guides` | 6+ | Mixed | CRUD, likes, bookmarks, comments |
-| `/search` | 3 | No | Query, suggestions, popular |
-| `/upload` | 1 | Yes | File upload |
-| `/analysis` | 3 | Yes | Skin analysis, results, history |
-| `/tryon` | 4 | Yes | Virtual try-on sessions |
-| `/perfectcorp` | 5 | Yes | AI/AR health, face detect, recommendations |
-| `/metrics` | 1 | Admin | Performance metrics endpoint |
-| `/admin/rate-limits` | 3 | Admin | Rate limit management, blocked IPs |
+|--------|--------|:----:|-------------|
+| `/auth` | 4 | — | Register, login, token refresh, logout |
+| `/users` | 5 | ✅ | Profile CRUD, preferences, avatar upload |
+| `/products` | 4 | Mixed | Catalog, details, categories, search |
+| `/cart` | 4 | ✅ | View, add item, update quantity, remove |
+| `/orders` | 4 | ✅ | Create, list, detail, cancel |
+| `/favorites` | 3 | ✅ | Add, remove, list wishlist |
+| `/notifications` | 4 | ✅ | List, mark read, mark all, delete |
+| `/promotions` | 4 | Mixed | Validate, apply, list, create (admin) |
+| `/referrals` | 4 | ✅ | Generate code, validate, redeem, stats |
+| `/fitness` | 6+ | ✅ | Activities, goals, progress, statistics |
+| `/guides` | 6+ | Mixed | CRUD, steps, likes, bookmarks, comments |
+| `/search` | 3 | — | Global search, suggestions, popular terms |
+| `/upload` | 1 | ✅ | File upload (images via Cloudinary) |
+| `/analysis` | 3 | ✅ | Initiate skin analysis, results, history |
+| `/tryon` | 4 | ✅ | Create/list/view virtual try-on sessions |
+| `/perfectcorp` | 5 | ✅ | Health check, face detect, AR recommendations |
+| `/metrics` | 1 | Admin | Server performance metrics |
+| `/admin/rate-limits` | 3 | Admin | Rate limit stats, blocked IPs, unblock |
 
 📖 **Full reference:** [docs/API_REFERENCE.md](docs/API_REFERENCE.md)
+
+---
+
+## 🗄️ Database
+
+### Prisma Schema — 25+ Models
+
+| Domain | Models |
+|--------|--------|
+| **Users** | `User`, `UserProfile`, `UserPreferences` |
+| **E-Commerce** | `Product`, `Category`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Favorite` |
+| **Content** | `Guide`, `GuideStep`, `GuideComment`, `GuideLike`, `GuideBookmark` |
+| **Fitness** | `FitnessActivity`, `FitnessGoal` |
+| **Promotions** | `Promotion`, `ReferralCode`, `ReferralUsage` |
+| **Notifications** | `Notification` |
+| **AI / AR** | `SkinAnalysis`, `TryOnSession` |
+
+```bash
+npm run prisma:generate     # Regenerate Prisma client after schema changes
+npm run prisma:migrate      # Apply pending migrations (dev)
+npm run prisma:deploy       # Apply migrations (production)
+npm run prisma:seed         # Seed with sample data
+npm run prisma:studio       # Launch Prisma Studio GUI
+npm run db:setup            # All-in-one: generate → migrate → seed
+```
+
+---
+
+## ⚡ Performance & Scaling
+
+### Adaptive Rate Limiting
+- **Tier-based limits:** Different thresholds per user role (guest, user, premium, admin)
+- **Behaviour-aware:** Automatically tightens limits for suspicious patterns
+- **DDoS protection:** IP reputation scoring, pattern detection, auto-blocking
+- **Admin endpoints:** `/api/v1/admin/rate-limits/*` for live monitoring
+
+### Application Performance Monitoring
+- **Sentry Performance:** 20% transaction sampling in production
+- **Profiling:** 10% profile sampling for deep code analysis
+- **Custom spans:** Track business-critical operations (checkout, AI calls)
+- **Performance regression CI:** Automated baseline comparison on every PR
+
+### Database Optimisation
+- Indexes optimised for hot queries (products by category, orders by user, etc.)
+- Connection pool tuned per environment: Production 20 · Staging 10 · Dev 5
+- Query analysis scripts to detect N+1 and slow queries
+
+### Auto-Scaling
+| Metric | Target | Min Instances | Max Instances |
+|--------|--------|:-------------:|:-------------:|
+| CPU utilisation | > 70% | 2 | 20 |
+| Memory utilisation | > 80% | 2 | 20 |
+| Request rate | > 1,000 req/instance | 2 | 20 |
+
+📖 **Docs:** [RATE_LIMITING.md](docs/RATE_LIMITING.md) · [PERFORMANCE_DASHBOARD.md](docs/PERFORMANCE_DASHBOARD.md) · [AUTO_SCALING.md](docs/AUTO_SCALING.md)
 
 ---
 
 ## 🧪 Testing
 
 ```bash
-npm test                      # All tests
-npm run test:coverage         # With coverage
-npm run test:integration      # Integration only
-npm run test:load             # Load testing with Artillery
-npm run test:verbose          # Verbose output
-npm run test:ci               # CI mode
+npm test                        # Run all test suites
+npm run test:coverage           # With coverage report
+npm run test:integration        # Integration tests only
+npm run test:verbose            # Full verbose output
+npm run test:ci                 # CI mode (coverage + limited workers)
 ```
 
-**Test suites:** 14 integration + 1 e2e + 4 service unit tests
+**Test suites (19 total):**
+- **Integration (14):** Auth, Users, Products, Cart, Orders, Notifications, Promotions, Referrals, Fitness, Guides, Search, PerfectCorp, Upload, Image/Storage
+- **E2E (1):** Full user journey (register → browse → cart → checkout)
+- **Unit (4):** CartService, NotificationService, OrderService, PromotionService
 
-> **Note:** Integration tests require PostgreSQL. Use `docker-compose up -d postgres` or configure `.env.test`.
+> ⚠️ Integration tests require a live PostgreSQL connection. Use `docker-compose up -d postgres` or configure `.env.test`.
 
 ---
 
@@ -243,143 +241,147 @@ npm run test:ci               # CI mode
 
 | Script | Description |
 |--------|-------------|
-| `npm run dev` | Start dev server with hot reload |
-| `npm run build` | Compile TypeScript |
-| `npm start` | Start production server |
-| `npm run lint` | Run ESLint |
-| `npm run lint:fix` | Auto-fix lint issues |
-| `npm run format` | Format code with Prettier |
-| `npm run format:check` | Check formatting |
-| `npm run type-check` | Verify TypeScript types |
+| `npm run dev` | Start dev server with hot reload (`tsx watch`) |
+| `npm run build` | Compile TypeScript to `dist/` |
+| `npm start` | Start compiled production server |
+| `npm run lint` | Run ESLint on all `.ts` files |
+| `npm run lint:fix` | Auto-fix linting issues |
+| `npm run format` | Format with Prettier |
+| `npm run format:check` | Check Prettier formatting |
+| `npm run type-check` | Verify TypeScript without emitting |
 | `npm test` | Run all tests |
-| `npm run test:coverage` | Test with coverage report |
-| `npm run test:load` | Run load tests |
-| `npm run test:ci` | CI test mode |
-| `npm run db:setup` | Generate + migrate + seed |
+| `npm run test:coverage` | Tests with coverage report |
+| `npm run test:ci` | CI-optimised test run |
+| `npm run db:setup` | Initialise database (generate → migrate → seed) |
 | `npm run prisma:studio` | Open Prisma Studio |
 
 ---
 
 ## 🔐 Environment Variables
 
-Copy `.env.example` to `.env` and configure:
-
 | Variable | Required | Default | Description |
-|----------|----------|---------|-------------|
-| `NODE_ENV` | Yes | `development` | Environment |
-| `PORT` | Yes | `5000` | Server port |
-| `DATABASE_URL` | Yes | — | PostgreSQL connection string |
-| `JWT_SECRET` | Yes | — | JWT signing key |
-| `JWT_REFRESH_SECRET` | Yes | — | Refresh token signing key |
-| `REDIS_URL` | No | — | Redis connection URL |
-| `CLOUDINARY_*` | No | — | Image hosting config |
-| `PERFECTCORP_API_KEY` | No | `mock` | AI/AR API key (uses mock if not set) |
-| `SENTRY_DSN` | No | — | Error tracking + APM DSN |
-| `RATE_LIMIT_WINDOW_MS` | No | `900000` | Rate limit window (15 min) |
-| `RATE_LIMIT_MAX` | No | `100` | Max requests per window |
+|----------|:--------:|---------|-------------|
+| `NODE_ENV` | ✅ | `development` | Runtime environment |
+| `PORT` | ✅ | `5000` | HTTP server port |
+| `DATABASE_URL` | ✅ | — | PostgreSQL connection string |
+| `JWT_SECRET` | ✅ | — | JWT access token signing key |
+| `JWT_REFRESH_SECRET` | ✅ | — | Refresh token signing key |
+| `JWT_EXPIRES_IN` | — | `15m` | Access token lifetime |
+| `JWT_REFRESH_EXPIRES_IN` | — | `7d` | Refresh token lifetime |
+| `REDIS_URL` | — | — | Redis connection URL (caching disabled if unset) |
+| `CLOUDINARY_CLOUD_NAME` | — | — | Cloudinary cloud name |
+| `CLOUDINARY_API_KEY` | — | — | Cloudinary API key |
+| `CLOUDINARY_API_SECRET` | — | — | Cloudinary API secret |
+| `PERFECTCORP_API_KEY` | — | `mock` | AI/AR API key (auto-mocked if unset) |
+| `STRIPE_SECRET_KEY` | — | — | Stripe secret key for payments |
+| `SENTRY_DSN` | — | — | Sentry DSN for error tracking |
+| `CORS_ORIGIN` | — | `*` | Allowed CORS origins (comma-separated) |
+| `RATE_LIMIT_WINDOW_MS` | — | `900000` | Rate limit window (15 min) |
+| `RATE_LIMIT_MAX` | — | `100` | Max requests per window |
+| `BCRYPT_ROUNDS` | — | `12` | bcrypt work factor |
 
 ---
 
 ## 🚀 Deployment
 
 ### Docker
+
 ```bash
-docker-compose up -d                                    # Development
-docker-compose -f docker-compose.production.yml up -d   # Production
+# Development
+docker-compose up -d
+
+# Production
+docker-compose -f docker-compose.production.yml up -d
 ```
 
-### CI/CD (GitHub Actions)
+### CI/CD Pipelines (GitHub Actions)
 
 | Workflow | Trigger | What It Does |
 |----------|---------|--------------|
-| `ci.yml` | PR/Push | Lint, test, security scan, **performance regression** |
-| `test.yml` | PR | Test with Postgres + Redis services |
-| `build.yml` | Push main/staging | Docker build + push + Trivy scan |
-| `deploy-staging.yml` | Push staging | Auto-deploy to staging |
-| `deploy-production.yml` | Release tag | Production deploy with approval |
-| `database-backup.yml` | Daily 2 AM UTC | Encrypted DB backup to S3 |
-| `load-test.yml` | Manual/Weekly | Automated load testing |
+| `ci.yml` | PR / Push | Lint, type-check, test, security scan, perf regression |
+| `test.yml` | PR | Full test suite with live Postgres & Redis |
+| `build.yml` | Push to main/staging | Build & push Docker images + Trivy scan |
+| `deploy-staging.yml` | Push to staging | Automated staging deployment |
+| `deploy-production.yml` | Release tag | Production deploy with approval gate |
+| `database-backup.yml` | Daily 2 AM UTC | GPG-AES-256 encrypted backup to S3 |
+| `load-test.yml` | Manual / Weekly | Artillery load testing |
 
 📖 **Guides:** [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) · [CI_CD.md](docs/CI_CD.md) · [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md)
 
 ---
 
-## 📚 Documentation
+## 🔒 Security
 
-### Core Documentation
+| Feature | Implementation |
+|---------|---------------|
+| Authentication | JWT with short-lived access tokens + refresh token rotation |
+| Password Hashing | bcrypt with 12 rounds |
+| Rate Limiting | Adaptive tier-based limiting with behaviour analysis |
+| DDoS Protection | IP reputation scoring, pattern detection, automatic IP blocking |
+| Security Headers | Helmet middleware |
+| CORS | Strict allowlist-based policy |
+| CSRF Protection | `csrf-csrf` double-submit cookie pattern |
+| XSS Prevention | `xss-clean` + `express-mongo-sanitize` |
+| HPP | HTTP Parameter Pollution protection |
+| SQL Injection | Prisma ORM parameterised queries |
+| Database Backups | GPG AES-256 encrypted, stored on S3 |
+| Dependency Scanning | Trivy in CI pipeline |
+
+---
+
+## 📈 Performance Targets
+
+| Metric | Target |
+|--------|--------|
+| P50 response time | < 100ms |
+| P95 response time | < 300ms |
+| P99 response time | < 500ms |
+| Concurrent users | 1,000+ |
+| Requests per second | 500+ |
+
+---
+
+## 📚 Documentation Index
+
+### Core
 | Document | Description |
 |----------|-------------|
-| [API_REFERENCE.md](docs/API_REFERENCE.md) | Complete endpoint reference |
-| [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | Deployment procedures |
+| [API_REFERENCE.md](docs/API_REFERENCE.md) | Complete endpoint reference with request/response schemas |
+| [DEPLOYMENT_GUIDE.md](docs/DEPLOYMENT_GUIDE.md) | Step-by-step deployment procedures |
 | [CI_CD.md](docs/CI_CD.md) | CI/CD pipeline documentation |
-| [SECURITY.md](docs/SECURITY.md) | Security implementation |
-| [BACKUP_RECOVERY.md](docs/BACKUP_RECOVERY.md) | Backup & disaster recovery |
-| [CONFIGURATION.md](docs/CONFIGURATION.md) | Configuration guide |
-| [ONBOARDING.md](docs/ONBOARDING.md) | New developer onboarding |
+| [SECURITY.md](docs/SECURITY.md) | Security implementation & hardening guide |
+| [BACKUP_RECOVERY.md](docs/BACKUP_RECOVERY.md) | Backup strategy & disaster recovery |
+| [CONFIGURATION.md](docs/CONFIGURATION.md) | Environment & configuration reference |
+| [ONBOARDING.md](docs/ONBOARDING.md) | New developer onboarding guide |
+| [PRODUCTION_DEPLOYMENT.md](docs/PRODUCTION_DEPLOYMENT.md) | Production deployment runbook |
 
-### Performance & Scaling Documentation
+### Performance & Scaling
 | Document | Description |
 |----------|-------------|
 | [RATE_LIMITING.md](docs/RATE_LIMITING.md) | Adaptive rate limiting & DDoS protection |
 | [PERFORMANCE_DASHBOARD.md](docs/PERFORMANCE_DASHBOARD.md) | APM setup & monitoring |
-| [PERFORMANCE_BASELINES.md](docs/PERFORMANCE_BASELINES.md) | Performance targets & SLAs |
-| [AUTO_SCALING.md](docs/AUTO_SCALING.md) | Auto-scaling configuration |
+| [PERFORMANCE_BASELINES.md](docs/PERFORMANCE_BASELINES.md) | SLA targets and baselines |
+| [AUTO_SCALING.md](docs/AUTO_SCALING.md) | ECS & Kubernetes auto-scaling config |
 | [RUM_SETUP.md](docs/RUM_SETUP.md) | Real User Monitoring setup |
-
----
-
-## 🔒 Security Features
-
-- JWT authentication + refresh tokens
-- bcrypt password hashing (10 rounds)
-- **Adaptive rate limiting** (tier-based, behavior-aware)
-- **DDoS protection** (pattern detection, IP reputation)
-- Helmet security headers
-- CORS with whitelist
-- CSRF protection
-- XSS prevention
-- Input sanitization (express-mongo-sanitize)
-- HPP (HTTP parameter pollution protection)
-- Prisma ORM (SQL injection safe)
-- Encrypted database backups (GPG AES-256)
-- Trivy vulnerability scanning in CI
-
----
-
-## 📈 Performance Metrics
-
-### Response Time Targets
-- **P50**: < 100ms
-- **P95**: < 300ms
-- **P99**: < 500ms
-
-### Load Capacity
-- **Concurrent Users**: 1,000+
-- **Requests/Second**: 500+
-- **Database Queries**: Optimized with indexes
-
-### Auto-Scaling
-- **Min Instances**: 2
-- **Max Instances**: 20
-- **Scale-Out Trigger**: CPU > 70% or Memory > 80%
-- **Scale-In Cooldown**: 5 minutes
 
 ---
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+2. Create a feature branch: `git checkout -b feature/your-feature`
+3. Make your changes and add relevant tests
+4. Run quality checks: `npm run lint && npm run type-check && npm test`
+5. Commit: `git commit -m 'feat: describe your change'`
+6. Push: `git push origin feature/your-feature`
+7. Open a Pull Request
 
 ---
 
-## 📝 License
+## 📄 License
 
-This project is proprietary and confidential.
+This project is proprietary and confidential. All rights reserved.
 
 ---
 
-*Last Updated: February 15, 2026*
+*Last updated: February 20, 2026*

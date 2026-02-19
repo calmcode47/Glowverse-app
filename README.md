@@ -1,26 +1,34 @@
-# Glowverse - AI/AR Beauty & Grooming Platform
+# Glowverse — AI/AR Beauty & Grooming Platform
 
-[![Node.js](https://img.shields.io/badge/Node.js-18+-green.svg)](https://nodejs.org/)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.3+-blue.svg)](https://www.typescriptlang.org/)
-[![React Native](https://img.shields.io/badge/React%20Native-0.81-blue.svg)](https://reactnative.dev/)
-[![Expo](https://img.shields.io/badge/Expo-54-black.svg)](https://expo.dev/)
-[![License](https://img.shields.io/badge/License-Proprietary-red.svg)]()
+<div align="center">
 
-**An immersive AI- and AR-powered beauty platform combining virtual try-on, skin analysis, personalized recommendations, e-commerce, and wellness tracking to help users discover products, visualize results in real-time, and make confident purchase decisions.**
+[![Node.js](https://img.shields.io/badge/Node.js-18%2B-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.7%2B-3178C6?style=for-the-badge&logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![React Native](https://img.shields.io/badge/React%20Native-0.81-61DAFB?style=for-the-badge&logo=react&logoColor=black)](https://reactnative.dev/)
+[![Expo](https://img.shields.io/badge/Expo%20SDK-54-000020?style=for-the-badge&logo=expo&logoColor=white)](https://expo.dev/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15%2B-4169E1?style=for-the-badge&logo=postgresql&logoColor=white)](https://www.postgresql.org/)
+[![Redis](https://img.shields.io/badge/Redis-7%2B-DC382D?style=for-the-badge&logo=redis&logoColor=white)](https://redis.io/)
+[![License](https://img.shields.io/badge/License-Proprietary-FF0000?style=for-the-badge)](LICENSE)
+
+**An immersive AI- and AR-powered beauty platform combining virtual try-on, skin analysis, personalized product recommendations, e-commerce, and wellness tracking — helping users discover products, visualize results in real-time, and make confident purchase decisions.**
+
+[Backend API](#-backend) · [Frontend App](#-frontend) · [Quick Start](#-quick-start) · [API Reference](backend/docs/API_REFERENCE.md) · [Deployment](backend/docs/DEPLOYMENT_GUIDE.md)
+
+</div>
 
 ---
 
 ## 📊 Project Status
 
 | Component | Status | Completion | Notes |
-|-----------|--------|------------|-------|
-| **Backend API** | ✅ Stable | 88% | Core API complete; payments + notifications delivery still partial |
-| **Database** | ✅ Stable | 95% | Prisma schema + seeds; ongoing refinements for production data |
-| **CI/CD Pipeline** | ✅ Stable | 90% | Workflows in place; env + release hardening ongoing |
-| **Infrastructure** | ✅ Stable | 85% | Docker + monitoring; production rollout depends on env/provider setup |
-| **Frontend UI** | ✅ Stable | 90% | Core app flows are complete; payment + some integrations are partial |
-| **Testing** | ✅ Stable | 80% | Unit + integration + E2E coverage for key flows; expand edge cases |
-| **Documentation** | ✅ In Progress | 85% | Backend docs strong; project report summarizes completion + gaps |
+|-----------|:------:|:----------:|-------|
+| **Backend API** | ✅ Stable | 88% | 65+ endpoints across 16 modules; payments & notification delivery in progress |
+| **Database** | ✅ Stable | 95% | Prisma schema with 25+ models, indexes, seeds, and migration history |
+| **Frontend UI** | ✅ Stable | 90% | 76+ components, 30+ screens; AR/AI production hardening ongoing |
+| **CI/CD Pipeline** | ✅ Stable | 90% | 7 GitHub Actions workflows (test, build, deploy, backup, perf) |
+| **Infrastructure** | ✅ Stable | 85% | Docker, AWS ECS auto-scaling, Terraform, Kubernetes HPA |
+| **Testing** | ✅ Stable | 80% | Unit, integration, and E2E (Detox) coverage across both packages |
+| **Documentation** | ✅ In Progress | 85% | 26 backend docs; frontend docs and API reference are complete |
 
 ---
 
@@ -28,35 +36,40 @@
 
 ```
 Glowverse-app/
-├── backend/                 # Node.js + Express + TypeScript API
+├── backend/                    # Node.js + Express + TypeScript REST API
 │   ├── src/
-│   │   ├── config/          # App configuration (env, redis, sentry, cloudinary)
-│   │   ├── controllers/     # 16 route controllers
-│   │   ├── middleware/       # Auth, rate-limit, cache, validation, security
-│   │   ├── routes/          # 17 route files (60+ endpoints)
-│   │   ├── services/        # 19 business logic services
-│   │   ├── types/           # TypeScript type definitions
-│   │   └── utils/           # Utilities and helpers
-│   ├── prisma/              # Database schema & migrations
-│   ├── __tests__/           # 14 integration tests + 1 e2e test
-│   ├── scripts/             # 6 DevOps scripts (backup, deploy, rollback)
-│   ├── docs/                # 21 documentation files + runbooks
-│   └── .github/workflows/   # 6 CI/CD workflow files
-├── frontend/                # React Native + Expo mobile app
+│   │   ├── config/             # Env, Redis, Sentry, Cloudinary, tracing
+│   │   ├── controllers/        # 16 route controllers
+│   │   ├── middleware/         # Auth, adaptive rate-limit, DDoS, cache, CSRF
+│   │   ├── routes/             # 20 route files (65+ endpoints)
+│   │   ├── services/           # 21 business-logic & performance services
+│   │   ├── types/              # TypeScript type definitions
+│   │   └── utils/              # Helpers, performance metrics, DB metrics
+│   ├── prisma/                 # Schema (25+ models), migrations, seeds
+│   ├── __tests__/              # 14 integration + 1 e2e + 4 unit suites
+│   ├── load-tests/             # Artillery load & stress test scenarios
+│   ├── infrastructure/         # Terraform (ECS) & Kubernetes HPA configs
+│   ├── scripts/                # DevOps: backup, deploy, rollback, cost analysis
+│   ├── docs/                   # 26 documentation files & runbooks
+│   └── .github/workflows/      # 7 CI/CD workflow files
+│
+├── frontend/                   # React Native + Expo cross-platform app
 │   ├── src/
-│   │   ├── components/      # 12 component categories (76+ components)
-│   │   ├── screens/         # 17 screen categories (30+ screens)
-│   │   ├── navigation/      # React Navigation setup
-│   │   ├── services/        # API client services
-│   │   ├── hooks/           # Custom React hooks
-│   │   ├── context/         # React context providers
-│   │   ├── theme/           # Design system & theming
-│   │   └── utils/           # Utility functions
-│   ├── assets/              # Images, fonts, icons
-│   └── __tests__/           # Component tests
-├── docker-compose.yml       # Local development services
-├── render.yaml              # Render deployment config
-└── railway.json             # Railway deployment config
+│   │   ├── components/         # 76+ components across 12 categories
+│   │   ├── screens/            # 30+ screens across 17 categories
+│   │   ├── navigation/         # React Navigation 7 configuration
+│   │   ├── services/           # API client, analytics, offline queue, cache
+│   │   ├── hooks/              # Custom React hooks
+│   │   ├── context/            # React context providers
+│   │   ├── theme/              # Design system, tokens, light/dark theming
+│   │   └── utils/              # Utility functions
+│   ├── e2e/                    # Detox E2E test suites
+│   ├── assets/                 # Images, fonts, Lottie animations
+│   └── app-store-assets/       # App Store screenshots and metadata
+│
+├── docker-compose.yml          # Local development services (Postgres, Redis)
+├── render.yaml                 # Render deployment configuration
+└── railway.json                # Railway deployment configuration
 ```
 
 ---
@@ -64,143 +77,115 @@ Glowverse-app/
 ## 🚀 Quick Start
 
 ### Prerequisites
-- **Node.js** 18+ installed
-- **npm** package manager
-- **PostgreSQL** (for production) or **Docker** (recommended)
-- **Expo CLI** (for mobile development)
 
-### 1. Clone Repository
+| Requirement | Version | Notes |
+|-------------|---------|-------|
+| Node.js | 18+ | Required for both packages |
+| npm | 9+ | Comes bundled with Node.js |
+| PostgreSQL | 15+ | Or use Docker (recommended) |
+| Redis | 7+ | Or use Docker (recommended) |
+| Docker | Latest | Optional — simplifies local services |
+| Expo CLI | Latest | Required for mobile development |
+
+### 1. Clone the Repository
+
 ```bash
 git clone <repository-url>
 cd Glowverse-app
 ```
 
 ### 2. Backend Setup
+
 ```bash
 cd backend
 
 # Install dependencies
 npm install
 
-# Setup environment
+# Configure environment variables
 cp .env.example .env
-# Edit .env with your configuration
+# Edit .env — see Environment Variables section below
 
-# Setup database (Docker recommended)
-docker-compose up -d postgres
+# Start infrastructure services (Docker recommended)
+docker-compose up -d postgres redis
 
-# Initialize database
+# Initialise database: generate Prisma client → run migrations → seed data
 npm run db:setup
 
-# Start development server
+# Start the development server (hot reload via tsx watch)
 npm run dev
 ```
 
-**Backend running at:** `http://localhost:5000`
-**Health check:** `http://localhost:5000/health`
+> **Backend running at:** `http://localhost:5000`
+> **Health check:** `http://localhost:5000/health`
 
 ### 3. Frontend Setup
+
 ```bash
 cd frontend
 
 # Install dependencies
 npm install
 
-# Start Expo development server (Windows & macOS)
+# Start Expo development server
+# Windows & macOS: defaults to tunnel mode with automatic LAN fallback
 npm start
 
 # Platform launchers
-npm run web
-npm run ios          # macOS only
-npm run android
+npm run web       # Open in browser
+npm run android   # Android emulator / device
+npm run ios       # iOS simulator (macOS only)
 
-# Connectivity modes
-# Windows and macOS default to tunnel; auto-fallback to LAN if tunnel fails
-npm run start:tunnel # Force tunnel on any OS
-npm run start:lan    # Prefer LAN (same Wi‑Fi, VPNs off)
-# Force a specific LAN IP if needed
-HOST_IP=YOUR_MAC_IP npm run start:lan
+# Connectivity options
+npm run start:tunnel   # Force tunnel (any OS)
+npm run start:lan      # Prefer LAN (same Wi-Fi, VPN off)
 ```
 
-**Frontend running at:** `http://localhost:8081`
+> **Frontend running at:** `http://localhost:8081`
+
+#### Windows-Specific Note
+If LAN mode is blocked by Windows Firewall, run:
+```powershell
+powershell -ExecutionPolicy Bypass -File .\windows_fix.ps1
+```
+This opens port 8081 and sets the correct bundler host.
 
 ---
 
-## 🌟 Key Features
+## 🌟 Feature Overview
 
-### Backend (16 Modules)
+### Backend — 16 Modules, 65+ Endpoints
 
-| Module | Description |
-|--------|-------------|
-| 🔐 **Authentication** | JWT + refresh tokens, registration, login, password management |
-| 👤 **User Management** | Profile CRUD, avatar uploads, preferences |
-| 🛒 **E-Commerce** | Product catalog, cart, orders, favorites, wishlist |
-| 📢 **Notifications** | Push notifications, in-app notification center |
-| 🎁 **Promotions** | Discount codes (% & fixed), seasonal campaigns |
-| 🤝 **Referrals** | Referral program with code generation & rewards |
-| 💪 **Fitness** | Activity logging, goal tracking, progress analytics |
-| 📚 **Guides** | Beauty tutorials with steps, likes, bookmarks, comments |
-| 🔍 **Search** | Cross-entity search with suggestions & trending |
-| 🎨 **AR/AI** | PerfectCorp integration for skin analysis & virtual try-on |
-| 📤 **Upload** | File upload with Cloudinary & Sharp image processing |
-| 📊 **Analysis** | Skin analysis results and product recommendations |
-| 🔄 **Try-On** | Virtual makeup try-on sessions |
-| 📈 **Monitoring** | Sentry error tracking, Winston logging |
-| 🛡️ **Security** | Helmet, CORS, rate limiting, CSRF, XSS protection |
-| 💾 **Caching** | Redis-based caching with IORedis |
+| Module | Endpoint | Highlights |
+|--------|----------|------------|
+| 🔐 **Authentication** | `/auth/*` | JWT + refresh tokens, bcrypt hashing, secure sessions |
+| 👤 **User Management** | `/users/*` | Profile CRUD, avatar uploads, preferences |
+| 🛒 **E-Commerce** | `/products/*`, `/cart/*`, `/orders/*` | Full catalog, cart, order lifecycle |
+| 📢 **Notifications** | `/notifications/*` | In-app notification center with preferences |
+| 🎁 **Promotions** | `/promotions/*` | Percentage & fixed discount codes, validation |
+| 🤝 **Referrals** | `/referrals/*` | Code generation, usage tracking, rewards & stats |
+| 💪 **Fitness** | `/fitness/*` | Activity logging, goal tracking, progress analytics |
+| 📚 **Beauty Guides** | `/guides/*` | Tutorials with steps, likes, bookmarks, comments |
+| 🔍 **Search** | `/search/*` | Global search, suggestions, trending terms |
+| 🎨 **AR / AI** | `/perfectcorp/*`, `/tryon/*`, `/analysis/*` | PerfectCorp virtual try-on & skin analysis |
+| 📤 **File Upload** | `/upload` | Cloudinary integration with Sharp image processing |
+| 🛡️ **Admin** | `/admin/*`, `/metrics` | Rate-limit management, performance metrics |
+| 💾 **Caching & Perf** | — | Redis caching, adaptive rate limiting, DDoS protection |
 
-#### Backend Completion (≈ 88%)
-- Implemented
-  - Auth (JWT + refresh), users/profile, products/catalog/search, cart and orders core flows
-  - Addresses CRUD with API + local/demo fallback
-  - Promotions/referrals modules (API surface + basic flows)
-  - Observability and hardening: logging, rate limiting, security middleware, runbooks
-- Remaining
-  - Payments: create payment intents / checkout sessions and fully wire Stripe flow end-to-end
-  - Notifications delivery: integrate real email/push/SMS providers + background queue
-  - Promotions in checkout: apply promo/discount consistently during order total calculation
-  - Final QA hardening: fix known edge-case handlers and expand integration coverage
+### Frontend — React Native + Expo
 
-### Frontend (React Native + Expo)
-
-| Feature | Description |
-|---------|-------------|
-| 📱 **Cross-Platform** | iOS, Android, and Web support |
-| 🎨 **76+ Components** | Buttons, cards, animations, AR views |
-| 📱 **30+ Screens** | Auth, shopping, AR, analysis, profile |
-| 🛒 **Cart & Checkout** | Multi‑step checkout with Stripe integration points |
-| 🧠 **AI & AR** | Virtual try‑on, skin analysis, recommendations |
-| 🔌 **API Layer** | Typed services for products, cart, orders, users, promos |
-| 📶 **Offline** | Request queue with auto‑sync, optimistic cart, caching |
-| 📈 **Analytics** | Firebase Analytics for screens and commerce funnels |
-| ✨ **Animations & UX** | Parallax, reveals, micro‑interactions |
-| 🎭 **Design System** | Light/dark themes, tokens, consistent UI |
-
-#### Frontend Completion (≈ 90%)
-- Implemented
-  - Authentication with token refresh; secure token storage
-  - Product catalog, detail pages with galleries and variants
-  - Cart operations, promo codes, multi‑step checkout
-  - **Refined Promotion UI**: Coupon-style design with one-tap copy functionality
-  - **Social Sharing**: Native system-level sharing for products and referral codes
-  - **Notification Center**: Granular user preferences with real-time backend synchronization
-  - **Fitness Tracking**: Comprehensive dashboard with goal progress and activity charts
-  - Orders list/detail, addresses CRUD, profile update
-  - AR virtual try‑on with capture and overlays
-  - AI skin analysis flow and results
-  - Search with filters; favorites and promotions
-  - Offline request queue, optimistic cart, product caching
-  - Analytics (extended): wishlist add/remove, filter apply/remove/sort, notification received/opened/dismissed, promo viewed/copied/applied/failed, payment selected/added, review started/submitted; plus view_item, add/remove cart, begin_checkout, purchase, search, try‑on and analysis, screen views
-  - Accessibility: alt text and labels for images, labeled icon buttons with roles/hints, touch‑target enforcement, contrast audit script
-  - Quality tooling: OpenAPI endpoint coverage audit; integration test scaffold for live backend; E2E deep linking and payment decline path
-  - Performance: image preloading, FlatList tuning, lazy-loaded screens, CI bundle-size budgets
-  - Build & Release: EAS profiles (dev/preview/prod), PR checks, production auto-submit workflows, store asset scaffolding, asset verification/optimization scripts, EAS projectId verification
-- Remaining
-  - End‑to‑end payments: server-issued client secret + webhook-driven order state
-  - AR/AI production hardening: native SDK linkage/config and device QA pass
-  - Offline queue UX: syncing state, user-facing conflict resolution UI
-  - Tech debt cleanup: remove duplicate/legacy auth screens and dead routes
-  - Expand E2E: payment edge cases (3DS/timeout/network) + more profile flows
+| Feature | Details |
+|---------|---------|
+| 📱 **Cross-Platform** | iOS, Android, and Web from a single codebase |
+| 🎨 **76+ Components** | Buttons, cards, animated wrappers, AR overlays, glassmorphism UI |
+| 📱 **30+ Screens** | Auth, catalog, AR try-on, skin analysis, fitness, guides, profile |
+| 🛒 **E-Commerce** | Multi-step checkout with Stripe card, Apple Pay & Google Pay |
+| 🧠 **AI & AR** | Virtual try-on with frame capture, AI skin analysis overlays |
+| 📶 **Offline-First** | Async request queue auto-synced on reconnect, optimistic cart UI |
+| 📈 **Analytics** | Firebase Analytics — screens, commerce funnels, AR/AI, referrals |
+| ✨ **Design System** | Light/dark themes, design tokens, Reanimated micro-interactions |
+| 🔌 **Typed API Layer** | Full Axios client with retry/backoff, deduplication, health monitoring |
+| ♿ **Accessibility** | Descriptive labels, focus management, touch-target enforcement |
 
 ---
 
@@ -209,118 +194,121 @@ HOST_IP=YOUR_MAC_IP npm run start:lan
 ### Backend
 | Technology | Version | Purpose |
 |------------|---------|---------|
-| Node.js | 18+ | Runtime |
-| TypeScript | 5.3+ | Type safety |
-| Express | 4.18 | Web framework |
-| Prisma | 5.7 | ORM (PostgreSQL) |
-| Jest + Supertest | 29.7 | Testing |
-| Redis (IORedis) | 5.9 | Caching |
-| Winston | 3.11 | Logging |
-| Sentry | 10.38 | Error tracking |
+| Node.js | 18+ | JavaScript runtime |
+| TypeScript | 5.7+ | Type safety |
+| Express | 4.21 | Web framework |
+| Prisma | 6.3 | ORM (PostgreSQL) |
+| Redis (IORedis) | 5.4 | Caching & rate limiting |
+| Winston | 3.17 | Structured logging |
+| Sentry | 8.54 | Error tracking & APM |
 | Sharp | 0.33 | Image processing |
-| Cloudinary | 2.9 | Image hosting |
-| Zod | 4.3 | Validation |
+| Cloudinary | 2.5 | Image hosting & CDN |
+| Stripe | 17.6 | Payment processing |
+| Zod | 3.24 | Runtime validation |
+| Jest + Supertest | 29.7 | Testing |
 
 ### Frontend
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | React Native | 0.81 | Mobile framework |
-| Expo SDK | 54 | Development platform |
+| Expo SDK | 54 | Build & development platform |
 | TypeScript | 5.9 | Type safety |
-| React Navigation | 7 | Routing |
-| React Native Paper | 5 | UI components |
-| React Native Reanimated | 4.1 | Animations |
+| React Navigation | 7 | Routing & navigation |
+| React Native Reanimated | 4.1 | Smooth animations |
+| React Native Paper | 5 | Material Design components |
 | Axios | 1.13 | HTTP client |
+| TanStack Query | 5 | Server state management |
+| Stripe React Native | 0.33 | Payments |
+| Firebase | 23 | Analytics & push notifications |
+| Detox | 20 | E2E testing |
 
-### DevOps
+### DevOps & Infrastructure
 | Technology | Purpose |
 |------------|---------|
-| GitHub Actions | CI/CD (6 workflows) |
-| Docker | Containerization |
-| AWS (ECS, RDS, S3) | Cloud infrastructure |
-| Sentry | Error tracking |
+| GitHub Actions | CI/CD (7 workflows) |
+| Docker | Containerisation & local dev |
+| AWS ECS + RDS + S3 | Cloud production infrastructure |
+| Terraform | Infrastructure as Code (ECS auto-scaling) |
+| Kubernetes HPA | Container orchestration scaling |
+| Sentry | Error tracking & performance monitoring |
 
 ---
 
-## 🔌 API Overview
+## 🔌 API Reference
 
 **Base URL:** `http://localhost:5000/api/v1`
 
 | Module | Endpoint | Methods |
 |--------|----------|---------|
-| **Auth** | `/auth/*` | POST (register, login, refresh, logout) |
-| **Users** | `/users/*` | GET, PUT, DELETE (profile, preferences) |
-| **Products** | `/products/*` | GET (catalog, search, categories) |
-| **Cart** | `/cart/*` | GET, POST, PUT, DELETE (cart management) |
-| **Orders** | `/orders/*` | GET, POST, PUT (order lifecycle) |
-| **Favorites** | `/favorites/*` | GET, POST, DELETE (wishlist) |
-| **Notifications** | `/notifications/*` | GET, PUT, DELETE (CRUD) |
-| **Promotions** | `/promotions/*` | GET, POST (discount codes) |
-| **Referrals** | `/referrals/*` | GET, POST (codes, rewards, stats) |
-| **Fitness** | `/fitness/*` | GET, POST, PUT, DELETE (activities, goals) |
-| **Guides** | `/guides/*` | GET, POST, PUT, DELETE (tutorials, engagement) |
-| **Search** | `/search/*` | GET (global search, suggestions) |
-| **Upload** | `/upload` | POST (file uploads) |
-| **Analysis** | `/analysis/*` | POST, GET (skin analysis) |
-| **Try-On** | `/tryon/*` | POST, GET (virtual makeup) |
-| **PerfectCorp** | `/perfectcorp/*` | POST, GET (AI/AR services) |
-
-**Total:** 60+ RESTful endpoints
+| Auth | `/auth/*` | POST — register, login, refresh, logout |
+| Users | `/users/*` | GET, PUT, DELETE — profile & preferences |
+| Products | `/products/*` | GET — catalog, details, categories, search |
+| Cart | `/cart/*` | GET, POST, PUT, DELETE |
+| Orders | `/orders/*` | GET, POST, PUT — full lifecycle |
+| Favorites | `/favorites/*` | GET, POST, DELETE |
+| Notifications | `/notifications/*` | GET, PUT, DELETE |
+| Promotions | `/promotions/*` | GET, POST — validation & application |
+| Referrals | `/referrals/*` | GET, POST — codes & rewards |
+| Fitness | `/fitness/*` | GET, POST, PUT, DELETE |
+| Guides | `/guides/*` | GET, POST, PUT, DELETE |
+| Search | `/search/*` | GET — query, suggestions, trending |
+| Upload | `/upload` | POST |
+| Skin Analysis | `/analysis/*` | POST, GET |
+| Virtual Try-On | `/tryon/*` | POST, GET |
+| PerfectCorp | `/perfectcorp/*` | POST, GET |
 
 📖 **Full API Reference:** [backend/docs/API_REFERENCE.md](backend/docs/API_REFERENCE.md)
 
 ---
 
-## 🧪 Testing
+## 🗄️ Database
 
-### Backend Tests
+### Schema — 25+ Prisma Models
+
+| Domain | Models |
+|--------|--------|
+| **Users** | `User`, `UserProfile`, `UserPreferences` |
+| **E-Commerce** | `Product`, `Category`, `Cart`, `CartItem`, `Order`, `OrderItem`, `Favorite` |
+| **Content** | `Guide`, `GuideStep`, `GuideComment`, `GuideLike`, `GuideBookmark` |
+| **Fitness** | `FitnessActivity`, `FitnessGoal` |
+| **Promotions** | `Promotion`, `ReferralCode`, `ReferralUsage` |
+| **Notifications** | `Notification` |
+| **AI / AR** | `SkinAnalysis`, `TryOnSession` |
+
 ```bash
-cd backend
-
-npm test                    # Run all tests
-npm run test:coverage       # With coverage report
-npm run test:integration    # Integration tests only
-npm run test:verbose        # Verbose output
-npm run test:ci             # CI mode (coverage + limited workers)
-```
-
-**Test Suites (14 integration + 1 e2e + 4 service specs):**
-- Auth, Users, E-Commerce (products, cart, orders)
-- Notifications, Promotions, Referrals
-- Fitness, Guides, Search
-- PerfectCorp, Upload, Image, Storage
-- User Journey (e2e)
-- Cart, Notification, Order, Promotion (service unit tests)
-
-### Frontend Tests
-```bash
-cd frontend
-npm test
+# Common database commands (run from ./backend)
+npm run prisma:generate     # Generate Prisma client
+npm run prisma:migrate      # Apply pending migrations
+npm run prisma:seed         # Seed with sample data
+npm run prisma:studio       # Open Prisma Studio GUI
+npm run db:setup            # All-in-one: generate + migrate + seed
 ```
 
 ---
 
-## 🗄️ Database
+## 🧪 Testing
 
-### Schema: 25+ Prisma Models
-
-| Domain | Models |
-|--------|--------|
-| **Users** | User, UserProfile, UserPreferences |
-| **E-Commerce** | Product, Category, Cart, CartItem, Order, OrderItem, Favorite |
-| **Content** | Guide, GuideStep, GuideComment, GuideLike, GuideBookmark |
-| **Fitness** | FitnessActivity, FitnessGoal |
-| **Promotions** | Promotion, ReferralCode, ReferralUsage |
-| **Notifications** | Notification |
-| **Analysis** | SkinAnalysis, TryOnSession |
-
+### Backend
 ```bash
-npm run prisma:generate      # Generate Prisma client
-npm run prisma:migrate       # Run migrations
-npm run prisma:seed          # Seed database
-npm run prisma:studio        # Open Prisma Studio
-npm run db:setup             # All-in-one setup
+cd backend
+npm test                    # All test suites
+npm run test:coverage       # Coverage report
+npm run test:integration    # Integration tests only
+npm run test:verbose        # Verbose mode
+npm run test:ci             # CI mode (limited workers)
 ```
+**19 test suites:** 14 integration · 1 E2E · 4 service unit tests
+
+### Frontend
+```bash
+cd frontend
+npm test                    # Unit tests
+npm run test:coverage       # Coverage report
+npm run e2e:ios:test        # Detox E2E (iOS)
+npm run e2e:android:test    # Detox E2E (Android)
+```
+
+> ⚠️ Backend integration tests require PostgreSQL. Use `docker-compose up -d postgres` or configure `.env.test`.
 
 ---
 
@@ -328,9 +316,9 @@ npm run db:setup             # All-in-one setup
 
 ### Docker (Local Development)
 ```bash
-docker-compose up -d         # Start all services
-docker-compose logs -f       # View logs
-docker-compose down          # Stop services
+docker-compose up -d          # Start all services (Postgres + Redis)
+docker-compose logs -f        # Stream logs
+docker-compose down           # Stop all services
 ```
 
 ### Production Docker
@@ -342,19 +330,93 @@ docker-compose -f docker-compose.production.yml up -d
 
 | Workflow | Trigger | Description |
 |----------|---------|-------------|
-| `ci.yml` | PR / Push | Lint, test, security scan |
-| `test.yml` | PR | Run test suite with Postgres/Redis |
-| `build.yml` | Push to main/staging | Build & push Docker images |
-| `deploy-staging.yml` | Push to staging | Auto-deploy to staging |
-| `deploy-production.yml` | Release tag | Production deploy with approval |
-| `database-backup.yml` | Daily (2 AM UTC) | Encrypted database backups |
+| `ci.yml` | PR / Push | Lint, test, security scan, performance regression |
+| `test.yml` | PR | Test suite with Postgres & Redis services |
+| `build.yml` | Push to main/staging | Docker build + push + Trivy vulnerability scan |
+| `deploy-staging.yml` | Push to staging | Automated staging deployment |
+| `deploy-production.yml` | Release tag | Production deploy with manual approval gate |
+| `database-backup.yml` | Daily 2 AM UTC | Encrypted GPG-AES-256 backups to S3 |
+| `load-test.yml` | Manual / Weekly | Automated Artillery load testing |
 
 ### Cloud Platforms
-- **Render:** `render.yaml` configuration included
-- **Railway:** `railway.json` configuration included
-- **AWS ECS:** Full deployment guide in docs
+- **Render** — `render.yaml` configuration included
+- **Railway** — `railway.json` configuration included
+- **AWS ECS** — Full Terraform & deployment guide in [`backend/docs`](backend/docs/)
 
 📖 **Deployment Guide:** [backend/docs/DEPLOYMENT_GUIDE.md](backend/docs/DEPLOYMENT_GUIDE.md)
+
+---
+
+## 🔐 Environment Variables
+
+### Backend (`backend/.env`)
+```env
+# Server
+NODE_ENV=development
+PORT=5000
+API_VERSION=v1
+
+# Database
+DATABASE_URL=postgresql://user:password@localhost:5432/glowverse
+
+# Authentication
+JWT_SECRET=your-super-secret-jwt-key
+JWT_REFRESH_SECRET=your-super-secret-refresh-key
+JWT_EXPIRES_IN=15m
+JWT_REFRESH_EXPIRES_IN=7d
+
+# CORS
+CORS_ORIGIN=http://localhost:3000,http://localhost:8081
+
+# Services (optional for local dev)
+CLOUDINARY_CLOUD_NAME=your-cloud-name
+CLOUDINARY_API_KEY=your-api-key
+CLOUDINARY_API_SECRET=your-api-secret
+PERFECTCORP_API_KEY=your-api-key
+STRIPE_SECRET_KEY=sk_test_your-key
+REDIS_URL=redis://localhost:6379
+SENTRY_DSN=your-sentry-dsn
+```
+
+### Frontend (`frontend/app.json` extras)
+```env
+EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
+EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
+STRIPE_PUBLISHABLE_KEY=pk_test_your-key
+ANALYTICS_ID=your-firebase-id
+```
+
+---
+
+## 📦 Sample Data
+
+After running `npm run db:setup` from the `backend/` directory:
+
+| Type | Details |
+|------|---------|
+| **Test Accounts** | `admin@glowverse.com / Admin@123` · `demo@glowverse.com / Demo@123` |
+| **Products** | 50+ products across 10 categories |
+| **Promo Codes** | `WELCOME15` (15%) · `GLOW25` (25%) · `FLAT10` ($10 off) |
+| **Beauty Guides** | 15–20 tutorials with step-by-step instructions |
+
+---
+
+## 🔒 Security
+
+| Feature | Implementation |
+|---------|---------------|
+| Authentication | JWT with refresh token rotation |
+| Password Hashing | bcrypt with 12 rounds |
+| Rate Limiting | Adaptive tier-based limiting with behaviour analysis |
+| DDoS Protection | Pattern detection, IP reputation, automatic blocking |
+| Headers | Helmet security headers |
+| CORS | Allowlist-only CORS policy |
+| CSRF | Token-based CSRF protection |
+| XSS | Input sanitisation & xss-clean middleware |
+| SQL Injection | Prisma ORM parameterised queries |
+| File Uploads | Type & size validation with Cloudinary scanning |
+| Backups | GPG AES-256 encrypted database backups to S3 |
+| Container Security | Trivy vulnerability scanning in CI |
 
 ---
 
@@ -365,93 +427,45 @@ docker-compose -f docker-compose.production.yml up -d
 - [Deployment Guide](backend/docs/DEPLOYMENT_GUIDE.md)
 - [CI/CD Documentation](backend/docs/CI_CD.md)
 - [Security Guide](backend/docs/SECURITY.md)
+- [Rate Limiting & DDoS](backend/docs/RATE_LIMITING.md)
+- [Performance Dashboard](backend/docs/PERFORMANCE_DASHBOARD.md)
+- [Auto-Scaling](backend/docs/AUTO_SCALING.md)
 - [Backup & Recovery](backend/docs/BACKUP_RECOVERY.md)
 - [Configuration Guide](backend/docs/CONFIGURATION.md)
 - [Onboarding Guide](backend/docs/ONBOARDING.md)
-- [Production Deployment Runbook](backend/docs/PRODUCTION_DEPLOYMENT.md)
-- [Release Management](backend/docs/RELEASE_MANAGEMENT.md)
-- [GitHub Setup](backend/docs/GITHUB_SETUP.md)
-- [Environment Setup (AWS)](backend/docs/ENVIRONMENT_SETUP.md)
+- [Production Runbook](backend/docs/PRODUCTION_DEPLOYMENT.md)
 
 ### Frontend
 - [Frontend README](frontend/README.md) — Architecture, features, testing, status
-- [Project Status Report](project_report.md) — Completion %, gaps, and next steps
+- [EAS Build Guide](frontend/docs/EAS.md) — Build profiles, secrets, CI submission
 
----
-
-## 🔐 Environment Variables
-
-### Backend (.env)
-```env
-NODE_ENV=development
-PORT=5000
-API_VERSION=v1
-DATABASE_URL=postgresql://user:password@localhost:5432/glowverse
-JWT_SECRET=your-super-secret-jwt-key
-JWT_REFRESH_SECRET=your-super-secret-refresh-key
-JWT_EXPIRES_IN=15m
-JWT_REFRESH_EXPIRES_IN=7d
-CORS_ORIGIN=http://localhost:3000,http://localhost:8081
-CLOUDINARY_CLOUD_NAME=your-cloud-name
-CLOUDINARY_API_KEY=your-api-key
-CLOUDINARY_API_SECRET=your-api-secret
-PERFECTCORP_API_KEY=your-api-key
-REDIS_URL=redis://localhost:6379
-```
-
-### Frontend
-```env
-EXPO_PUBLIC_API_URL=http://localhost:5000/api/v1
-EXPO_PUBLIC_PERFECTCORP_API_KEY=your-api-key
-```
-
----
-
-## 📦 Sample Data
-
-After running `npm run db:setup`:
-
-| Type | Details |
-|------|---------|
-| **Test Accounts** | `admin@glowverse.com / Admin@123`, `demo@glowverse.com / Demo@123` |
-| **Products** | 50+ across 10 categories |
-| **Promo Codes** | `WELCOME15` (15%), `GLOW25` (25%), `FLAT10` ($10) |
-| **Guides** | 15-20 beauty tutorials with steps |
-
----
-
-## 🔒 Security
-
-- ✅ JWT authentication with refresh tokens
-- ✅ bcrypt password hashing (10 rounds)
-- ✅ Rate limiting (100 req/15min)
-- ✅ Helmet security headers
-- ✅ CORS configuration
-- ✅ CSRF protection
-- ✅ XSS prevention
-- ✅ Input sanitization
-- ✅ SQL injection protection (Prisma ORM)
-- ✅ File upload validation
-- ✅ Encrypted database backups (GPG AES-256)
+### Project
+- [Project Status Report](project_report.md) — Completion %, gaps, and go-live checklist
 
 ---
 
 ## 🤝 Contributing
 
 1. Fork the repository
-2. Create feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit changes (`git commit -m 'Add amazing feature'`)
-4. Push to branch (`git push origin feature/amazing-feature`)
-5. Open Pull Request
+2. Create a feature branch: `git checkout -b feature/your-feature-name`
+3. Make your changes and add tests where applicable
+4. Ensure checks pass: `npm run lint && npm run type-check && npm test`
+5. Commit with a descriptive message: `git commit -m 'feat: add your feature'`
+6. Push the branch: `git push origin feature/your-feature-name`
+7. Open a Pull Request — CI will run automatically
 
 ---
 
 ## 📄 License
 
-This project is proprietary software developed for the Glowverse beauty platform.
+This project is proprietary software developed for the Glowverse beauty platform. All rights reserved.
 
 ---
 
+<div align="center">
+
 **Built with ❤️ for the Glowverse beauty community**
 
-*Last Updated: February 16, 2026*
+*Last updated: February 20, 2026*
+
+</div>
