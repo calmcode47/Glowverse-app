@@ -24,7 +24,7 @@
 |-----------|:------:|:----------:|-------|
 | **Backend API** | ✅ Stable | 88% | 65+ endpoints across 16 modules; payments & notification delivery in progress |
 | **Database** | ✅ Stable | 95% | Prisma schema with 25+ models, indexes, seeds, and migration history |
-| **Frontend UI** | ✅ Stable | 90% | 76+ components, 30+ screens; AR/AI production hardening ongoing |
+| **Frontend UI** | ✅ Stable | 90% | 76+ components, 30+ screens; AR SDK bridge and AI analysis pipeline in place |
 | **CI/CD Pipeline** | ✅ Stable | 90% | 7 GitHub Actions workflows (test, build, deploy, backup, perf) |
 | **Infrastructure** | ✅ Stable | 85% | Docker, AWS ECS auto-scaling, Terraform, Kubernetes HPA |
 | **Testing** | ✅ Stable | 80% | Unit, integration, and E2E (Detox) coverage across both packages |
@@ -180,12 +180,13 @@ This opens port 8081 and sets the correct bundler host.
 | 🎨 **76+ Components** | Buttons, cards, animated wrappers, AR overlays, glassmorphism UI |
 | 📱 **30+ Screens** | Auth, catalog, AR try-on, skin analysis, fitness, guides, profile |
 | 🛒 **E-Commerce** | Multi-step checkout with Stripe card, Apple Pay & Google Pay |
-| 🧠 **AI & AR** | Virtual try-on with frame capture, AI skin analysis overlays |
+| 🧠 **AI & AR** | AR SDK bridge with Vision Camera pipeline, AI skin analysis flow |
 | 📶 **Offline-First** | Async request queue auto-synced on reconnect, optimistic cart UI |
 | 📈 **Analytics** | Firebase Analytics — screens, commerce funnels, AR/AI, referrals |
 | ✨ **Design System** | Light/dark themes, design tokens, Reanimated micro-interactions |
 | 🔌 **Typed API Layer** | Full Axios client with retry/backoff, deduplication, health monitoring |
 | ♿ **Accessibility** | Descriptive labels, focus management, touch-target enforcement |
+| 🔗 **Deep Linking** | Configured schemes and navigation handlers for app-to-app flows |
 
 ---
 

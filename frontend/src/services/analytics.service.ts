@@ -1,14 +1,8 @@
-let Analytics: any;
-try {
-  // eslint-disable-next-line @typescript-eslint/no-var-requires
-  Analytics = require("expo-firebase-analytics");
-} catch {
-  Analytics = {
-    logEvent: async () => {},
-    setUserId: async () => {},
-    setUserProperty: async () => {}
-  };
-}
+const Analytics = {
+  logEvent: async (_name?: string, _params?: Record<string, any>) => {},
+  setUserId: async (_id?: string) => {},
+  setUserProperty: async (_name?: string, _value?: string) => {}
+};
 
 // Optional Sentry integration without hard dependency
 let Sentry: any;
@@ -253,7 +247,7 @@ class AnalyticsService {
       properties: {
         promo_id: promo.id,
         promo_code: promo.code,
-        promo_type: promo.discountLabel
+        promo_type: (promo as any).discountLabel
       }
     });
   }

@@ -8,7 +8,7 @@
 [![Stripe](https://img.shields.io/badge/Stripe-0.33-635BFF?style=for-the-badge&logo=stripe&logoColor=white)](https://stripe.com/)
 [![Firebase](https://img.shields.io/badge/Firebase-23-FFCA28?style=for-the-badge&logo=firebase&logoColor=black)](https://firebase.google.com/)
 
-**Cross-platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web — featuring 76+ reusable components, 30+ screens, AR virtual try-on, AI skin analysis, offline-first architecture, and comprehensive analytics.**
+**Cross-platform mobile application for the Glowverse AI/AR beauty platform. Built with React Native and Expo for iOS, Android, and Web — featuring 76+ reusable components, 30+ screens, AR SDK bridge with real-time try-on, AI skin analysis pipeline, offline-first sync, and comprehensive analytics.**
 
 </div>
 
@@ -26,7 +26,7 @@
 | State Management | ✅ | React Context + TanStack Query |
 | Analytics | ✅ | Firebase — commerce, AR/AI, notifications, referrals |
 | Offline Support | ✅ | Request queue, optimistic cart, product caching |
-| AR / Try-On | ✅ | Virtual try-on with frame capture & overlays |
+| AR / Try-On | ✅ | AR SDK bridge, Vision Camera pipeline, frame capture & overlays |
 | Performance | ✅ | Image preloading, FlatList tuning, lazy-loaded screens |
 | Accessibility | ✅ | Labels, focus management, touch-target enforcement |
 | Testing | ✅ | Jest unit tests + Detox E2E suites |
@@ -43,11 +43,13 @@
 - Cart management with offline optimistic updates
 - Multi-step checkout — shipping → payment → review → confirmation
 - Stripe card, Apple Pay, and Google Pay integration
-- Orders list and details, address CRUD
+- Orders list and details, address CRUD, invoice sharing
 
 ### AI & AR
 - Virtual try-on powered by PerfectCorp with live frame capture and overlays
-- AI skin analysis with preprocessing and annotated results
+- AR SDK native bridge (iOS/Android) with Vision Camera frame processor
+- AR analytics, performance monitor, and screenshot capture/sharing
+- AI skin analysis with consent flow, preprocessing, and annotated results
 - Device-performance-tuned quality and frame-rate managers
 
 ### Discovery & Content
@@ -62,6 +64,7 @@
 - **Analytics:** Comprehensive Firebase events (screens, products, cart, checkout, AR, referrals, filters, payments, reviews)
 - **API reliability:** Exponential backoff retries, request deduplication, health monitoring, Sentry tagging
 - **Design system:** Design tokens, light/dark mode, Reanimated micro-interactions, glassmorphism components
+- **Deep linking:** Configured schemes and navigation handlers for app-to-app flows
 
 ---
 
@@ -149,14 +152,17 @@ frontend/
 │   ├── navigation/                 # React Navigation 7 configuration
 │   ├── services/
 │   │   ├── api/                    # Typed Axios client + auth interceptors
+│   │   ├── ai/                     # Skin analysis APIs + ML helpers
+│   │   ├── ar/                     # AR SDK orchestration & analytics
 │   │   ├── analytics.service.ts    # Firebase Analytics helper
 │   │   ├── analytics/              # Extended event types & hooks
 │   │   ├── offlineQueue.service.ts # Offline request queue
 │   │   ├── cache.service.ts        # Product detail cache
 │   │   ├── imagePreloader.service.ts # Image prefetching
 │   │   └── apiHealthMonitor.ts     # API health & latency tracking
-│   ├── hooks/                      # Custom React hooks
+│   ├── hooks/                      # Custom React hooks (AR SDK, offline, analytics)
 │   ├── context/                    # AuthContext, CartContext, ThemeContext
+│   ├── modules/                    # AR SDK native bridge (iOS/Android)
 │   ├── config/                     # App-level configuration
 │   ├── constants/                  # Shared constants
 │   ├── theme/                      # Design tokens, colours, typography
@@ -186,7 +192,8 @@ frontend/
 | Technology | Version | Purpose |
 |------------|---------|---------|
 | React Native | 0.81.5 | Cross-platform mobile framework |
-| Expo SDK | 54 | Build & development platform |
+| Expo SDK | 54.0 | Build & development platform |
+| React | 19.1 | UI library |
 | TypeScript | 5.9 | Type safety |
 | React Navigation | 7 | Stack & tab routing, deep links |
 | React Native Reanimated | 4.1 | 60fps animations & gestures |
@@ -207,6 +214,7 @@ frontend/
 | Firebase | 23 | Analytics & push messaging |
 | Stripe React Native | 0.33 | Card, Apple Pay, Google Pay |
 | Sentry React Native | 8 | Error tracking & performance |
+| Vision Camera | 4.7 | High-performance camera pipeline |
 | Detox | 20 | E2E automation tests |
 | Fuse.js | 7.1 | Client-side fuzzy search |
 
@@ -309,6 +317,16 @@ STRIPE_PUBLISHABLE_KEY=pk_test_your-stripe-key
 STRIPE_MERCHANT_ID=merchant.com.glowverse.dev
 ANALYTICS_ID=your-firebase-analytics-id
 SENTRY_DSN=your-sentry-dsn
+
+# AR SDK (native bridge)
+AR_SDK_VENDOR=perfectcorp
+AR_SDK_ENABLED=true
+AR_SDK_API_KEY=your-ar-sdk-api-key
+AR_SDK_LICENSE_KEY=your-ar-sdk-license
+AR_SDK_API_URL=https://your-ar-sdk-api
+AR_TARGET_FPS=30
+AR_ENABLE_GPU_ACCELERATION=true
+AR_MAX_TEXTURE_CACHE_SIZE_MB=64
 ```
 
 ---
