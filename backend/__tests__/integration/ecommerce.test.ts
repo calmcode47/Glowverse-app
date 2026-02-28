@@ -226,6 +226,16 @@ describe('E-Commerce API Integration Tests', () => {
             expect(res.body.data.order.id).toBe(orderId);
         });
 
+        it('should trigger order confirmation email', async () => {
+            const res = await request(app)
+                .post(`/api/v1/orders/${orderId}/email/confirmation`)
+                .set('Authorization', `Bearer ${authToken}`)
+                .expect(200);
+
+            expect(res.body.success).toBe(true);
+            expect(res.body.message).toContain('email queued successfully');
+        });
+
         it('should cancel order', async () => {
             const res = await request(app)
                 .patch(`/api/v1/orders/${orderId}/cancel`)

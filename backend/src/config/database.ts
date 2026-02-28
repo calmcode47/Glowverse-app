@@ -78,7 +78,8 @@ const getConfig = () => require('./index').config;
 
 // Defer environment check until after all imports have settled (ESM hoisting fix)
 setImmediate(() => {
-  if (getConfig().server.env !== 'production') {
+  const config = getConfig();
+  if (config?.server?.env !== 'production') {
     globalForPrisma.prisma = prisma;
   }
 });
@@ -93,12 +94,18 @@ process.on('beforeExit', async () => {
 
 // Defer logger initialization until after ESM imports and validateEnv() have run
 setImmediate(() => {
-  const logger = require('../utils/logger').default;
-  const config = getConfig();
-  logger.info('Database connection initialized', {
-    environment: config.server.env,
-    recommendedPoolSize: calculatePoolSize(),
-  });
+  try {
+    const logger = require('../utils/logger').default;
+    const config = getConfig();
+    if (logger && config?.server) {
+      logger.info('Database connection initialized', {
+        environment: config.server.env,
+        recommendedPoolSize: calculatePoolSize(),
+      });
+    }
+  } catch (e) {
+    // Ignore during Jest teardown
+  }
 });
 
 export default prisma;

@@ -27,6 +27,7 @@ router.get('/', OrderController.getUserOrders);
 router.get('/stats', OrderController.getOrderStatistics);
 router.get('/:id', OrderController.getOrderById);
 router.patch('/:id/cancel', OrderController.cancelOrder);
+router.post('/:id/email/confirmation', OrderController.sendOrderConfirmation);
 
 // Admin only routes would go here (e.g. update status)
 router.patch('/:id/status', authorize('ADMIN'), OrderController.updateOrderStatus);

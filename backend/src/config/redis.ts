@@ -36,8 +36,12 @@ const getRedisClient = () => {
         });
 
         redisClient.on('error', (err) => {
-            const logger = require('../utils/logger').default;
-            logger.error('Redis connection error', { error: err.message });
+            try {
+                const logger = require('../utils/logger').default;
+                if (logger) logger.error('Redis connection error', { error: err.message });
+            } catch (e) {
+                // Ignore during Jest teardown
+            }
         });
 
         redisClient.on('close', () => {

@@ -17,6 +17,7 @@ import uploadRoutes from "./upload.routes";
 import rateLimitRoutes from "./admin/rate-limits.routes";
 import metricsRoutes from "./metrics.routes";
 import webhookRoutes from "./webhook.routes";
+import paymentRoutes from "./payment.routes";
 
 export {
     authRoutes,
@@ -36,7 +37,8 @@ export {
     uploadRoutes,
     rateLimitRoutes,
     metricsRoutes,
-    webhookRoutes
+    webhookRoutes,
+    paymentRoutes
 };
 
 /**
@@ -52,11 +54,12 @@ export const registerRoutes = (app: Application, apiPrefix: string): void => {
     app.use(`${apiPrefix}/users`, userRoutes);
 
     // ============================================
-    // E-COMMERCE
+    // E-COMMERCE & PAYMENTS
     // ============================================
     app.use(`${apiPrefix}/products`, productRoutes);
     app.use(`${apiPrefix}/cart`, cartRoutes);
     app.use(`${apiPrefix}/orders`, orderRoutes);
+    app.use(`${apiPrefix}/payments`, paymentRoutes);
 
     // ============================================
     // CORE FEATURES
@@ -113,6 +116,7 @@ export const getRegisteredRoutes = (apiPrefix: string) => {
         products: `${apiPrefix}/products`,
         cart: `${apiPrefix}/cart`,
         orders: `${apiPrefix}/orders`,
+        payments: `${apiPrefix}/payments`,
         analysis: `${apiPrefix}/analysis`,
         tryon: `${apiPrefix}/tryon`,
         favorites: `${apiPrefix}/favorites`,

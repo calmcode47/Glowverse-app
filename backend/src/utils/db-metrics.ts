@@ -22,37 +22,9 @@ export const dbQueryTotal = new Counter({
  * Uses Prisma middleware to track query performance
  */
 export const initDbMetrics = () => {
-    // @ts-ignore - Prisma middleware types can be tricky
-    prisma.$use(async (params, next) => {
-        const start = Date.now();
-
-        try {
-            const result = await next(params);
-            const duration = Date.now() - start;
-
-            dbQueryDuration.observe(
-                { operation: params.action, model: params.model || 'unknown' },
-                duration
-            );
-
-            dbQueryTotal.inc({
-                operation: params.action,
-                model: params.model || 'unknown',
-            });
-
-            return result;
-        } catch (error) {
-            // Still record the query attempt and fail duration
-            const duration = Date.now() - start;
-            dbQueryDuration.observe(
-                { operation: params.action, model: params.model || 'unknown' },
-                duration
-            );
-            dbQueryTotal.inc({
-                operation: params.action,
-                model: params.model || 'unknown',
-            });
-            throw error;
-        }
-    });
+    // Prisma $use is deprecated and removed in v6.
+    // Tracking query duration requires using Prisma Client Extensions ($extends) 
+    // which should be configured directly during PrismaClient instantiation.
+    const logger = require('./logger').default;
+    logger.warn('DbMetrics initialization skipped. Prisma $use is unsupported in Prisma v6.');
 };
