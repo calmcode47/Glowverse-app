@@ -12,20 +12,34 @@ const fileFilter = (req: Request, file: Express.Multer.File, cb: multer.FileFilt
   }
 };
 
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: env.upload.maxFileSize },
-  fileFilter
-});
+// Lazy initialization for Multer to avoids eager config access
+let uploadMiddleware: multer.Multer | null = null;
 
-export const uploadSingle = upload.single("image");
-export const uploadMultiple = upload.array("images", 5);
+const getUploadMiddleware = () => {
+  if (!uploadMiddleware) {
+    uploadMiddleware = multer({
+      storage: multer.memoryStorage(),
+      limits: { fileSize: env.upload.maxFileSize },
+      fileFilter
+    });
+  }
+  return uploadMiddleware;
+};
+
+export const uploadSingle = (req: any, res: any, next: any) => {
+  return getUploadMiddleware().single("image")(req, res, next);
+};
+
+export const uploadMultiple = (req: any, res: any, next: any) => {
+  return getUploadMiddleware().array("images", 5)(req, res, next);
+};
 
 export const handleUploadError = (error: any, req: Request, res: any, next: any) => {
   void req;
   void res;
   if (error instanceof multer.MulterError) {
     if (error.code === "LIMIT_FILE_SIZE") {
+      // Access env lazily here too
       return next(new AppError(`File too large. Maximum size is ${env.upload.maxFileSize / 1024 / 1024}MB`, 400));
     }
     return next(new AppError(error.message, 400));

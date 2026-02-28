@@ -61,7 +61,7 @@ export class FitnessController {
     static async getActivity(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            const activity = await FitnessService.getActivityById(userId, req.params.id);
+            const activity = await FitnessService.getActivityById(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 data: activity
@@ -78,7 +78,7 @@ export class FitnessController {
     static async updateActivity(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            const activity = await FitnessService.updateActivity(userId, req.params.id, req.body);
+            const activity = await FitnessService.updateActivity(userId, req.params.id as string, req.body);
             res.status(200).json({
                 success: true,
                 message: 'Activity updated successfully',
@@ -96,7 +96,7 @@ export class FitnessController {
     static async deleteActivity(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            await FitnessService.deleteActivity(userId, req.params.id);
+            await FitnessService.deleteActivity(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Activity deleted successfully'
@@ -186,7 +186,7 @@ export class FitnessController {
     static async deleteGoal(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            await FitnessService.deleteGoal(userId, req.params.id);
+            await FitnessService.deleteGoal(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Goal deleted successfully'

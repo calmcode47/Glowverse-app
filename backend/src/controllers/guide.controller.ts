@@ -41,7 +41,7 @@ export class GuideController {
     static async getGuide(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user?.userId;
-            const guide = await GuideService.getGuide(req.params.idOrSlug, userId);
+            const guide = await GuideService.getGuide(req.params.idOrSlug as string, userId);
             res.status(200).json({
                 success: true,
                 data: guide
@@ -149,7 +149,7 @@ export class GuideController {
      */
     static async getRelatedGuides(req: Request, res: Response, next: NextFunction) {
         try {
-            const guides = await GuideService.getRelatedGuides(req.params.id);
+            const guides = await GuideService.getRelatedGuides(req.params.id as string);
             res.status(200).json({
                 success: true,
                 data: guides
@@ -166,7 +166,7 @@ export class GuideController {
     static async likeGuide(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            await GuideService.likeGuide(userId, req.params.id);
+            await GuideService.likeGuide(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Guide liked'
@@ -183,7 +183,7 @@ export class GuideController {
     static async unlikeGuide(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            await GuideService.unlikeGuide(userId, req.params.id);
+            await GuideService.unlikeGuide(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Guide unliked'
@@ -200,7 +200,7 @@ export class GuideController {
     static async bookmarkGuide(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            await GuideService.bookmarkGuide(userId, req.params.id);
+            await GuideService.bookmarkGuide(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Guide bookmarked'
@@ -217,7 +217,7 @@ export class GuideController {
     static async removeBookmark(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const userId = req.user!.userId;
-            await GuideService.removeBookmark(userId, req.params.id);
+            await GuideService.removeBookmark(userId, req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Bookmark removed'
@@ -252,7 +252,7 @@ export class GuideController {
         try {
             const userId = req.user!.userId;
             const { content, rating } = req.body;
-            const comment = await GuideService.commentOnGuide(userId, req.params.id, content, rating);
+            const comment = await GuideService.commentOnGuide(userId, req.params.id as string, content, rating);
             res.status(201).json({
                 success: true,
                 message: 'Comment added',
@@ -269,7 +269,7 @@ export class GuideController {
      */
     static async trackShare(req: Request, res: Response, next: NextFunction) {
         try {
-            await GuideService.trackShare(req.params.id);
+            await GuideService.trackShare(req.params.id as string);
             res.status(200).json({
                 success: true,
                 message: 'Share tracked'

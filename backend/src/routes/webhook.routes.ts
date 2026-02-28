@@ -50,13 +50,13 @@ router.post(
             }
 
             // Return 200 to acknowledge receipt
-            res.json({ received: true });
+            return res.json({ received: true });
         } catch (error: any) {
             logger.error('Webhook processing error', {
                 error: error.message,
                 signature,
             });
-            res.status(400).json({ error: error.message });
+            return res.status(400).json({ error: error.message });
         }
     }
 );

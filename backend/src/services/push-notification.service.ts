@@ -15,9 +15,16 @@ export interface PushNotificationData {
 }
 
 export class PushNotificationService {
-    private static expo = new Expo({
-        accessToken: config.expo.accessToken,
-    });
+    private static _expo: Expo;
+
+    private static get expo(): Expo {
+        if (!this._expo) {
+            this._expo = new Expo({
+                accessToken: config.expo.accessToken,
+            });
+        }
+        return this._expo;
+    }
 
     /**
      * Send push notification to a user

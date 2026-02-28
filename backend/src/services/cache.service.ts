@@ -3,7 +3,9 @@ import logger from '../utils/logger';
 import { config } from '../config';
 
 export class CacheService {
-    private static readonly DEFAULT_TTL = config.redis.ttl;
+    private static get DEFAULT_TTL() {
+        return config.redis.ttl;
+    }
     private static readonly NAMESPACE = 'glowverse';
 
     /**

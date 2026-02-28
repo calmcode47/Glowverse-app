@@ -5,7 +5,7 @@ import prisma from '../config/database';
 import { EnhancedNotificationService } from './enhancedNotification.service';
 
 const stripe = new Stripe(config.stripe.secretKey, {
-    apiVersion: '2024-11-20.acacia',
+    apiVersion: '2024-11-20.acacia' as any,
 });
 
 export class WebhookService {
@@ -100,12 +100,12 @@ export class WebhookService {
                     userId,
                     orderNumber: await this.generateOrderNumber(),
                     paymentIntentId: paymentIntent.id,
-                    status: 'CONFIRMED',
+                    status: 'PROCESSING',
                     subtotal,
                     tax,
                     shippingCost: shipping,
                     total,
-                    shippingAddress,
+                    shippingAddress: JSON.stringify(shippingAddress),
                     paymentMethod: paymentIntent.payment_method_types[0],
                     paymentStatus: 'PAID',
                     items: {
@@ -113,7 +113,13 @@ export class WebhookService {
                             productId: item.productId,
                             quantity: item.quantity,
                             price: Number(item.price),
-                            name: item.product.name,
+                            subtotal: Number(item.price) * item.quantity,
+                            total: Number(item.price) * item.quantity,
+                            tax: 0,
+                            discount: 0,
+                            productName: item.product.name,
+                            productImage: item.product.thumbnailUrl || '',
+                            productSku: item.product.sku || null,
                         })),
                     },
                 },
@@ -181,10 +187,10 @@ export class WebhookService {
                         type: 'SYSTEM',
                         title: 'Payment Failed',
                         message: 'Your payment could not be processed. Please try again.',
-                        data: {
+                        data: JSON.stringify({
                             paymentIntentId: paymentIntent.id,
                             error: paymentIntent.last_payment_error?.message,
-                        },
+                        }),
                     },
                 });
 
@@ -234,10 +240,10 @@ export class WebhookService {
             await prisma.notification.create({
                 data: {
                     userId: order.userId,
-                    type: 'ORDER',
+                    type: 'ORDER_PLACED',
                     title: 'Refund Processed',
                     message: `Your refund for order #${order.orderNumber} has been processed.`,
-                    data: { orderId: order.id },
+                    data: JSON.stringify({ orderId: order.id }),
                 },
             });
 

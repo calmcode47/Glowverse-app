@@ -321,4 +321,4 @@ export class EmailService {
 }
 
 // Initialize on import
-EmailService.initialize();
+

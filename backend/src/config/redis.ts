@@ -20,38 +20,68 @@ const redisOptions: RedisOptions = {
     lazyConnect: true,
 };
 
-// Create Redis client
-export const redis = new Redis(config.redis.url, redisOptions);
+// Lazy singleton to avoid eager config access
+let redisClient: Redis | null = null;
 
-// Connection event handlers
-redis.on('connect', () => {
-    logger.info('✓ Redis connected successfully');
+const getRedisClient = () => {
+    if (!redisClient) {
+        // Only access config when client is actually requested
+        const { config } = require('./index');
+        redisClient = new Redis(config.redis.url, redisOptions);
+
+        // Attach event handlers to the new instance
+        redisClient.on('connect', () => {
+            const logger = require('../utils/logger').default;
+            logger.info('✓ Redis connected successfully');
+        });
+
+        redisClient.on('error', (err) => {
+            const logger = require('../utils/logger').default;
+            logger.error('Redis connection error', { error: err.message });
+        });
+
+        redisClient.on('close', () => {
+            const logger = require('../utils/logger').default;
+            logger.warn('Redis connection closed');
+        });
+
+        redisClient.on('reconnecting', () => {
+            const logger = require('../utils/logger').default;
+            logger.info('Redis reconnecting...');
+        });
+    }
+    return redisClient;
+};
+
+// Export a Proxy that forwards all operations to the lazy client
+export const redis = new Proxy({} as Redis, {
+    get(_target, prop) {
+        const client = getRedisClient();
+        // Bind methods to the client instance
+        const value = client[prop as keyof Redis];
+        return typeof value === 'function' ? value.bind(client) : value;
+    }
 });
 
-redis.on('error', (err) => {
-    logger.error('Redis connection error', { error: err.message });
-});
-
-redis.on('close', () => {
-    logger.warn('Redis connection closed');
-});
-
-redis.on('reconnecting', () => {
-    logger.info('Redis reconnecting...');
-});
 
 // Graceful shutdown
 process.on('SIGTERM', async () => {
+    const logger = require('../utils/logger').default;
     logger.info('Closing Redis connection...');
-    await redis.quit();
+    if (redisClient) {
+        await redisClient.quit();
+    }
 });
 
 // Connect on app start
 export async function connectRedis(): Promise<void> {
     try {
-        await redis.connect();
+        const client = getRedisClient();
+        await client.connect();
+        const logger = require('../utils/logger').default;
         logger.info('Redis connection established');
     } catch (error) {
+        const logger = require('../utils/logger').default;
         logger.error('Failed to connect to Redis', { error });
         throw error;
     }

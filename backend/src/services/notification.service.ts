@@ -1,5 +1,5 @@
 
-import { PrismaClient, Notification, NotificationType, NotificationPriority, OrderStatus } from '@prisma/client';
+import { Notification, NotificationType, NotificationPriority, OrderStatus } from '@prisma/client';
 import { AppError } from '../utils/errors';
 import { prisma } from '../config/database';
 

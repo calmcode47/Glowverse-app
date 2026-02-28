@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { requireAuth } from '../middleware/auth';
+import { authenticate as requireAuth } from '../middleware/auth';
 import { PushNotificationService } from '../services/push-notification.service';
 
 const router = Router();
@@ -22,12 +22,12 @@ router.post('/tokens', requireAuth, async (req, res, next) => {
 
         await PushNotificationService.registerToken(userId, token, deviceInfo);
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Push token registered',
         });
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
@@ -49,12 +49,12 @@ router.delete('/tokens', requireAuth, async (req, res, next) => {
 
         await PushNotificationService.unregisterToken(userId, token);
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Push token unregistered',
         });
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 
@@ -77,12 +77,12 @@ router.post('/test', requireAuth, async (req, res, next) => {
             data: { test: true },
         });
 
-        res.json({
+        return res.json({
             success: true,
             message: 'Test notification sent',
         });
     } catch (error) {
-        next(error);
+        return next(error);
     }
 });
 

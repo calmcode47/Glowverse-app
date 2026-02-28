@@ -9,9 +9,13 @@ const levels = {
 };
 
 const level = () => {
-  const { config } = require("@config/index");
-  const isDevelopment = config.server.isDevelopment;
-  return isDevelopment ? "debug" : "warn";
+  try {
+    const { config } = require("@config/index");
+    return config.server.isDevelopment ? "debug" : "warn";
+  } catch (error) {
+    // Config not initialized yet (early module load)
+    return "debug";
+  }
 };
 
 const colors = {

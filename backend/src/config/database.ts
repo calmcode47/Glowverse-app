@@ -24,11 +24,11 @@ const globalForPrisma = global as unknown as { prisma: PrismaClient };
 
 // Lazy load config to ensure environment is validated first
 const getPrismaClientOptions = () => {
-  const { config } = require('./index');
   return {
     datasources: {
       db: {
-        url: config.database.url,
+        // Use process.env directly — dotenv is loaded before any imports resolve
+        url: process.env.DATABASE_URL,
       },
     },
     log: [
@@ -76,9 +76,12 @@ prisma.$on('error', (e: any) => {
 // Lazy load config for environment check
 const getConfig = () => require('./index').config;
 
-if (getConfig().server.env !== 'production') {
-  globalForPrisma.prisma = prisma;
-}
+// Defer environment check until after all imports have settled (ESM hoisting fix)
+setImmediate(() => {
+  if (getConfig().server.env !== 'production') {
+    globalForPrisma.prisma = prisma;
+  }
+});
 
 // Graceful shutdown
 process.on('beforeExit', async () => {
@@ -88,12 +91,14 @@ process.on('beforeExit', async () => {
   logger.info('Database connection closed');
 });
 
-// Lazy load logger and config for initialization message
-const logger = require('../utils/logger').default;
-const config = getConfig();
-logger.info('Database connection initialized', {
-  environment: config.server.env,
-  recommendedPoolSize: calculatePoolSize(),
+// Defer logger initialization until after ESM imports and validateEnv() have run
+setImmediate(() => {
+  const logger = require('../utils/logger').default;
+  const config = getConfig();
+  logger.info('Database connection initialized', {
+    environment: config.server.env,
+    recommendedPoolSize: calculatePoolSize(),
+  });
 });
 
 export default prisma;

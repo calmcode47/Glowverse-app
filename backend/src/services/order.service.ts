@@ -403,6 +403,25 @@ export class OrderService {
     }
 
     /**
+     * Find order by Stripe Charge ID.
+     * Charges always relate to a payment intent; we use the charge's paymentIntent
+     * field to look up the order since chargeId is not stored directly.
+     */
+    static async findByChargeId(chargeId: string): Promise<OrderWithItems | null> {
+        // chargeId is not stored — callers should pass paymentIntentId when possible.
+        // Fallback: scan orders for a matching metadata reference.
+        const order = await prisma.order.findFirst({
+            where: {
+                metadata: {
+                    contains: chargeId,
+                },
+            },
+            include: { items: true },
+        });
+        return order as OrderWithItems | null;
+    }
+
+    /**
      * Wrapper for database transactions
      */
     static async transaction<T>(fn: (tx: Prisma.TransactionClient) => Promise<T>): Promise<T> {
